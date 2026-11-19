@@ -1,3 +1,5 @@
+<img src="custom_components/garden_planner/brand/icon.png" alt="Garden Planner icon" width="96" align="right">
+
 # Garden Planner for Home Assistant
 
 Turns a list of crops into dated garden tasks on a Home Assistant to-do list:
