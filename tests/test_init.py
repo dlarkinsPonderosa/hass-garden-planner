@@ -67,12 +67,15 @@ async def test_config_flow_zone_suggests_frost_dates(hass: HomeAssistant) -> Non
     defaults = {str(k): k.default() for k in schema if callable(getattr(k, "default", None))}
     assert defaults["last_frost"] == "04-30"
     assert defaults["first_frost"] == "10-10"
+    assert defaults["profile"] == "continental"
     user = {**LOCATION, "last_frost": "04-30", "first_frost": "10-10", "offset_days": -7}
     user.pop("warm_last_frost")
+    user["profile"] = "continental"
     result = await hass.config_entries.flow.async_configure(result["flow_id"], user)
     assert result["type"] == "create_entry"
     assert result["data"]["warm_last_frost"] == ""
     assert result["data"]["offset_days"] == -7
+    assert result["data"]["profile"] == "continental"
 
 
 async def test_config_flow_bad_date(hass: HomeAssistant) -> None:

@@ -34,6 +34,16 @@ TASK_SOW = "sow"
 TASK_COVER = "cover"
 TASK_HARVEST = "harvest"
 
+TASK_ICONS = {
+    TASK_SOW_INDOORS: "mdi:seed-outline",
+    TASK_POT_UP: "mdi:pot-mix",
+    TASK_HARDEN_OFF: "mdi:weather-sunny",
+    TASK_TRANSPLANT: "mdi:shovel",
+    TASK_SOW: "mdi:seed",
+    TASK_COVER: "mdi:umbrella-outline",
+    TASK_HARVEST: "mdi:basket",
+}
+
 CATALOG_PATH = Path(__file__).parent / "data" / "crops.json"
 OFFSET_RE = re.compile(r"^([LF])([+-]\d+)$")
 
@@ -69,6 +79,10 @@ class Settings:
     warm_last_frost: str | None = None
     # Moves every date earlier (negative) or later (positive).
     offset_days: int = 0
+    # Climate profile: cool_spring (coastal), continental or atlantic.
+    profile: str = "cool_spring"
+    # Start task names with the crop's emoji, like "🥕 Sow Carrot in beds".
+    task_emoji: bool = False
     greenhouse_spring_weeks: int = 4
     greenhouse_fall_weeks: int = 4
     harden_off_days: int = 7
@@ -132,6 +146,13 @@ class Crop:
     perennial: bool = False
     source: str = "custom"
     notes: str | None = None
+    icon: str = "mdi:sprout"
+    emoji: str = "🌱"
+    # Windows for other climate profiles. "windows" is the cool_spring set and
+    # the fallback for any profile not listed (custom crops have only that).
+    profiles: dict[str, list[Window]] = field(default_factory=dict)
+    # Profiles whose windows were estimated rather than read off a chart.
+    estimated_profiles: list[str] = field(default_factory=list)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Crop:
@@ -139,6 +160,13 @@ class Crop:
             key=data["key"],
             name=data["name"],
             windows=[Window.from_dict(w) for w in data.get("windows", [])],
+            icon=data.get("icon") or "mdi:sprout",
+            emoji=data.get("emoji") or "🌱",
+            profiles={
+                name: [Window.from_dict(w) for w in windows]
+                for name, windows in (data.get("profiles") or {}).items()
+            },
+            estimated_profiles=list(data.get("estimated_profiles") or []),
             weeks_indoor=data.get("weeks_indoor"),
             days_to_harvest=int(data.get("days_to_harvest", 60)),
             harvest_weeks=int(data.get("harvest_weeks", 4)),
@@ -152,13 +180,22 @@ class Crop:
     def to_dict(self) -> dict[str, Any]:
         out = asdict(self)
         out["windows"] = [w.to_dict() for w in self.windows]
+        out["profiles"] = {
+            name: [w.to_dict() for w in windows]
+            for name, windows in self.profiles.items()
+        }
         return out
 
-    def supports(self, method: str) -> bool:
-        return any(_window_supports(w, method) for w in self.windows)
+    def windows_for(self, profile: str | None) -> list[Window]:
+        if profile and profile in self.profiles:
+            return self.profiles[profile]
+        return self.windows
 
-    def methods(self) -> list[str]:
-        return [m for m in METHODS if self.supports(m)]
+    def supports(self, method: str, profile: str | None = None) -> bool:
+        return any(_window_supports(w, method) for w in self.windows_for(profile))
+
+    def methods(self, profile: str | None = None) -> list[str]:
+        return [m for m in METHODS if self.supports(m, profile)]
 
 
 def load_catalog(path: Path = CATALOG_PATH) -> dict[str, Crop]:
@@ -209,6 +246,8 @@ class Task:
     summary: str
     description: str = ""
     done_on: date | None = None
+    icon: str = "mdi:sprout"
+    crop_icon: str = "mdi:sprout"
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -221,6 +260,8 @@ class Task:
             "summary": self.summary,
             "description": self.description,
             "done_on": self.done_on.isoformat() if self.done_on else None,
+            "icon": self.icon,
+            "crop_icon": self.crop_icon,
         }
 
 
@@ -291,13 +332,15 @@ def effective_range(
     return start, end
 
 
-def choose_window(crop: Crop, method: str, season: str | None) -> Window:
+def choose_window(
+    crop: Crop, method: str, season: str | None, profile: str | None = None
+) -> Window:
     """Pick the crop window a planting uses."""
-    options = [w for w in crop.windows if _window_supports(w, method)]
+    options = [w for w in crop.windows_for(profile) if _window_supports(w, method)]
     if not options:
         raise PlannerError(
             f"{crop.name} can't be grown with method {method}. "
-            f"Supported: {', '.join(crop.methods()) or 'none'}"
+            f"Supported: {', '.join(crop.methods(profile)) or 'none'}"
         )
     if season:
         for window in options:
@@ -325,7 +368,7 @@ def sowing_dates(
     planting: Planting, crop: Crop, settings: Settings
 ) -> Schedule:
     """The anchor date of each succession: transplant for indoor, sowing for direct."""
-    window = choose_window(crop, planting.method, planting.season)
+    window = choose_window(crop, planting.method, planting.season, settings.profile)
     greenhouse = planting.method in GREENHOUSE_METHODS
     rng = window.transplant if planting.method in INDOOR_METHODS else window.direct
     assert rng is not None
@@ -356,7 +399,7 @@ def generate_tasks(
     planting: Planting, crop: Crop, settings: Settings
 ) -> list[Task]:
     """All tasks for a planting, in date order, before any actual dates."""
-    window = choose_window(crop, planting.method, planting.season)
+    window = choose_window(crop, planting.method, planting.season, settings.profile)
     schedule = sowing_dates(planting, crop, settings)
     greenhouse = planting.method in GREENHOUSE_METHODS
     indoor = planting.method in INDOOR_METHODS
@@ -367,6 +410,7 @@ def generate_tasks(
 
     def add(idx: int, kind: str, due: date, summary: str, extra: str = "") -> None:
         suffix = f" (sowing {idx + 1} of {total})" if total > 1 else ""
+        prefix = f"{crop.emoji} " if settings.task_emoji and crop.emoji else ""
         parts = [p for p in (extra, planting.quantity and f"Quantity: {planting.quantity}",
                              planting.location and f"Location: {planting.location}",
                              planting.notes) if p]
@@ -378,8 +422,10 @@ def generate_tasks(
                 kind=kind,
                 due=due,
                 planned=due,
-                summary=summary + suffix,
+                summary=prefix + summary + suffix,
                 description="\n".join(parts),
+                icon=TASK_ICONS.get(kind, "mdi:sprout"),
+                crop_icon=crop.icon,
             )
         )
 

@@ -25,12 +25,16 @@ from .const import (
     CONF_LAST_FROST,
     CONF_LOOKAHEAD_DAYS,
     CONF_OFFSET_DAYS,
+    CONF_PROFILE,
+    CONF_TASK_EMOJI,
     CONF_TODO_ENTITY,
     CONF_WARM_LAST_FROST,
     CONF_ZONE,
     DEFAULTS,
     DOMAIN,
     NEW_LIST,
+    PROFILE_CONTINENTAL,
+    PROFILES,
     ZONE_CUSTOM,
     ZONE_FROST_DATES,
     ZONE_VICTORIA,
@@ -75,9 +79,14 @@ def _zone_defaults(zone: str) -> dict[str, Any]:
     """Suggested frost dates for the chosen starting point."""
     if zone in ZONE_FROST_DATES:
         last, first = ZONE_FROST_DATES[zone]
-        return {CONF_LAST_FROST: last, CONF_FIRST_FROST: first, CONF_WARM_LAST_FROST: ""}
+        return {
+            CONF_LAST_FROST: last,
+            CONF_FIRST_FROST: first,
+            CONF_WARM_LAST_FROST: "",
+            CONF_PROFILE: PROFILE_CONTINENTAL,
+        }
     if zone == ZONE_CUSTOM:
-        return {CONF_WARM_LAST_FROST: ""}
+        return {CONF_WARM_LAST_FROST: "", CONF_PROFILE: PROFILE_CONTINENTAL}
     return {}
 
 
@@ -111,11 +120,19 @@ def _schema(
                     mode=selector.NumberSelectorMode.BOX,
                 )
             ),
+            vol.Required(CONF_PROFILE, default=default(CONF_PROFILE)): selector.SelectSelector(
+                selector.SelectSelectorConfig(
+                    options=list(PROFILES),
+                    translation_key=CONF_PROFILE,
+                    mode=selector.SelectSelectorMode.LIST,
+                )
+            ),
             vol.Required(CONF_GREENHOUSE_SPRING_WEEKS, default=default(CONF_GREENHOUSE_SPRING_WEEKS)): _number(0, 16, "weeks"),
             vol.Required(CONF_GREENHOUSE_FALL_WEEKS, default=default(CONF_GREENHOUSE_FALL_WEEKS)): _number(0, 16, "weeks"),
             vol.Required(CONF_HARDEN_OFF_DAYS, default=default(CONF_HARDEN_OFF_DAYS)): _number(0, 21, "days"),
             vol.Required(CONF_GREENHOUSE_HARDEN_OFF_DAYS, default=default(CONF_GREENHOUSE_HARDEN_OFF_DAYS)): _number(0, 21, "days"),
             vol.Required(CONF_LOOKAHEAD_DAYS, default=default(CONF_LOOKAHEAD_DAYS)): _number(1, 400, "days"),
+            vol.Required(CONF_TASK_EMOJI, default=default(CONF_TASK_EMOJI)): bool,
         }
     )
 

@@ -163,7 +163,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         manager = _manager(hass)
         return {
             "crops": [
-                {**crop.to_dict(), "methods": crop.methods()}
+                {**crop.to_dict(), "methods": crop.methods(manager.settings.profile)}
                 for crop in sorted(manager.crops.values(), key=lambda c: c.name)
             ]
         }

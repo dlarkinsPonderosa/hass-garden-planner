@@ -131,3 +131,38 @@ def test_catalog_matches_chart_when_frost_dates_match():
     planting = Planting(id="p1", year=2027, crop="pepper", method="indoor_bed")
     dates = by_kind(generate_tasks(planting, CATALOG["pepper"], AS_PRINTED))
     assert dates[TASK_TRANSPLANT] == date(2027, 6, 1)
+
+
+def test_every_crop_has_every_profile_and_an_icon():
+    for crop in CATALOG.values():
+        assert set(crop.profiles) == {"continental", "atlantic"}, crop.key
+        assert crop.icon.startswith("mdi:")
+        assert crop.emoji
+        for profile in ("cool_spring", "continental", "atlantic"):
+            assert crop.methods(profile), (crop.key, profile)
+
+
+def test_continental_profile_saskatoon():
+    # Saskatoon: last frost May 21, first frost Sep 15.
+    sask = Settings(last_frost="05-21", first_frost="09-15", profile="continental")
+    peas = Planting(id="p1", year=2027, crop="pea", method="direct_bed")
+    tomato = Planting(id="p2", year=2027, crop="tomato", method="indoor_bed")
+    pea_sow = by_kind(generate_tasks(peas, CATALOG["pea"], sask))[TASK_SOW]
+    transplant = by_kind(generate_tasks(tomato, CATALOG["tomato"], sask))[TASK_TRANSPLANT]
+    # The Prairies chart: peas from about May 1, tomatoes out from late May.
+    assert date(2027, 4, 25) <= pea_sow <= date(2027, 5, 10)
+    assert date(2027, 5, 25) <= transplant <= date(2027, 6, 10)
+    # The coastal profile would put tomatoes out a month after last frost.
+    coastal = Settings(last_frost="05-21", first_frost="09-15")
+    late = by_kind(generate_tasks(tomato, CATALOG["tomato"], coastal))[TASK_TRANSPLANT]
+    assert late > transplant
+
+
+def test_task_emoji_and_icons():
+    settings = Settings(task_emoji=True)
+    planting = Planting(id="p1", year=2027, crop="carrot", method="direct_bed")
+    tasks = generate_tasks(planting, CATALOG["carrot"], settings)
+    sow = next(t for t in tasks if t.kind == TASK_SOW)
+    assert sow.summary == "🥕 Sow Carrot in beds"
+    assert sow.icon == "mdi:seed"
+    assert sow.crop_icon == "mdi:carrot"

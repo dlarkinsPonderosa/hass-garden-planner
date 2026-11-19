@@ -42,6 +42,8 @@ def _task_attr(manager: GardenManager, task: Task) -> dict[str, Any]:
         "crop": planting.get("crop"),
         "method": planting.get("method"),
         "planting_id": task.planting_id,
+        "icon": task.icon,
+        "crop_icon": task.crop_icon,
     }
 
 
@@ -95,10 +97,12 @@ class NextTaskSensor(GardenSensor):
     def _update_from_manager(self) -> None:
         tasks = self.manager.open_tasks()
         if not tasks:
+            self._attr_icon = "mdi:sprout"
             self._attr_native_value = None
             self._attr_extra_state_attributes = {}
             return
         task = tasks[0]
+        self._attr_icon = task.crop_icon
         self._attr_native_value = task.summary[:255]
         self._attr_extra_state_attributes = _task_attr(self.manager, task)
 
@@ -159,6 +163,7 @@ class PlantingsSensor(GardenSensor):
                 {
                     **planting.to_dict(),
                     "crop_name": crop.name if crop else planting.crop,
+                    "icon": crop.icon if crop else "mdi:sprout",
                     "tasks": [t.to_dict() for t in tasks],
                 }
             )

@@ -1,6 +1,11 @@
 {
  "source": "South Coastal BC Vegetable and Flower & Herb Planting Guides (West Coast Seeds), plus added crops",
  "format": "Ranges are days from the last spring frost (L) or first fall frost (F).",
+ "profiles": {
+  "cool_spring": "South Coastal BC chart (long, cool spring)",
+  "continental": "South Central BC and South Central Prairies charts, averaged (spring warms fast)",
+  "atlantic": "Maritimes chart"
+ },
  "crops": [
   {
    "key": "amaranth",
@@ -20,7 +25,29 @@
    "harvest_weeks": 8,
    "frost_tender": true,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "direct": [
+       "L+21",
+       "L+50"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "direct": [
+       "L+16",
+       "L+45"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:grain",
+   "emoji": "\ud83c\udf3e"
   },
   {
    "key": "artichoke",
@@ -44,7 +71,37 @@
    "harvest_weeks": 6,
    "frost_tender": false,
    "pot_up": true,
-   "perennial": true
+   "perennial": true,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-73",
+       "L-44"
+      ],
+      "transplant": [
+       "L+12",
+       "L+28"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-57",
+       "L-46"
+      ],
+      "transplant": [
+       "L+16",
+       "L+30"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:flower",
+   "emoji": "\ud83c\udf3c"
   },
   {
    "key": "arugula",
@@ -64,7 +121,36 @@
    "harvest_weeks": 3,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "direct": [
+       "L-28",
+       "F-35"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "direct": [
+       "L-90",
+       "F-99"
+      ]
+     },
+     {
+      "season": "fall",
+      "direct": [
+       "F-42",
+       "F-12"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:leaf",
+   "emoji": "\ud83e\udd6c"
   },
   {
    "key": "asparagus",
@@ -89,7 +175,37 @@
    "frost_tender": false,
    "pot_up": false,
    "perennial": true,
-   "notes": "First real harvest in the third spring."
+   "notes": "First real harvest in the third spring.",
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-75",
+       "L-26"
+      ],
+      "transplant": [
+       "L+12",
+       "L+40"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-80",
+       "L-6"
+      ],
+      "transplant": [
+       "L+16",
+       "L+35"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:sprout",
+   "emoji": "\ud83c\udf31"
   },
   {
    "key": "bean_asparagus",
@@ -113,7 +229,37 @@
    "harvest_weeks": 6,
    "frost_tender": true,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-30",
+       "L+19"
+      ],
+      "transplant": [
+       "L+19",
+       "L+55"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-46",
+       "L+4"
+      ],
+      "transplant": [
+       "L+4",
+       "L+35"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:seed",
+   "emoji": "\ud83e\uded8"
   },
   {
    "key": "bean_broad",
@@ -140,7 +286,43 @@
    "harvest_weeks": 4,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "direct": [
+       "L-39",
+       "L+14"
+      ]
+     },
+     {
+      "season": "fall",
+      "direct": [
+       "F-26",
+       "F+25"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "direct": [
+       "L-36",
+       "L+16"
+      ]
+     },
+     {
+      "season": "fall",
+      "direct": [
+       "F-42",
+       "F-12"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:seed",
+   "emoji": "\ud83e\uded8"
   },
   {
    "key": "bean_bush_pole",
@@ -160,7 +342,29 @@
    "harvest_weeks": 6,
    "frost_tender": true,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "direct": [
+       "L+14",
+       "F-97"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "direct": [
+       "L+16",
+       "F-84"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:seed",
+   "emoji": "\ud83e\uded8"
   },
   {
    "key": "bean_soya",
@@ -180,7 +384,29 @@
    "harvest_weeks": 3,
    "frost_tender": true,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "direct": [
+       "L+21",
+       "L+45"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "direct": [
+       "L+16",
+       "L+45"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:seed",
+   "emoji": "\ud83e\uded8"
   },
   {
    "key": "beet",
@@ -200,7 +426,29 @@
    "harvest_weeks": 4,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "direct": [
+       "L+6",
+       "F-70"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "direct": [
+       "L+16",
+       "F-84"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:sprout",
+   "emoji": "\ud83d\udfe3"
   },
   {
    "key": "broccoli",
@@ -228,7 +476,41 @@
    "harvest_weeks": 3,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-44",
+       "L-26"
+      ],
+      "transplant": [
+       "L+2",
+       "L+22"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-36",
+       "L-16"
+      ],
+      "transplant": [
+       "L+4",
+       "L+20"
+      ],
+      "direct": [
+       "L+20",
+       "L+45"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:tree",
+   "emoji": "\ud83e\udd66"
   },
   {
    "key": "broccoli_sprouting",
@@ -267,7 +549,37 @@
    "harvest_weeks": 6,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "summer",
+      "indoor": [
+       "L+31",
+       "L+45"
+      ],
+      "transplant": [
+       "F-78",
+       "F-62"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "summer",
+      "indoor": [
+       "L+25",
+       "L+35"
+      ],
+      "transplant": [
+       "F-77",
+       "F-63"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:tree",
+   "emoji": "\ud83e\udd66"
   },
   {
    "key": "brussels_sprouts",
@@ -291,7 +603,37 @@
    "harvest_weeks": 8,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-8",
+       "L+10"
+      ],
+      "transplant": [
+       "F-78",
+       "F-62"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-36",
+       "L-26"
+      ],
+      "transplant": [
+       "L+4",
+       "L+15"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:leaf-circle",
+   "emoji": "\ud83e\udd6c"
   },
   {
    "key": "cabbage",
@@ -319,7 +661,45 @@
    "harvest_weeks": 4,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-30",
+       "L-11"
+      ],
+      "transplant": [
+       "L+2",
+       "L+20"
+      ],
+      "direct": [
+       "L+21",
+       "L+32"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-36",
+       "L-16"
+      ],
+      "transplant": [
+       "L+9",
+       "L+20"
+      ],
+      "direct": [
+       "L+20",
+       "L+45"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:leaf-circle",
+   "emoji": "\ud83e\udd6c"
   },
   {
    "key": "cabbage_overwinter",
@@ -347,7 +727,41 @@
    "harvest_weeks": 6,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "summer",
+      "indoor": [
+       "L+45",
+       "F-97"
+      ],
+      "direct": [
+       "F-97",
+       "F-78"
+      ],
+      "transplant": [
+       "F-73",
+       "F-57"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "summer",
+      "indoor": [
+       "L+30",
+       "F-94"
+      ],
+      "transplant": [
+       "F-77",
+       "F-63"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:leaf-circle",
+   "emoji": "\ud83e\udd6c"
   },
   {
    "key": "carrot",
@@ -367,7 +781,29 @@
    "harvest_weeks": 6,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "direct": [
+       "L+6",
+       "F-70"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "direct": [
+       "L-6",
+       "F-63"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:carrot",
+   "emoji": "\ud83e\udd55"
   },
   {
    "key": "cauliflower",
@@ -402,7 +838,37 @@
    "harvest_weeks": 3,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-44",
+       "L-14"
+      ],
+      "transplant": [
+       "L+12",
+       "L+30"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-36",
+       "L-16"
+      ],
+      "transplant": [
+       "L-1",
+       "L+16"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:tree",
+   "emoji": "\ud83e\udd66"
   },
   {
    "key": "celery",
@@ -426,7 +892,37 @@
    "harvest_weeks": 6,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-59",
+       "L-16"
+      ],
+      "transplant": [
+       "L+15",
+       "L+28"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-36",
+       "L-16"
+      ],
+      "transplant": [
+       "L+4",
+       "L+20"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:leaf",
+   "emoji": "\ud83e\udd6c"
   },
   {
    "key": "corn",
@@ -446,7 +942,29 @@
    "harvest_weeks": 3,
    "frost_tender": true,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "direct": [
+       "L+18",
+       "L+48"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "direct": [
+       "L+16",
+       "L+45"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:corn",
+   "emoji": "\ud83c\udf3d"
   },
   {
    "key": "corn_salad",
@@ -477,7 +995,51 @@
    "harvest_weeks": 8,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "direct": [
+       "L-34",
+       "L+10"
+      ],
+      "cover": [
+       "L-41",
+       "L-26"
+      ]
+     },
+     {
+      "season": "fall",
+      "direct": [
+       "F-34",
+       "F+7"
+      ],
+      "cover": [
+       "F-10",
+       "F+19"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "direct": [
+       "L-36",
+       "L+45"
+      ]
+     },
+     {
+      "season": "fall",
+      "direct": [
+       "F-77",
+       "F-37"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:leaf",
+   "emoji": "\ud83e\udd6c"
   },
   {
    "key": "cress",
@@ -497,7 +1059,36 @@
    "harvest_weeks": 2,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "direct": [
+       "L-21",
+       "F-42"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "direct": [
+       "L-36",
+       "L+30"
+      ]
+     },
+     {
+      "season": "fall",
+      "direct": [
+       "F-77",
+       "F-53"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:leaf",
+   "emoji": "\ud83e\udd6c"
   },
   {
    "key": "cucumber",
@@ -525,7 +1116,41 @@
    "harvest_weeks": 8,
    "frost_tender": true,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-10",
+       "L+6"
+      ],
+      "direct": [
+       "L+6",
+       "L+18"
+      ],
+      "transplant": [
+       "L+18",
+       "L+35"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-15",
+       "L-1"
+      ],
+      "transplant": [
+       "L+16",
+       "L+30"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:food-variant",
+   "emoji": "\ud83e\udd52"
   },
   {
    "key": "eggplant",
@@ -549,7 +1174,37 @@
    "harvest_weeks": 8,
    "frost_tender": true,
    "pot_up": true,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-47",
+       "L-28"
+      ],
+      "transplant": [
+       "L+21",
+       "L+38"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-15",
+       "L-6"
+      ],
+      "transplant": [
+       "L+16",
+       "L+30"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:food-variant",
+   "emoji": "\ud83c\udf46"
   },
   {
    "key": "endive",
@@ -580,7 +1235,40 @@
    "harvest_weeks": 4,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "direct": [
+       "L-1",
+       "L+34"
+      ]
+     },
+     {
+      "season": "fall",
+      "direct": [
+       "F-93",
+       "F-67"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-45",
+       "L-31"
+      ],
+      "transplant": [
+       "L+4",
+       "L+16"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:leaf",
+   "emoji": "\ud83e\udd6c"
   },
   {
    "key": "fennel",
@@ -600,7 +1288,29 @@
    "harvest_weeks": 4,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "direct": [
+       "L-3",
+       "L+50"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "direct": [
+       "L-21",
+       "F-94"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:leaf",
+   "emoji": "\ud83e\udd6c"
   },
   {
    "key": "garlic",
@@ -628,7 +1338,29 @@
    "frost_tender": false,
    "pot_up": false,
    "perennial": false,
-   "notes": "Plant cloves. Fall planting is harvested the next July."
+   "notes": "Plant cloves. Fall planting is harvested the next July.",
+   "profiles": {
+    "continental": [
+     {
+      "season": "fall",
+      "direct": [
+       "F+8",
+       "F+46"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "fall",
+      "direct": [
+       "F-46",
+       "F+29"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:sprout",
+   "emoji": "\ud83e\uddc4"
   },
   {
    "key": "kale",
@@ -648,7 +1380,29 @@
    "harvest_weeks": 16,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "direct": [
+       "L-28",
+       "F-60"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "direct": [
+       "L-6",
+       "F-94"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:leaf",
+   "emoji": "\ud83e\udd6c"
   },
   {
    "key": "kohlrabi",
@@ -675,7 +1429,44 @@
    "harvest_weeks": 3,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-39",
+       "L-16"
+      ],
+      "transplant": [
+       "L-6",
+       "L+22"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-36",
+       "L-16"
+      ],
+      "transplant": [
+       "L+4",
+       "L+16"
+      ]
+     },
+     {
+      "season": "summer",
+      "direct": [
+       "F-94",
+       "F-78"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:leaf-circle",
+   "emoji": "\ud83e\udd6c"
   },
   {
    "key": "leek",
@@ -714,7 +1505,41 @@
    "harvest_weeks": 12,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-71",
+       "L-26"
+      ],
+      "transplant": [
+       "L-6",
+       "L+17"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-62",
+       "L-1"
+      ],
+      "transplant": [
+       "L-1",
+       "L+9"
+      ],
+      "direct": [
+       "L+9",
+       "L+45"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:sprout",
+   "emoji": "\ud83e\uddc5"
   },
   {
    "key": "lettuce",
@@ -746,7 +1571,45 @@
    "harvest_weeks": 4,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-26",
+       "L-1"
+      ],
+      "transplant": [
+       "L+4",
+       "L+23"
+      ],
+      "direct": [
+       "L+23",
+       "F-54"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-36",
+       "L-16"
+      ],
+      "transplant": [
+       "L-15",
+       "L+15"
+      ],
+      "direct": [
+       "L+16",
+       "F-47"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:leaf",
+   "emoji": "\ud83e\udd6c"
   },
   {
    "key": "melon",
@@ -770,7 +1633,37 @@
    "harvest_weeks": 4,
    "frost_tender": true,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-18",
+       "L-6"
+      ],
+      "transplant": [
+       "L+15",
+       "L+30"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-1",
+       "L+4"
+      ],
+      "transplant": [
+       "L+25",
+       "L+45"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:fruit-watermelon",
+   "emoji": "\ud83c\udf48"
   },
   {
    "key": "mustard",
@@ -801,7 +1694,43 @@
    "harvest_weeks": 4,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "direct": [
+       "L-28",
+       "L+50"
+      ]
+     },
+     {
+      "season": "fall",
+      "direct": [
+       "F-66",
+       "F-11"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "direct": [
+       "L-36",
+       "L+45"
+      ]
+     },
+     {
+      "season": "fall",
+      "direct": [
+       "F-77",
+       "F-17"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:leaf",
+   "emoji": "\ud83e\udd6c"
   },
   {
    "key": "okra",
@@ -825,7 +1754,37 @@
    "harvest_weeks": 6,
    "frost_tender": true,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-18",
+       "L-8"
+      ],
+      "transplant": [
+       "L+15",
+       "L+28"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-26",
+       "L-15"
+      ],
+      "transplant": [
+       "L+4",
+       "L+20"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:leaf",
+   "emoji": "\ud83e\udd6c"
   },
   {
    "key": "onion",
@@ -853,7 +1812,37 @@
    "harvest_weeks": 3,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-85",
+       "L-34"
+      ],
+      "transplant": [
+       "L+6",
+       "L+20"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-85",
+       "L-36"
+      ],
+      "transplant": [
+       "L-1",
+       "L+16"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:sprout",
+   "emoji": "\ud83e\uddc5"
   },
   {
    "key": "onion_overwinter",
@@ -877,7 +1866,37 @@
    "harvest_weeks": 3,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "summer",
+      "indoor": [
+       "L+38",
+       "F-70"
+      ],
+      "transplant": [
+       "F-49",
+       "F-37"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "summer",
+      "indoor": [
+       "F-108",
+       "F-94"
+      ],
+      "transplant": [
+       "F-77",
+       "F-63"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:sprout",
+   "emoji": "\ud83e\uddc5"
   },
   {
    "key": "scallion",
@@ -901,7 +1920,33 @@
    "harvest_weeks": 6,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "direct": [
+       "L-18",
+       "F-22"
+      ],
+      "indoor": [
+       "L-50",
+       "L-36"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "direct": [
+       "L-15",
+       "F-63"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:sprout",
+   "emoji": "\ud83e\uddc5"
   },
   {
    "key": "pac_choi",
@@ -925,7 +1970,51 @@
    "harvest_weeks": 3,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "direct": [
+       "L-31",
+       "F-42"
+      ],
+      "cover": [
+       "L-31",
+       "L-8"
+      ]
+     },
+     {
+      "season": "summer",
+      "direct": [
+       "F-63",
+       "F-27"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "direct": [
+       "L-36",
+       "L+45"
+      ],
+      "cover": [
+       "L-36",
+       "L-15"
+      ]
+     },
+     {
+      "season": "summer",
+      "direct": [
+       "F-77",
+       "F-53"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:leaf",
+   "emoji": "\ud83e\udd6c"
   },
   {
    "key": "parsnip",
@@ -945,7 +2034,29 @@
    "harvest_weeks": 12,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "direct": [
+       "L-1",
+       "L+38"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "direct": [
+       "L-21",
+       "L+45"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:carrot",
+   "emoji": "\ud83e\udd55"
   },
   {
    "key": "pea",
@@ -972,7 +2083,43 @@
    "harvest_weeks": 4,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "direct": [
+       "L-20",
+       "L+38"
+      ]
+     },
+     {
+      "season": "summer",
+      "direct": [
+       "F-97",
+       "F-78"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "direct": [
+       "L-41",
+       "L+15"
+      ]
+     },
+     {
+      "season": "summer",
+      "direct": [
+       "L+30",
+       "F-94"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:seed",
+   "emoji": "\ud83e\udedb"
   },
   {
    "key": "pepper",
@@ -996,7 +2143,37 @@
    "harvest_weeks": 10,
    "frost_tender": true,
    "pot_up": true,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-71",
+       "L-47"
+      ],
+      "transplant": [
+       "L+21",
+       "L+38"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-76",
+       "L-52"
+      ],
+      "transplant": [
+       "L+16",
+       "L+40"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:chili-mild",
+   "emoji": "\ud83e\uded1"
   },
   {
    "key": "radicchio",
@@ -1031,7 +2208,40 @@
    "harvest_weeks": 4,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "direct": [
+       "L-1",
+       "L+34"
+      ]
+     },
+     {
+      "season": "summer",
+      "direct": [
+       "F-93",
+       "F-67"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-45",
+       "L-31"
+      ],
+      "transplant": [
+       "L+4",
+       "L+16"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:leaf",
+   "emoji": "\ud83e\udd6c"
   },
   {
    "key": "radish",
@@ -1062,7 +2272,51 @@
    "harvest_weeks": 2,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "direct": [
+       "L-26",
+       "L+17"
+      ],
+      "cover": [
+       "L-21",
+       "L+4"
+      ]
+     },
+     {
+      "season": "fall",
+      "direct": [
+       "F-55",
+       "F-19"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "direct": [
+       "L-36",
+       "L+15"
+      ],
+      "cover": [
+       "L-36",
+       "L-15"
+      ]
+     },
+     {
+      "season": "fall",
+      "direct": [
+       "F-46",
+       "F-2"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:sprout",
+   "emoji": "\ud83d\udd34"
   },
   {
    "key": "rhubarb",
@@ -1087,7 +2341,37 @@
    "frost_tender": false,
    "pot_up": false,
    "perennial": true,
-   "notes": "First harvest in the second or third spring."
+   "notes": "First harvest in the second or third spring.",
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-57",
+       "L-31"
+      ],
+      "transplant": [
+       "L+4",
+       "L+28"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-36",
+       "L-6"
+      ],
+      "transplant": [
+       "L-6",
+       "F-77"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:leaf",
+   "emoji": "\ud83c\udf3f"
   },
   {
    "key": "rutabaga",
@@ -1107,7 +2391,37 @@
    "harvest_weeks": 8,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "direct": [
+       "L+31",
+       "F-97"
+      ],
+      "indoor": [
+       "L-50",
+       "L-36"
+      ],
+      "transplant": [
+       "L+11",
+       "L+30"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "direct": [
+       "L+16",
+       "F-94"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:sprout",
+   "emoji": "\ud83d\udfe1"
   },
   {
    "key": "spinach",
@@ -1138,7 +2452,59 @@
    "harvest_weeks": 4,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "direct": [
+       "L-31",
+       "L+22"
+      ],
+      "cover": [
+       "L-31",
+       "L-8"
+      ]
+     },
+     {
+      "season": "fall",
+      "direct": [
+       "F-49",
+       "F-24"
+      ],
+      "cover": [
+       "F-17",
+       "F-1"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "direct": [
+       "L-21",
+       "L+30"
+      ],
+      "cover": [
+       "L-21",
+       "L-1"
+      ]
+     },
+     {
+      "season": "fall",
+      "direct": [
+       "F-77",
+       "F-17"
+      ],
+      "cover": [
+       "F-46",
+       "F-17"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:leaf",
+   "emoji": "\ud83e\udd6c"
   },
   {
    "key": "squash",
@@ -1166,7 +2532,45 @@
    "harvest_weeks": 8,
    "frost_tender": true,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-10",
+       "L+4"
+      ],
+      "transplant": [
+       "L+12",
+       "L+28"
+      ],
+      "direct": [
+       "L-6",
+       "L+4"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-15",
+       "L-1"
+      ],
+      "direct": [
+       "L-1",
+       "L+4"
+      ],
+      "transplant": [
+       "L+9",
+       "L+25"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:pumpkin",
+   "emoji": "\ud83c\udf83"
   },
   {
    "key": "strawberry",
@@ -1190,7 +2594,37 @@
    "harvest_weeks": 4,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": true
+   "perennial": true,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-130",
+       "L-74"
+      ],
+      "transplant": [
+       "L+2",
+       "L+21"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-135",
+       "L-77"
+      ],
+      "transplant": [
+       "L-15",
+       "L+15"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:fruit-cherries",
+   "emoji": "\ud83c\udf53"
   },
   {
    "key": "swiss_chard",
@@ -1210,7 +2644,29 @@
    "harvest_weeks": 16,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "direct": [
+       "L+2",
+       "F-52"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "direct": [
+       "L-1",
+       "F-68"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:leaf",
+   "emoji": "\ud83e\udd6c"
   },
   {
    "key": "tomato",
@@ -1234,7 +2690,37 @@
    "harvest_weeks": 10,
    "frost_tender": true,
    "pot_up": true,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-50",
+       "L-31"
+      ],
+      "transplant": [
+       "L+12",
+       "L+30"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-57",
+       "L-36"
+      ],
+      "transplant": [
+       "L-1",
+       "L+20"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:fruit-cherries",
+   "emoji": "\ud83c\udf45"
   },
   {
    "key": "turnip",
@@ -1254,7 +2740,29 @@
    "harvest_weeks": 4,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "direct": [
+       "L-11",
+       "F-42"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "direct": [
+       "L-1",
+       "F-63"
+      ]
+     }
+    ]
+   },
+   "icon": "mdi:sprout",
+   "emoji": "\u26aa"
   },
   {
    "key": "potato",
@@ -1275,7 +2783,33 @@
    "frost_tender": false,
    "pot_up": false,
    "perennial": false,
-   "notes": "Plant seed potatoes. Early varieties about 70 days, main crop about 110."
+   "notes": "Plant seed potatoes. Early varieties about 70 days, main crop about 110.",
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "direct": [
+       "L-25",
+       "L+67"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "direct": [
+       "L-31",
+       "L+61"
+      ]
+     }
+    ]
+   },
+   "estimated_profiles": [
+    "continental",
+    "atlantic"
+   ],
+   "icon": "mdi:sprout",
+   "emoji": "\ud83e\udd54"
   },
   {
    "key": "tomatillo",
@@ -1299,7 +2833,41 @@
    "harvest_weeks": 8,
    "frost_tender": true,
    "pot_up": true,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-51",
+       "L-20"
+      ],
+      "transplant": [
+       "L+10",
+       "L+41"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-57",
+       "L-26"
+      ],
+      "transplant": [
+       "L+4",
+       "L+35"
+      ]
+     }
+    ]
+   },
+   "estimated_profiles": [
+    "continental",
+    "atlantic"
+   ],
+   "icon": "mdi:fruit-cherries",
+   "emoji": "\ud83d\udfe2"
   },
   {
    "key": "basil",
@@ -1323,7 +2891,41 @@
    "harvest_weeks": 10,
    "frost_tender": true,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-20",
+       "L+15"
+      ],
+      "transplant": [
+       "L+27",
+       "L+56"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-26",
+       "L+9"
+      ],
+      "transplant": [
+       "L+21",
+       "L+50"
+      ]
+     }
+    ]
+   },
+   "estimated_profiles": [
+    "continental",
+    "atlantic"
+   ],
+   "icon": "mdi:spa",
+   "emoji": "\ud83c\udf3f"
   },
   {
    "key": "bergamot",
@@ -1358,7 +2960,63 @@
    "harvest_weeks": 8,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": true
+   "perennial": true,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-53",
+       "L-20"
+      ],
+      "direct": [
+       "L-20",
+       "L+6"
+      ],
+      "transplant": [
+       "L+22",
+       "L+36"
+      ]
+     },
+     {
+      "season": "fall",
+      "direct": [
+       "F-11",
+       "F+19"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-59",
+       "L-26"
+      ],
+      "direct": [
+       "L-26",
+       "L+0"
+      ],
+      "transplant": [
+       "L+16",
+       "L+30"
+      ]
+     },
+     {
+      "season": "fall",
+      "direct": [
+       "F-21",
+       "F+9"
+      ]
+     }
+    ]
+   },
+   "estimated_profiles": [
+    "continental",
+    "atlantic"
+   ],
+   "icon": "mdi:spa",
+   "emoji": "\ud83c\udf3f"
   },
   {
    "key": "borage",
@@ -1378,7 +3036,33 @@
    "harvest_weeks": 8,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "direct": [
+       "L-8",
+       "F-58"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "direct": [
+       "L-14",
+       "F-68"
+      ]
+     }
+    ]
+   },
+   "estimated_profiles": [
+    "continental",
+    "atlantic"
+   ],
+   "icon": "mdi:spa",
+   "emoji": "\ud83c\udf3f"
   },
   {
    "key": "chamomile",
@@ -1405,7 +3089,47 @@
    "harvest_weeks": 8,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "direct": [
+       "L-8",
+       "L+82"
+      ]
+     },
+     {
+      "season": "fall",
+      "direct": [
+       "F-27",
+       "F+19"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "direct": [
+       "L-14",
+       "L+76"
+      ]
+     },
+     {
+      "season": "fall",
+      "direct": [
+       "F-37",
+       "F+9"
+      ]
+     }
+    ]
+   },
+   "estimated_profiles": [
+    "continental",
+    "atlantic"
+   ],
+   "icon": "mdi:spa",
+   "emoji": "\ud83c\udf3f"
   },
   {
    "key": "chervil",
@@ -1429,7 +3153,41 @@
    "harvest_weeks": 6,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-30",
+       "L-8"
+      ],
+      "direct": [
+       "L-8",
+       "F-58"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-36",
+       "L-14"
+      ],
+      "direct": [
+       "L-14",
+       "F-68"
+      ]
+     }
+    ]
+   },
+   "estimated_profiles": [
+    "continental",
+    "atlantic"
+   ],
+   "icon": "mdi:spa",
+   "emoji": "\ud83c\udf3f"
   },
   {
    "key": "chives",
@@ -1464,7 +3222,63 @@
    "harvest_weeks": 20,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": true
+   "perennial": true,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-67",
+       "L-8"
+      ],
+      "transplant": [
+       "L-8",
+       "L+11"
+      ],
+      "direct": [
+       "L+11",
+       "L+82"
+      ]
+     },
+     {
+      "season": "summer",
+      "direct": [
+       "F-72",
+       "F-12"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-73",
+       "L-14"
+      ],
+      "transplant": [
+       "L-14",
+       "L+5"
+      ],
+      "direct": [
+       "L+5",
+       "L+76"
+      ]
+     },
+     {
+      "season": "summer",
+      "direct": [
+       "F-82",
+       "F-22"
+      ]
+     }
+    ]
+   },
+   "estimated_profiles": [
+    "continental",
+    "atlantic"
+   ],
+   "icon": "mdi:spa",
+   "emoji": "\ud83c\udf3f"
   },
   {
    "key": "cilantro",
@@ -1485,7 +3299,33 @@
    "frost_tender": false,
    "pot_up": false,
    "perennial": false,
-   "notes": "Bolts in summer heat, so sow small batches every 2 to 3 weeks."
+   "notes": "Bolts in summer heat, so sow small batches every 2 to 3 weeks.",
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "direct": [
+       "L-39",
+       "F-12"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "direct": [
+       "L-45",
+       "F-22"
+      ]
+     }
+    ]
+   },
+   "estimated_profiles": [
+    "continental",
+    "atlantic"
+   ],
+   "icon": "mdi:spa",
+   "emoji": "\ud83c\udf3f"
   },
   {
    "key": "dill",
@@ -1505,7 +3345,33 @@
    "harvest_weeks": 4,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "direct": [
+       "L+22",
+       "F-42"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "direct": [
+       "L+16",
+       "F-52"
+      ]
+     }
+    ]
+   },
+   "estimated_profiles": [
+    "continental",
+    "atlantic"
+   ],
+   "icon": "mdi:spa",
+   "emoji": "\ud83c\udf3f"
   },
   {
    "key": "lavender",
@@ -1529,7 +3395,41 @@
    "harvest_weeks": 6,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": true
+   "perennial": true,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-84",
+       "L-39"
+      ],
+      "transplant": [
+       "L+36",
+       "L+67"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-90",
+       "L-45"
+      ],
+      "transplant": [
+       "L+30",
+       "L+61"
+      ]
+     }
+    ]
+   },
+   "estimated_profiles": [
+    "continental",
+    "atlantic"
+   ],
+   "icon": "mdi:spa",
+   "emoji": "\ud83c\udf3f"
   },
   {
    "key": "lemon_balm",
@@ -1557,7 +3457,49 @@
    "harvest_weeks": 16,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": true
+   "perennial": true,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-67",
+       "L-39"
+      ],
+      "transplant": [
+       "L-20",
+       "L-8"
+      ],
+      "direct": [
+       "L-8",
+       "F-73"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-73",
+       "L-45"
+      ],
+      "transplant": [
+       "L-26",
+       "L-14"
+      ],
+      "direct": [
+       "L-14",
+       "F-83"
+      ]
+     }
+    ]
+   },
+   "estimated_profiles": [
+    "continental",
+    "atlantic"
+   ],
+   "icon": "mdi:spa",
+   "emoji": "\ud83c\udf3f"
   },
   {
    "key": "lemongrass",
@@ -1581,7 +3523,41 @@
    "harvest_weeks": 10,
    "frost_tender": true,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-79",
+       "L-35"
+      ],
+      "transplant": [
+       "L+10",
+       "L+41"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-85",
+       "L-41"
+      ],
+      "transplant": [
+       "L+4",
+       "L+35"
+      ]
+     }
+    ]
+   },
+   "estimated_profiles": [
+    "continental",
+    "atlantic"
+   ],
+   "icon": "mdi:spa",
+   "emoji": "\ud83c\udf3f"
   },
   {
    "key": "lovage",
@@ -1616,7 +3592,63 @@
    "harvest_weeks": 12,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": true
+   "perennial": true,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-39",
+       "L-8"
+      ],
+      "direct": [
+       "L-8",
+       "L+11"
+      ],
+      "transplant": [
+       "L+11",
+       "L+22"
+      ]
+     },
+     {
+      "season": "fall",
+      "direct": [
+       "F-11",
+       "F+19"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-45",
+       "L-14"
+      ],
+      "direct": [
+       "L-14",
+       "L+5"
+      ],
+      "transplant": [
+       "L+5",
+       "L+16"
+      ]
+     },
+     {
+      "season": "fall",
+      "direct": [
+       "F-21",
+       "F+9"
+      ]
+     }
+    ]
+   },
+   "estimated_profiles": [
+    "continental",
+    "atlantic"
+   ],
+   "icon": "mdi:spa",
+   "emoji": "\ud83c\udf3f"
   },
   {
    "key": "mint",
@@ -1640,7 +3672,41 @@
    "harvest_weeks": 16,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": true
+   "perennial": true,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-67",
+       "L-9"
+      ],
+      "transplant": [
+       "L+22",
+       "L+67"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-73",
+       "L-15"
+      ],
+      "transplant": [
+       "L+16",
+       "L+61"
+      ]
+     }
+    ]
+   },
+   "estimated_profiles": [
+    "continental",
+    "atlantic"
+   ],
+   "icon": "mdi:spa",
+   "emoji": "\ud83c\udf3f"
   },
   {
    "key": "oregano",
@@ -1664,7 +3730,41 @@
    "harvest_weeks": 16,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": true
+   "perennial": true,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-53",
+       "L+11"
+      ],
+      "transplant": [
+       "L+11",
+       "L+36"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-59",
+       "L+5"
+      ],
+      "transplant": [
+       "L+5",
+       "L+30"
+      ]
+     }
+    ]
+   },
+   "estimated_profiles": [
+    "continental",
+    "atlantic"
+   ],
+   "icon": "mdi:spa",
+   "emoji": "\ud83c\udf3f"
   },
   {
    "key": "parsley",
@@ -1685,7 +3785,33 @@
    "frost_tender": false,
    "pot_up": false,
    "perennial": false,
-   "notes": "Flat-leaf (Italian) and curly are timed the same."
+   "notes": "Flat-leaf (Italian) and curly are timed the same.",
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "direct": [
+       "L+6",
+       "F-58"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "direct": [
+       "L+0",
+       "F-68"
+      ]
+     }
+    ]
+   },
+   "estimated_profiles": [
+    "continental",
+    "atlantic"
+   ],
+   "icon": "mdi:spa",
+   "emoji": "\ud83c\udf3f"
   },
   {
    "key": "rosemary",
@@ -1709,7 +3835,41 @@
    "harvest_weeks": 20,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": true
+   "perennial": true,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-67",
+       "L+11"
+      ],
+      "transplant": [
+       "L+11",
+       "L+36"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-73",
+       "L+5"
+      ],
+      "transplant": [
+       "L+5",
+       "L+30"
+      ]
+     }
+    ]
+   },
+   "estimated_profiles": [
+    "continental",
+    "atlantic"
+   ],
+   "icon": "mdi:spa",
+   "emoji": "\ud83c\udf3f"
   },
   {
    "key": "sage",
@@ -1733,7 +3893,41 @@
    "harvest_weeks": 20,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": true
+   "perennial": true,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-67",
+       "L+11"
+      ],
+      "transplant": [
+       "L+11",
+       "L+36"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-73",
+       "L+5"
+      ],
+      "transplant": [
+       "L+5",
+       "L+30"
+      ]
+     }
+    ]
+   },
+   "estimated_profiles": [
+    "continental",
+    "atlantic"
+   ],
+   "icon": "mdi:spa",
+   "emoji": "\ud83c\udf3f"
   },
   {
    "key": "savory",
@@ -1757,7 +3951,41 @@
    "harvest_weeks": 12,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-39",
+       "L+16"
+      ],
+      "transplant": [
+       "L+16",
+       "L+31"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-45",
+       "L+10"
+      ],
+      "transplant": [
+       "L+10",
+       "L+25"
+      ]
+     }
+    ]
+   },
+   "estimated_profiles": [
+    "continental",
+    "atlantic"
+   ],
+   "icon": "mdi:spa",
+   "emoji": "\ud83c\udf3f"
   },
   {
    "key": "shiso",
@@ -1785,7 +4013,49 @@
    "harvest_weeks": 12,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-25",
+       "L-8"
+      ],
+      "transplant": [
+       "L-8",
+       "L+11"
+      ],
+      "direct": [
+       "L+11",
+       "L+82"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-31",
+       "L-14"
+      ],
+      "transplant": [
+       "L-14",
+       "L+5"
+      ],
+      "direct": [
+       "L+5",
+       "L+76"
+      ]
+     }
+    ]
+   },
+   "estimated_profiles": [
+    "continental",
+    "atlantic"
+   ],
+   "icon": "mdi:spa",
+   "emoji": "\ud83c\udf3f"
   },
   {
    "key": "stevia",
@@ -1809,7 +4079,41 @@
    "harvest_weeks": 8,
    "frost_tender": true,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-34",
+       "L+26"
+      ],
+      "transplant": [
+       "L+27",
+       "L+56"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-40",
+       "L+20"
+      ],
+      "transplant": [
+       "L+21",
+       "L+50"
+      ]
+     }
+    ]
+   },
+   "estimated_profiles": [
+    "continental",
+    "atlantic"
+   ],
+   "icon": "mdi:spa",
+   "emoji": "\ud83c\udf3f"
   },
   {
    "key": "marjoram",
@@ -1833,7 +4137,41 @@
    "harvest_weeks": 12,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": false
+   "perennial": false,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-53",
+       "L+11"
+      ],
+      "transplant": [
+       "L+11",
+       "L+36"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-59",
+       "L+5"
+      ],
+      "transplant": [
+       "L+5",
+       "L+30"
+      ]
+     }
+    ]
+   },
+   "estimated_profiles": [
+    "continental",
+    "atlantic"
+   ],
+   "icon": "mdi:spa",
+   "emoji": "\ud83c\udf3f"
   },
   {
    "key": "thyme",
@@ -1857,7 +4195,41 @@
    "harvest_weeks": 16,
    "frost_tender": false,
    "pot_up": false,
-   "perennial": true
+   "perennial": true,
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-67",
+       "L+6"
+      ],
+      "transplant": [
+       "L+11",
+       "L+41"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-73",
+       "L+0"
+      ],
+      "transplant": [
+       "L+5",
+       "L+35"
+      ]
+     }
+    ]
+   },
+   "estimated_profiles": [
+    "continental",
+    "atlantic"
+   ],
+   "icon": "mdi:spa",
+   "emoji": "\ud83c\udf3f"
   }
  ]
 }

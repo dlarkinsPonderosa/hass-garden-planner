@@ -6,9 +6,11 @@ covering and harvest. It handles three ways of growing (indoor starts under
 lights, beds, heated greenhouse), repeat sowings such as carrots every week,
 and moves later tasks when you tick one off early or late.
 
-It works anywhere: every crop's timing is stored as days before or after the
-last spring frost and the first fall frost, so your own frost dates turn it
-into a calendar for your garden.
+It works anywhere in a temperate climate: every crop's timing is stored as
+days before or after the last spring frost and the first fall frost, so your
+own frost dates turn it into a calendar for your garden. A climate profile
+handles how fast spring warms up after the last frost, which hardiness zones
+don't capture.
 
 The built-in crop catalog is transcribed from West Coast Seeds' *South Coastal
 BC Vegetable Planting Guide* (49 crops) and the herbs from its *Flower & Herb
@@ -37,9 +39,28 @@ length, so check the suggested dates against your local averages.
 | First fall frost | 11-16 | Average first frost |
 | Last frost for warm crops | 04-01 | Tomatoes, peppers, squash and other frost-tender crops are timed from this instead. Useful where spring stays cool after the last frost, like coastal BC. Leave empty to use the last frost |
 | Move all dates by | 0 days | Fine-tune for a warm (negative) or cold (positive) garden |
+| Climate profile | Cool, slow spring | See below. Zone starting points suggest the fast-spring profile |
 | Greenhouse weeks earlier in spring / later in fall | 4 / 4 | Widens every window for greenhouse plantings |
 | Harden off days (beds / greenhouse) | 7 / 3 | Set to 0 to skip the task |
 | Look-ahead days | 30 | Tasks are added to the list this many days before they're due, with their real due date, so long succession sowings don't flood it |
+| Start task names with the crop's emoji | Off | "🥕 Sow Carrot in beds", so garden tasks stand out on a shared list |
+
+### Climate profiles
+
+Planting charts from different regions show that frost dates alone don't
+transfer: on the coast, spring is long and cool, so warm crops wait about a
+month after the last frost; inland, spring warms fast and tomatoes go out one
+to two weeks after it.
+
+| Profile | Built from | Fits |
+| --- | --- | --- |
+| Cool, slow spring | South Coastal BC chart | Coastal BC, Pacific Northwest, UK, New Zealand |
+| Spring warms fast | South Central BC and South Central Prairies charts, averaged | BC interior, Prairies, northern BC, most of the US and eastern Canada |
+| Atlantic | Maritimes chart | Maritimes, Newfoundland |
+
+Herbs, potato, tomatillo and a few crops missing from a regional chart are
+estimated from their coastal timing, shifted by the typical difference for
+crops that appear on both charts (`estimated_profiles` in `crops.json`).
 
 All of these can be changed later under **Configure**.
 
@@ -124,6 +145,12 @@ the whole catalog.
 | `sensor.garden_planner_overdue_tasks` | Count | task list |
 | `sensor.garden_planner_plantings` | Count | every planting with its full schedule |
 | `todo.garden_planner_garden_tasks` | Only when the planner makes its own list | |
+
+Each crop has a Material Design icon (`mdi:carrot`, `mdi:chili-mild`,
+`mdi:spa` for herbs and so on) and each kind of task has one too (`mdi:seed`
+for sowing, `mdi:shovel` for transplanting, `mdi:basket` for harvest). The
+next task sensor shows the crop's icon, and task attributes carry `icon` and
+`crop_icon` for dashboards.
 
 ## Development
 
