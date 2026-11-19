@@ -495,20 +495,21 @@ async def test_custom_crop_round_trip(hass: HomeAssistant) -> None:
 
     entry = await _setup(hass, profile="continental")
     await _call(hass, "add_crop", {
-        "key": "okra", "name": "Okra", "based_on": "tomato", "icon": "mdi:chili-mild",
+        "key": "okra_red", "name": "Okra, red", "based_on": "tomato", "icon": "mdi:chili-mild",
         "category": "vegetable", "days_to_harvest": 60,
         "windows": [{"season": "spring", "indoor": ["2027-03-01", "03-20"], "transplant": ["05-15", "06-01"]}],
     })
-    crop = entry.runtime_data.crop("okra")
+    crop = entry.runtime_data.crop("okra_red")
     # Its own dates win over the base crop's climate profiles.
     assert crop.profiles == {}
     resp = await _call(hass, "list_crops", {}, True)
-    okra = next(c for c in resp["crops"] if c["key"] == "okra")
+    okra = next(c for c in resp["crops"] if c["key"] == "okra_red")
     assert okra["custom"] and not okra["in_use"]
     assert okra["icon"] == "mdi:chili-mild"
     assert okra["windows"] == [{"season": "spring", "indoor": ["03-01", "03-20"], "transplant": ["05-15", "06-01"]}]
     tomato = next(c for c in resp["crops"] if c["key"] == "tomato")
-    assert not tomato["custom"] and "windows" not in tomato
+    assert tomato["builtin"] and not tomato["custom"] and not tomato["edited"]
+    assert tomato["windows"]
 
     with pytest.raises(ServiceValidationError):
         await _call(hass, "add_crop", {"key": "nothing", "name": "Nothing"})
@@ -543,3 +544,35 @@ async def test_add_crop_from_configure(hass: HomeAssistant) -> None:
     )
     assert result["type"] == "create_entry"
     assert entry.runtime_data.crop("tomato_2").name == "Tomato"
+
+
+async def test_builtin_crops_edit_remove_reset(hass: HomeAssistant) -> None:
+    """Built-in crops are a default list: edit, remove and bring back."""
+    from homeassistant.exceptions import ServiceValidationError
+
+    entry = await _setup(hass)
+    manager = entry.runtime_data
+    windows = manager.crop("carrot").windows
+    # Editing only the name and icon keeps the timing.
+    await _call(hass, "add_crop", {"key": "carrot", "name": "Carrot, Nantes", "icon": "mdi:carrot"})
+    carrot = manager.crop("carrot")
+    assert carrot.name == "Carrot, Nantes" and carrot.windows == windows
+    resp = await _call(hass, "list_crops", {}, True)
+    info = next(c for c in resp["crops"] if c["key"] == "carrot")
+    assert info["builtin"] and info["edited"]
+
+    await _call(hass, "reset_crop", {"key": "carrot"})
+    assert manager.crop("carrot").name == "Carrot"
+
+    # Removing a built-in crop hides it; it can be restored.
+    await _call(hass, "remove_crop", {"key": "kohlrabi"})
+    assert "kohlrabi" not in manager.crops
+    resp = await _call(hass, "list_crops", {}, True)
+    assert [c["key"] for c in resp["hidden"]] == ["kohlrabi"]
+    await _call(hass, "reset_crop", {"key": "kohlrabi"})
+    assert "kohlrabi" in manager.crops
+
+    # A crop in use can't be removed.
+    await _call(hass, "add_planting", {"crop": "pea", "method": "direct_bed", "year": 2027}, True)
+    with pytest.raises(ServiceValidationError):
+        await _call(hass, "remove_crop", {"key": "pea"})

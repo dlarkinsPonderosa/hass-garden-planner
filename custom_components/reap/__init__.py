@@ -213,13 +213,23 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         except PlannerError as err:
             raise ServiceValidationError(str(err)) from err
 
+    async def reset_crop(call: ServiceCall) -> None:
+        try:
+            await _manager(hass).async_reset_crop(call.data["key"])
+        except PlannerError as err:
+            raise ServiceValidationError(str(err)) from err
+
     async def list_crops(call: ServiceCall) -> ServiceResponse:
         manager = _manager(hass)
         return {
             "crops": [
                 manager.crop_info(crop)
                 for crop in sorted(manager.crops.values(), key=lambda c: c.name)
-            ]
+            ],
+            "hidden": [
+                {"key": c.key, "name": c.name, "icon": c.icon, "category": c.category}
+                for c in sorted(manager.hidden_crops(), key=lambda c: c.name)
+            ],
         }
 
     async def set_crop_defaults(call: ServiceCall) -> None:
@@ -283,6 +293,10 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     )
     hass.services.async_register(
         DOMAIN, "remove_crop", remove_crop,
+        vol.Schema({vol.Required("key"): cv.string}),
+    )
+    hass.services.async_register(
+        DOMAIN, "reset_crop", reset_crop,
         vol.Schema({vol.Required("key"): cv.string}),
     )
     hass.services.async_register(

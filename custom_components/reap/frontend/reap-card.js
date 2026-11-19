@@ -149,6 +149,7 @@ class ReapCard extends HTMLElement {
     try {
       const res = await this._call("list_crops", {}, true);
       this._crops = res.crops;
+      this._hiddenCrops = res.hidden || [];
     } catch (err) {
       this._error = `Couldn't load the crop list: ${err.message || err}`;
     }
@@ -384,7 +385,7 @@ class ReapCard extends HTMLElement {
     if (!name) throw new Error("Give the crop a name.");
     let key = this._editing;
     if (!key) {
-      const taken = new Set((this._crops || []).map((c) => c.key));
+      const taken = new Set([...(this._crops || []), ...(this._hiddenCrops || [])].map((c) => c.key));
       const base = slug(name);
       key = base;
       for (let n = 2; taken.has(key); n++) key = `${base}_${n}`;
@@ -404,7 +405,8 @@ class ReapCard extends HTMLElement {
       windows[season] = windows[season] || { season };
       windows[season][kind] = [from, to];
     }
-    if (Object.keys(windows).length) data.windows = Object.values(windows);
+    const sendDates = !this._editing || f._dates_changed;
+    if (sendDates && Object.keys(windows).length) data.windows = Object.values(windows);
     else if (!data.based_on && !this._editing) throw new Error("Give at least one date range, or copy timing from a crop.");
     return data;
   }
@@ -419,6 +421,20 @@ class ReapCard extends HTMLElement {
       this._mode = "crops";
       this._form = {};
       this._editing = null;
+    } catch (err) {
+      this._error = err.message || String(err);
+    }
+    this._busy = false;
+    this._render();
+  }
+
+  async _resetCrop(key) {
+    this._busy = true;
+    this._error = null;
+    try {
+      await this._call("reset_crop", { key });
+      this._confirmDelete = null;
+      await this._loadCrops();
     } catch (err) {
       this._error = err.message || String(err);
     }
@@ -629,32 +645,60 @@ class ReapCard extends HTMLElement {
     const wrap = h("div", { class: "form" });
     wrap.append(h("div", { class: "form-title" }, icon("mdi:sprout-outline"), "Crops"));
     const all = this._crops || [];
-    const mine = all.filter((c) => c.custom);
     wrap.append(h("p", { class: "muted small" },
-      `${all.length - mine.length} built-in crops. Add your own crop or variety below. To make a variety, copy timing from the crop it's a variety of.`));
+      "Your crop list. Edit any crop to match your garden, remove the ones you don't grow, or add your own. To add a variety, copy timing from the crop it's a variety of."));
     const list = h("div", { class: "list" });
-    if (!mine.length) list.append(h("p", { class: "muted" }, "You haven't added any crops yet."));
-    for (const crop of mine) {
+    const filter = h("input", {
+      type: "search", placeholder: `Search ${all.length} crops`, class: "search", value: this._cropFilter || "",
+      oninput: (e) => {
+        this._cropFilter = e.target.value;
+        const q = e.target.value.trim().toLowerCase();
+        for (const row of list.children) row.hidden = !!q && !(row.dataset.name || "").includes(q);
+      },
+    });
+    wrap.append(filter);
+    const q = (this._cropFilter || "").trim().toLowerCase();
+    for (const crop of all) {
       const label = (CATEGORIES.find(([v]) => v === crop.category) || [null, "Vegetable"])[1];
-      list.append(h("div", { class: "row" },
-        h("div", { class: "crop-icon small-icon" }, icon(crop.icon || "mdi:sprout")),
-        h("div", { class: "info" },
-          h("div", { class: "name" }, crop.name),
-          h("div", { class: "muted small" }, [label, crop.in_use ? "in use" : null].filter(Boolean).join(" · "))),
-        h("div", { class: "row-actions" },
-          h("button", { class: "icon-btn", title: "Edit", onclick: () => this._startCrop(crop) }, icon("mdi:pencil")),
-          h("button", {
-            class: "icon-btn", title: crop.in_use ? "In use, so it can't be removed" : "Remove", disabled: crop.in_use,
-            onclick: () => { this._confirmDelete = crop.key; this._render(); },
-          }, icon("mdi:delete-outline")))));
+      const tag = crop.custom ? "Your crop" : crop.edited ? "Edited" : null;
+      const item = h("div", {},
+        h("div", { class: "row" },
+          h("div", { class: "crop-icon small-icon" }, icon(crop.icon || "mdi:sprout")),
+          h("div", { class: "info" },
+            h("div", { class: "name" }, crop.name),
+            h("div", { class: "muted small" }, [label, tag, crop.in_use ? "in use" : null].filter(Boolean).join(" · "))),
+          h("div", { class: "row-actions" },
+            crop.edited
+              ? h("button", { class: "icon-btn", title: "Undo my edits", disabled: this._busy, onclick: () => this._resetCrop(crop.key) }, icon("mdi:restore"))
+              : null,
+            h("button", { class: "icon-btn", title: "Edit", onclick: () => this._startCrop(crop) }, icon("mdi:pencil")),
+            h("button", {
+              class: "icon-btn", title: crop.in_use ? "In use, so it can't be removed" : "Remove", disabled: crop.in_use,
+              onclick: () => { this._confirmDelete = crop.key; this._render(); },
+            }, icon("mdi:delete-outline")))));
+      item.dataset.name = crop.name.toLowerCase();
+      item.hidden = !!q && !item.dataset.name.includes(q);
       if (this._confirmDelete === crop.key) {
-        list.append(h("div", { class: "confirm" },
-          `Remove ${crop.name}?`,
+        item.append(h("div", { class: "confirm" },
+          crop.builtin ? `Remove ${crop.name}? You can bring it back later.` : `Remove ${crop.name}?`,
           h("button", { onclick: () => { this._confirmDelete = null; this._render(); } }, "Keep"),
           h("button", { class: "danger", disabled: this._busy, onclick: () => this._deleteCrop(crop.key) }, "Remove")));
       }
+      list.append(item);
     }
     wrap.append(list);
+    const hidden = this._hiddenCrops || [];
+    if (hidden.length) {
+      const removed = h("details", { class: "removed" },
+        h("summary", {}, `Removed crops (${hidden.length})`));
+      for (const crop of hidden) {
+        removed.append(h("div", { class: "row" },
+          h("div", { class: "crop-icon small-icon" }, icon(crop.icon || "mdi:sprout")),
+          h("div", { class: "info" }, h("div", { class: "name muted" }, crop.name)),
+          h("button", { disabled: this._busy, onclick: () => this._resetCrop(crop.key) }, icon("mdi:restore"), "Restore")));
+      }
+      wrap.append(removed);
+    }
     wrap.append(h("div", { class: "actions" },
       h("button", { onclick: () => this._cancel() }, "Done"),
       h("button", { class: "primary", onclick: () => this._startCrop(null) }, icon("mdi:plus"), "Add crop")));
@@ -692,6 +736,8 @@ class ReapCard extends HTMLElement {
     }
     form.append(h("p", { class: "muted small" }, f.based_on
       ? "Dates are optional. Leave them empty to use the copied crop's timing."
+      : this._editing
+      ? "These are the dates for your garden. Change any of them, and the rest of the crop stays as it is."
       : "Enter the dates you'd usually do each step in your garden, using the ones that apply. The year doesn't matter."));
     const range = (field, label) => h("div", { class: "range" },
       h("span", { class: "range-label" }, label),
@@ -752,7 +798,11 @@ class ReapCard extends HTMLElement {
     return h("label", { class: "field" }, h("span", {}, label),
       h("input", {
         type, value, ...extra,
-        oninput: (e) => { this._form[key] = e.target.value; this._preview = null; },
+        oninput: (e) => {
+          this._form[key] = e.target.value;
+          this._preview = null;
+          if (/_(from|to)$/.test(key)) this._form._dates_changed = true;
+        },
       }));
   }
 
@@ -873,6 +923,11 @@ const STYLE = `
   .check { display: flex; align-items: center; gap: 8px; font-size: 0.9em; }
   .range { display: grid; grid-template-columns: minmax(110px, 1fr) 1fr 1fr; gap: 8px; align-items: end; }
   .range-label { font-size: 0.9em; padding-bottom: 10px; }
+  .search { font: inherit; padding: 8px; border-radius: 6px; border: 1px solid var(--divider-color);
+    background: var(--card-background-color); color: var(--primary-text-color); }
+  .list > div[hidden] { display: none; }
+  .list > div:not(:last-child) > .row { border-bottom: 1px solid var(--divider-color); }
+  .removed summary { cursor: pointer; color: var(--secondary-text-color); padding: 8px 0; }
   .crop-icon.small-icon { width: 36px; height: 36px; --mdc-icon-size: 22px; }
   .error { color: var(--error-color); display: flex; align-items: center; gap: 6px; padding: 8px 0; }
 `;

@@ -363,7 +363,7 @@
     },
     "remove_crop": {
       "name": "Remove crop",
-      "description": "Remove a crop you added.",
+      "description": "Remove a crop no planting uses. Built-in crops can be brought back with Reset crop.",
       "fields": {
         "key": {
           "name": "Key",
@@ -524,6 +524,16 @@
     "list_locations": {
       "name": "List locations",
       "description": "Return every location with its sensor, light and how many plantings use it."
+    },
+    "reset_crop": {
+      "name": "Reset crop",
+      "description": "Undo your edits to a built-in crop, or bring back one you removed.",
+      "fields": {
+        "key": {
+          "name": "Crop",
+          "description": "The crop's key."
+        }
+      }
     }
   },
   "selector": {

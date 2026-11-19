@@ -218,8 +218,13 @@ then either:
   directly in spring or fall in your garden.
 
 Dates you enter are saved relative to your frost dates, so they follow any
-later change to your settings. Crops you add can be edited from the card, and
-removed once no planting uses them.
+later change to your settings.
+
+The built-in crops are just a starting list. Every crop, built-in or your own,
+can be edited from the card, and removed once no planting uses it. Edited
+built-in crops have an undo button that puts back the original, and removed
+ones are listed under **Removed crops** with a **Restore** button
+(`reap.reset_crop` does the same).
 
 The same is available as an action:
 
