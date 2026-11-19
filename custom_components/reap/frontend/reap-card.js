@@ -61,9 +61,17 @@ function icon(name, cls = "") {
   return h("ha-icon", { icon: name, class: cls });
 }
 
-function shortDate(iso) {
+// Dates follow the language set in Home Assistant, not the browser's.
+let LOCALE;
+
+function shortDate(iso, withYear = false) {
   const [y, m, d] = iso.split("-").map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  const opts = withYear ? { month: "short", day: "numeric", year: "numeric" } : { month: "short", day: "numeric" };
+  try {
+    return new Date(y, m - 1, d).toLocaleDateString(LOCALE, opts);
+  } catch (err) {
+    return new Date(y, m - 1, d).toLocaleDateString(undefined, opts);
+  }
 }
 
 function moistureLevel(value) {
@@ -80,17 +88,19 @@ const CROP_DATES = [
   ["spring_indoor", "spring", "indoor"],
   ["spring_transplant", "spring", "transplant"],
   ["spring_direct", "spring", "direct"],
+  ["summer_indoor", "summer", "indoor"],
+  ["summer_transplant", "summer", "transplant"],
+  ["summer_direct", "summer", "direct"],
+  ["fall_indoor", "fall", "indoor"],
+  ["fall_transplant", "fall", "transplant"],
   ["fall_direct", "fall", "direct"],
 ];
+const CROP_SEASONS = ["spring", "summer", "fall"];
 
 function slug(text) {
   return text.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "") || "crop";
 }
 
-function defaultYear() {
-  const now = new Date();
-  return now.getMonth() < 8 ? now.getFullYear() : now.getFullYear() + 1;
-}
 
 class ReapCard extends HTMLElement {
   setConfig(config) {
@@ -108,7 +118,10 @@ class ReapCard extends HTMLElement {
   set hass(hass) {
     const old = this._hass;
     this._hass = hass;
-    if (!this._crops && !this._loadingCrops) this._loadCrops();
+    LOCALE = (hass.locale && hass.locale.language) || hass.language || undefined;
+    // While list_crops fails, wait longer between tries instead of asking on
+    // every state change in the house.
+    if (!this._crops && !this._loadingCrops && !(this._cropsRetryAt > Date.now())) this._loadCrops();
     // Only redraw when something shown changes, so typing in a form isn't interrupted.
     if (!this._mode && (!old || this._watched().some((id) => old.states[id] !== hass.states[id]))) {
       this._render();
@@ -151,8 +164,14 @@ class ReapCard extends HTMLElement {
       const res = await this._call("list_crops", {}, true);
       this._crops = res.crops;
       this._hiddenCrops = res.hidden || [];
+      this._cropsDelay = 0;
+      this._cropsRetryAt = 0;
+      if (this._cropsError) { this._error = null; this._cropsError = false; }
     } catch (err) {
+      this._cropsDelay = Math.min((this._cropsDelay || 2500) * 2, 300000);
+      this._cropsRetryAt = Date.now() + this._cropsDelay;
       this._error = `Couldn't load the crop list: ${err.message || err}`;
+      this._cropsError = true;
     }
     this._loadingCrops = false;
     this._render();
@@ -185,7 +204,8 @@ class ReapCard extends HTMLElement {
     const first = (this._crops || [])[0];
     this._mode = "add";
     this._editing = null;
-    this._form = { year: defaultYear() };
+    // No year: Reap picks the next season the crop can still be sown in.
+    this._form = { year: "" };
     if (first) this._pickCrop(first.key, false);
     this._preview = null;
     this._error = null;
@@ -259,22 +279,29 @@ class ReapCard extends HTMLElement {
     this._render();
     try {
       const payload = this._payload();
+      const saveDefaults = this._form.save_defaults;
       if (this._mode === "add") {
         await this._call("add_planting", payload);
       } else {
         await this._call("update_planting", { planting_id: this._editing, ...payload });
       }
-      if (this._form.save_defaults) {
+      // The planting is saved: close the form, so pressing Add again can't
+      // make a second one, even if saving the defaults fails below.
+      this._mode = null;
+      this._form = {};
+      this._preview = null;
+      if (saveDefaults) {
         const defaults = { crop: payload.crop };
         for (const k of DEFAULT_KEYS) {
           if (payload[k] !== undefined && payload[k] !== "") defaults[k] = payload[k];
         }
-        await this._call("set_crop_defaults", defaults);
-        await this._loadCrops();
+        try {
+          await this._call("set_crop_defaults", defaults);
+          await this._loadCrops();
+        } catch (err) {
+          this._error = `The planting was saved, but its defaults weren't: ${err.message || err}`;
+        }
       }
-      this._mode = null;
-      this._form = {};
-      this._preview = null;
     } catch (err) {
       this._error = err.message || String(err);
     }
@@ -359,16 +386,24 @@ class ReapCard extends HTMLElement {
       ? {
         name: crop.name, category: crop.category || "vegetable", icon: crop.icon || "",
         days_to_harvest: crop.days_to_harvest, harvest_weeks: crop.harvest_weeks,
-        weeks_indoor: crop.weeks_indoor || "", frost_tender: crop.frost_tender, perennial: crop.perennial,
+        weeks_indoor: crop.weeks_indoor || "", frost_tender: crop.frost_tender, planted: !!crop.planted, perennial: crop.perennial,
         notes: crop.notes || "", based_on: "",
       }
-      : { name: "", category: "vegetable", icon: "", based_on: "", frost_tender: false, perennial: false };
+      : { name: "", category: "vegetable", icon: "", based_on: "", frost_tender: false, planted: false, perennial: false };
+    // Windows the form can't show (another season, or a second window of a
+    // season) are sent back unchanged, so editing never drops them.
+    this._extraWindows = [];
     if (crop) {
+      const seen = new Set();
       for (const w of crop.windows || []) {
-        const season = w.season === "spring" ? "spring" : "fall";
+        if (!CROP_SEASONS.includes(w.season) || seen.has(w.season)) {
+          this._extraWindows.push(w);
+          continue;
+        }
+        seen.add(w.season);
         for (const kind of ["indoor", "transplant", "direct"]) {
-          const key = `${season}_${kind}`;
-          if (w[kind] && CROP_DATES.some(([k]) => k === key) && !this._form[`${key}_from`]) {
+          const key = `${w.season}_${kind}`;
+          if (w[kind]) {
             this._form[`${key}_from`] = w[kind][0];
             this._form[`${key}_to`] = w[kind][1];
           }
@@ -390,7 +425,7 @@ class ReapCard extends HTMLElement {
       key = base;
       for (let n = 2; taken.has(key); n++) key = `${base}_${n}`;
     }
-    const data = { key, name, category: f.category || "vegetable", frost_tender: !!f.frost_tender, perennial: !!f.perennial };
+    const data = { key, name, category: f.category || "vegetable", frost_tender: !!f.frost_tender, planted: !!f.planted, perennial: !!f.perennial };
     if ((f.icon || "").trim()) data.icon = f.icon.trim();
     if (f.based_on) data.based_on = f.based_on;
     for (const k of ["days_to_harvest", "harvest_weeks", "weeks_indoor"]) {
@@ -406,7 +441,9 @@ class ReapCard extends HTMLElement {
       windows[season][kind] = [from, to];
     }
     const sendDates = !this._editing || f._dates_changed;
-    if (sendDates && Object.keys(windows).length) data.windows = Object.values(windows);
+    if (sendDates && Object.keys(windows).length) {
+      data.windows = [...Object.values(windows), ...(this._extraWindows || [])];
+    }
     else if (!data.based_on && !this._editing) throw new Error("Give at least one date range, or copy timing from a crop.");
     return data;
   }
@@ -486,7 +523,12 @@ class ReapCard extends HTMLElement {
       body.append(h("p", { class: "muted" }, `Entity ${this._config.entity} not found. Is Reap set up?`));
       return;
     }
-    if (this._error) body.append(h("div", { class: "error" }, icon("mdi:alert-circle-outline"), this._error));
+    if (this._error) {
+      body.append(h("div", { class: "error" }, icon("mdi:alert-circle-outline"), this._error,
+        this._cropsError && !this._crops
+          ? h("button", { onclick: () => { this._cropsRetryAt = 0; this._loadCrops(); } }, "Retry")
+          : null));
+    }
 
     if (this._mode === "locations") {
       body.append(this._renderLocations());
@@ -511,7 +553,7 @@ class ReapCard extends HTMLElement {
 
     const plantings = this._plantings()
       .map((p) => ({ ...p, open: (p.tasks || []).filter((t) => !t.done_on) }))
-      .filter((p) => this._config.show_done || p.open.length)
+      .filter((p) => this._config.show_done || p.open.length || p.open_count)
       .sort((a, b) => ((a.open[0] || {}).due || "9999").localeCompare((b.open[0] || {}).due || "9999"));
 
     if (!plantings.length) {
@@ -534,7 +576,7 @@ class ReapCard extends HTMLElement {
     const crop = this._crop(p.crop);
     const next = p.open[0];
     const name = p.variety ? `${p.crop_name} (${p.variety})` : p.crop_name;
-    const sowings = new Set((p.tasks || []).map((t) => t.succession)).size;
+    const sowings = p.sowings || new Set((p.tasks || []).map((t) => t.succession)).size;
     const details = [
       METHOD_LABELS[p.method] || p.method,
       p.season && p.season !== "spring" ? p.season : null,
@@ -753,6 +795,7 @@ class ReapCard extends HTMLElement {
           const base = this._crop(value);
           if (base && !f.icon) f.icon = base.icon;
           if (base && !f.category) f.category = base.category;
+          if (base) f.planted = !!base.planted;
           this._render();
         }));
     }
@@ -768,12 +811,24 @@ class ReapCard extends HTMLElement {
     form.append(range("spring_indoor", "Start indoors"));
     form.append(range("spring_transplant", "Transplant out"));
     form.append(range("spring_direct", "Direct sow (spring)"));
-    form.append(range("fall_direct", "Direct sow or plant (fall)"));
+    // Summer and fall plantings, folded away unless the crop has them.
+    for (const [season, title] of [["summer", "Summer planting"], ["fall", "Fall planting"]]) {
+      const used = ["indoor", "transplant", "direct"].some((k) => f[`${season}_${k}_from`] || f[`${season}_${k}_to`]);
+      const details = h("details", { class: "season", open: used || season === "fall" },
+        h("summary", {}, title),
+        range(`${season}_indoor`, "Start indoors"),
+        range(`${season}_transplant`, "Transplant out"),
+        range(`${season}_direct`, season === "fall" ? "Direct sow or plant" : "Direct sow"));
+      details.addEventListener("toggle", () => { this._open = this._open || {}; this._open[season] = details.open; });
+      if (this._open && season in this._open) details.open = this._open[season];
+      form.append(details);
+    }
     form.append(h("div", { class: "grid" },
       this._input("days_to_harvest", "Days to harvest", "number", { min: 1, max: 1100, placeholder: "60" }),
       this._input("harvest_weeks", "Harvest lasts (weeks)", "number", { min: 1, max: 52, placeholder: "4" }),
       this._input("weeks_indoor", "Weeks indoors (optional)", "number", { min: 1, max: 30 })));
     form.append(this._check("frost_tender", "Frost tender (timed from the warm-crop frost date)"));
+    form.append(this._check("planted", "Planted from cloves, sets, tubers or slips (tasks say Plant, not Sow)"));
     form.append(this._check("perennial", "Perennial"));
     form.append(this._input("notes", "Notes"));
     form.append(h("div", { class: "actions" },
@@ -862,7 +917,7 @@ class ReapCard extends HTMLElement {
       if (crop.notes) form.append(h("p", { class: "muted small" }, icon("mdi:information-outline"), crop.notes));
     }
     form.append(h("div", { class: "grid" },
-      this._input("year", "Year", "number", { min: 2024, max: 2100 }),
+      this._input("year", "Year", "number", { min: 2000, max: 2100, placeholder: "Next season" }),
       this._input("start_date", "Start date (optional)", "date"),
       this._input("succession_days", "Repeat every (days)", "number", { min: 0, max: 365 }),
       this._input("succession_count", "Number of sowings", "number", { min: 1, max: 200 }),
@@ -883,7 +938,7 @@ class ReapCard extends HTMLElement {
     if (this._preview) {
       const list = h("div", { class: "preview" });
       for (const t of this._preview.slice(0, 30)) {
-        list.append(h("div", { class: "small" }, icon(t.icon || "mdi:calendar"), `${shortDate(t.due)}, ${t.due.slice(0, 4)}: ${t.summary}`));
+        list.append(h("div", { class: "small" }, icon(t.icon || "mdi:calendar"), `${shortDate(t.due, true)}: ${t.summary}`));
       }
       if (this._preview.length > 30) list.append(h("div", { class: "muted small" }, `...and ${this._preview.length - 30} more`));
       form.append(list);
@@ -952,6 +1007,9 @@ const STYLE = `
     background: var(--card-background-color); color: var(--primary-text-color); }
   .list > div[hidden] { display: none; }
   .list > div:not(:last-child) > .row { border-bottom: 1px solid var(--divider-color); }
+  .season { border-top: 1px solid var(--divider-color); padding-top: 4px; }
+  .season summary { cursor: pointer; font-weight: 500; padding: 8px 0; }
+  .season > .range { margin-bottom: 8px; }
   .removed summary { cursor: pointer; color: var(--secondary-text-color); padding: 8px 0; }
   .crop-icon.small-icon { width: 36px; height: 36px; --mdc-icon-size: 22px; }
   .error { color: var(--error-color); display: flex; align-items: center; gap: 6px; padding: 8px 0; }
@@ -969,7 +1027,7 @@ const EDITOR_SCHEMA = [
       { name: "show_done", selector: { boolean: {} } },
     ],
   },
-  { name: "icon_size", selector: { number: { min: 24, max: 72, step: 4, mode: "slider", unit_of_measurement: "px" } } },
+  { name: "icon_size", selector: { number: { min: 16, max: 72, step: 4, mode: "slider", unit_of_measurement: "px" } } },
 ];
 const EDITOR_LABELS = {
   title: "Title",
@@ -1001,8 +1059,13 @@ class ReapCardEditor extends HTMLElement {
       this._form.schema = EDITOR_SCHEMA;
       this._form.computeLabel = (s) => EDITOR_LABELS[s.name] || s.name;
       this._form.addEventListener("value-changed", (ev) => {
+        // Only keep options that differ from the defaults in the card's YAML.
+        const config = {};
+        for (const [key, value] of Object.entries(ev.detail.value)) {
+          if (key === "type" || key === "entity" || CARD_DEFAULTS[key] !== value) config[key] = value;
+        }
         this.dispatchEvent(new CustomEvent("config-changed", {
-          bubbles: true, composed: true, detail: { config: ev.detail.value },
+          bubbles: true, composed: true, detail: { config },
         }));
       });
       this.append(this._form);

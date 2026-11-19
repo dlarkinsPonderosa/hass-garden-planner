@@ -1,7 +1,7 @@
 {
   "config": {
     "abort": {
-      "already_configured": "Reap is already set up."
+      "single_instance_allowed": "Reap is already set up."
     },
     "error": {
       "invalid_month_day": "Use month-day, for example 03-06."
@@ -48,7 +48,6 @@
   "options": {
     "error": {
       "invalid_month_day": "Use month-day, for example 03-06.",
-      "cannot_schedule": "That crop can't be planned that way. Check the method, season and dates.",
       "crop_error": "{error}"
     },
     "step": {
@@ -191,7 +190,7 @@
       "fields": {
         "crop": {
           "name": "Crop",
-          "description": "Crop from the catalog, or the key of a crop you added."
+          "description": "The crop's key, such as tomato or garlic. The List crops action lists every key."
         },
         "method": {
           "name": "Method",
@@ -245,7 +244,7 @@
       "fields": {
         "crop": {
           "name": "Crop",
-          "description": "Crop from the catalog, or the key of a crop you added."
+          "description": "The crop's key, such as tomato or garlic. The List crops action lists every key."
         },
         "method": {
           "name": "Method",
@@ -339,6 +338,10 @@
           "name": "Frost tender",
           "description": "Warm-season crop."
         },
+        "planted": {
+          "name": "Planted",
+          "description": "Grown from cloves, sets, tubers or slips, so tasks say Plant instead of Sow."
+        },
         "pot_up": {
           "name": "Pot up",
           "description": "Add a pot-up task for indoor starts."
@@ -423,7 +426,7 @@
         },
         "crop": {
           "name": "Crop",
-          "description": "Crop from the catalog, or the key of a crop you added."
+          "description": "The crop's key, such as tomato or garlic. The List crops action lists every key."
         },
         "method": {
           "name": "Method",
@@ -551,6 +554,14 @@
         "fruit": "Fruit",
         "flower": "Flower"
       }
+    }
+  },
+  "exceptions": {
+    "not_set_up": {
+      "message": "Reap is not set up"
+    },
+    "planner_error": {
+      "message": "{error}"
     }
   }
 }

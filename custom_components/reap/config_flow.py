@@ -38,7 +38,6 @@ from .const import (
     ZONE_CUSTOM,
     ZONE_FROST_DATES,
 )
-from .manager import default_year
 from .planner import PlannerError
 
 
@@ -228,8 +227,6 @@ class ReapConfigFlow(ConfigFlow, domain=DOMAIN):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Pick the task list and a starting point for frost dates."""
-        await self.async_set_unique_id(DOMAIN)
-        self._abort_if_unique_id_configured()
         if user_input is not None:
             self._data = {
                 CONF_TODO_ENTITY: user_input[CONF_TODO_ENTITY],
@@ -415,6 +412,7 @@ class ReapOptionsFlow(OptionsFlow):
         crop = manager.crop(self._crop)
         profile = manager.settings.profile
         errors: dict[str, str] = {}
+        problem = ""
         if user_input is not None:
             fields = {"crop": crop.key}
             for key in PLANTING_KEYS:
@@ -429,8 +427,9 @@ class ReapOptionsFlow(OptionsFlow):
             self._save_defaults = bool(user_input.get("save_defaults"))
             try:
                 manager.preview(fields)
-            except PlannerError:
-                errors["base"] = "cannot_schedule"
+            except PlannerError as err:
+                errors["base"] = "crop_error"
+                problem = str(err)
             else:
                 self._planting = fields
                 return await self.async_step_planting_confirm()
@@ -457,7 +456,11 @@ class ReapOptionsFlow(OptionsFlow):
             )
         fields.update(
             {
-                vol.Required("year", default=default_year()): _box(2024, 2100),
+                vol.Required("year", default=manager.pick_year({
+                    "crop": crop.key,
+                    "method": defaults.get("method", methods[0]),
+                    "season": seasons[0] if len(seasons) > 1 else None,
+                })): _box(2000, 2100),
                 vol.Optional("start_date"): selector.DateSelector(),
                 vol.Optional("succession_days", default=0): _box(0, 365, "days"),
                 vol.Optional("succession_count"): _box(1, 200),
@@ -483,7 +486,7 @@ class ReapOptionsFlow(OptionsFlow):
             step_id="planting_details",
             data_schema=schema,
             errors=errors,
-            description_placeholders={"crop": crop.name},
+            description_placeholders={"crop": crop.name, "error": problem},
         )
 
     async def async_step_planting_confirm(

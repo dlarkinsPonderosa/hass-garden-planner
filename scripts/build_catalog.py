@@ -2,15 +2,16 @@
 
 The windows below are calendar dates read off published regional
 planting charts (to roughly half-month accuracy). The crop list and the
-"cool_spring" profile come from the South Coastal BC charts; "continental"
-averages South Central BC and the South Central Prairies; "atlantic" is the
-Maritimes chart. A crop missing from a regional chart is estimated from its
-coastal timing, shifted by the typical difference for crops that are on both. The chart is drawn for
+"cool_spring" profile come from a mild maritime chart; "continental"
+averages two short-season inland charts; "atlantic" is a cool, late-spring
+chart. A crop missing from a regional chart is estimated from its
+cool-spring timing, shifted by the typical difference for crops that are on both. The main chart is drawn for
 an April 1 last frost and a November 16 first frost, so each date is stored as
 days from the last frost (L) for dates before July, or from the first frost (F)
 after that. That lets the planner work anywhere from its frost dates.
 
 Run: python scripts/build_catalog.py
+Check only (exit 1 if crops.json is out of date): python scripts/build_catalog.py --check
 """
 import json
 import re
@@ -99,7 +100,7 @@ crop("turnip","Turnip",[(S,{"direct":("03-01","08-31")})],dth=50,harvest_weeks=4
 A = "added"
 crop("potato","Potato",[(S,{"direct":("03-15","06-15")})],dth=100,harvest_weeks=6,source=A,notes="Plant seed potatoes. Early varieties about 70 days, main crop about 110.")
 crop("tomatillo","Tomatillo",[(S,{"indoor":("03-15","04-15"),"transplant":("05-15","06-15")})],weeks_indoor=7,dth=120,harvest_weeks=8,tender=True,pot_up=True,source=A)
-# Herbs, from the South Coastal BC Flower & Herb Planting Guide.
+# Herbs, from the same chart's flower and herb guide.
 H = "pdf_herbs"
 crop("basil","Basil",[(S,{"indoor":("04-15","05-20"),"transplant":("06-01","06-30")})],weeks_indoor=6,dth=85,harvest_weeks=10,tender=True,source=H)
 crop("bergamot","Bergamot",[(S,{"indoor":("02-15","03-20"),"direct":("03-20","04-15"),"transplant":("05-01","05-15")}),(F,{"direct":("10-01","10-31")})],weeks_indoor=10,dth=120,harvest_weeks=8,perennial=True,source=H)
@@ -131,7 +132,7 @@ crop("thyme","Thyme",[(S,{"indoor":("02-01","04-15"),"transplant":("04-20","05-2
 # ---------------------------------------------------------------------------
 I, D, T, V = "indoor", "direct", "transplant", "cover"
 
-SOUTH_CENTRAL_BC = {  # Kamloops, Vernon, Kelowna, Nelson: about May 1 - Oct 6
+CONTINENTAL_A = {  # inland valleys: about May 1 - Oct 6
     "frost": ("05-01", "10-06"),
     "amaranth": [(S, {D: ("06-01", "06-30")})],
     "artichoke": [(S, {I: ("03-01", "03-25"), T: ("05-25", "06-10")})],
@@ -184,7 +185,7 @@ SOUTH_CENTRAL_BC = {  # Kamloops, Vernon, Kelowna, Nelson: about May 1 - Oct 6
     "turnip": [(S, {D: ("05-10", "08-25")})],
 }
 
-PRAIRIES = {  # Edmonton, Saskatoon and area: about May 21 - Sep 11
+CONTINENTAL_B = {  # northern plains: about May 21 - Sep 11
     "frost": ("05-21", "09-11"),
     "amaranth": [(S, {D: ("06-01", "06-30")})],
     "artichoke": [(S, {I: ("02-25", "03-31"), T: ("05-20", "06-05")})],
@@ -233,7 +234,7 @@ PRAIRIES = {  # Edmonton, Saskatoon and area: about May 21 - Sep 11
     "turnip": [(S, {D: ("04-20", "08-01")})],
 }
 
-MARITIMES = {  # Halifax, Fredericton, Charlottetown and area: about May 16 - Oct 17
+ATLANTIC = {  # cool coast with a late spring: about May 16 - Oct 17
     "frost": ("05-16", "10-17"),
     "amaranth": [(S, {D: ("06-01", "06-30")})],
     "artichoke": [(S, {I: ("03-20", "03-31"), T: ("06-01", "06-15")})],
@@ -320,7 +321,9 @@ def average(*sets):
             pair = []
             for i in (0, 1):
                 anchors = [e[i][0] for e in all_ends]
-                anchor = max(set(anchors), key=anchors.count)
+                # Most common anchor; on a tie, the last frost (L), so the
+                # result doesn't depend on set order.
+                anchor = max(sorted(set(anchors)), key=lambda a: (anchors.count(a), a == "L"))
                 days = [e[i][1] for e in all_ends if e[i][0] == anchor]
                 pair.append((anchor, round(sum(days) / len(days))))
             if pair[0] == pair[1] or (pair[0][0] == pair[1][0] and pair[1][1] < pair[0][1]):
@@ -329,7 +332,7 @@ def average(*sets):
     return out
 
 
-def coastal_windows(crop_dict):
+def cool_spring_windows(crop_dict):
     out = {}
     for w in crop_dict["windows"]:
         out[w["season"]] = {k: [(v[0][0], int(v[0][1:])), (v[1][0], int(v[1][1:]))]
@@ -338,21 +341,21 @@ def coastal_windows(crop_dict):
 
 
 def fit_shift(profile_sets, tender):
-    """Median change from the coastal timing for crops that appear in both,
+    """Median change from the cool-spring timing for crops that appear in both,
     used to estimate crops (herbs, potato, tomatillo) a regional chart lacks."""
     deltas = {"L": [], "F": []}
     for c in C:
         if c["frost_tender"] != tender or c["key"] not in profile_sets:
             continue
-        coast = coastal_windows(c)
+        base = cool_spring_windows(c)
         for season, kinds in profile_sets[c["key"]].items():
             for kind, ends in kinds.items():
                 # Only sowing and planting-out dates drive the schedule.
                 if kind not in ("direct", "transplant"):
                     continue
-                if season in coast and kind in coast[season]:
+                if season in base and kind in base[season]:
                     for i in (0, 1):
-                        a, b = coast[season][kind][i], ends[i]
+                        a, b = base[season][kind][i], ends[i]
                         if a[0] == b[0]:
                             deltas[a[0]].append(b[1] - a[1])
     med = {}
@@ -375,8 +378,8 @@ def to_json(windows):
 
 
 PROFILES = {
-    "continental": [SOUTH_CENTRAL_BC, PRAIRIES],
-    "atlantic": [MARITIMES],
+    "continental": [CONTINENTAL_A, CONTINENTAL_B],
+    "atlantic": [ATLANTIC],
 }
 for profile, charts in PROFILES.items():
     sets = {}
@@ -389,12 +392,12 @@ for profile, charts in PROFILES.items():
         c.setdefault("profiles", {})
         if c["key"] in sets:
             windows = sets[c["key"]]
-            # Keep coastal-only seasons out: a region's chart is the authority.
+            # Keep cool-spring-only seasons out: a region's chart is the authority.
             c["profiles"][profile] = to_json(windows)
         else:
-            c["profiles"][profile] = to_json(shifted(coastal_windows(c), shifts[c["frost_tender"]]))
+            c["profiles"][profile] = to_json(shifted(cool_spring_windows(c), shifts[c["frost_tender"]]))
             c.setdefault("estimated_profiles", []).append(profile)
-    print(profile, "estimated shift from coastal:", shifts)
+    print(profile, "estimated shift from cool_spring:", shifts)
 
 # ---------------------------------------------------------------------------
 # Icons (Material Design Icons).
@@ -435,7 +438,7 @@ for c in C:
 # ---------------------------------------------------------------------------
 # Crops sown in summer or fall that overwinter: harvest starts this many days
 # after the next spring's warm last frost (04-01 on the cool-spring chart), whatever the
-# planting date. Coastal timings: fava mid-May, cabbage April, onion and
+# planting date. Cool-spring timings: fava mid-May, cabbage April, onion and
 # garlic June to July.
 OVERWINTER_HARVEST = {
     "bean_broad": 45,
@@ -474,6 +477,8 @@ for c in C:
 for c in C:
     c["category"] = "herb" if c["source"] == "pdf_herbs" else "vegetable"
     c["source"] = "builtin"
+    # Grown from cloves or tubers: tasks say "Plant", not "Sow".
+    c["planted"] = c["key"] in ("garlic", "potato")
 
 out = {
     "source": "Built-in catalog: regional planting charts for cool-spring, continental and Atlantic climates, plus added crops",
@@ -485,21 +490,21 @@ out = {
     },
     "crops": C,
 }
-OUT.write_text(json.dumps(out, indent=1) + "\n", encoding="utf-8")
-print(f"{len(C)} crops written to {OUT}")
+CHECK = "--check" in sys.argv
+stale = []
 
-# Keep the crop dropdown in services.yaml in step with the catalog.
-SERVICES = OUT.parent.parent / "services.yaml"
-options = "\n".join(
-    f'              - label: "{c["name"]}"\n                value: "{c["key"]}"'
-    for c in sorted(C, key=lambda c: c["name"])
-)
-text = SERVICES.read_text(encoding="utf-8")
-# Replace the option list under every crop dropdown.
-pattern = re.compile(
-    r"(    crop:\n(?:      required: true\n)?      selector:\n        select:\n"
-    r"          custom_value: true\n          options:\n)(?:              .*\n)+"
-)
-text, count = pattern.subn(lambda m: m.group(1) + options + "\n", text)
-SERVICES.write_text(text, encoding="utf-8")
-print(f"Crop options updated in {count} places in {SERVICES}")
+
+def write(path, text):
+    if path.read_text(encoding="utf-8") == text:
+        return
+    if CHECK:
+        stale.append(path.name)
+    else:
+        path.write_text(text, encoding="utf-8")
+
+
+write(OUT, json.dumps(out, indent=1) + "\n")
+print(f"{len(C)} crops built for {OUT}")
+
+if stale:
+    sys.exit(f"Out of date: {', '.join(stale)}. Run python scripts/build_catalog.py")

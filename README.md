@@ -79,6 +79,12 @@ Some crops have no published timing for every profile. Those are estimated
 from the cool-spring timing, shifted by the typical difference for crops that
 have both (`estimated_profiles` in `crops.json`).
 
+**Southern hemisphere:** enter your frost dates as usual (for example a last
+frost of 09-15 and a first frost of 05-01). When the first frost falls earlier
+in the calendar than the last frost, Reap treats the season as running across
+the new year: a planting's year is the year its spring falls in, and its fall
+tasks land in the next calendar year.
+
 All of these can be changed later under **Configure**.
 
 ## Dashboard card
@@ -176,7 +182,7 @@ data:
 | --- | --- |
 | `crop` | Catalog key, such as `tomato`, `pepper`, `garlic` |
 | `method` | `indoor_bed`, `indoor_greenhouse`, `direct_bed`, `direct_greenhouse`. Defaults to the crop's default method |
-| `year` | Defaults to this year, or next year from September on |
+| `year` | Defaults to the next season the crop can still be sown in: this year if its window hasn't ended, otherwise next year |
 | `season` | For crops with more than one window, such as `fall` for garlic or broad beans |
 | `start_date` | Transplant date (indoor methods) or first sowing date (direct). Defaults to the start of the crop's window |
 | `succession_days`, `succession_count`, `succession_until` | Repeat sowings |
@@ -276,4 +282,10 @@ pytest
 
 The catalog is generated from the chart transcription in
 `scripts/build_catalog.py`: edit that file and run it to rebuild
-`data/crops.json`.
+`data/crops.json`. The tests check that the two match
+(`python scripts/build_catalog.py --check`), so edit the script rather than
+the JSON.
+
+Releases: bump `version` in `manifest.json` (it also busts the card's cache).
+When that reaches `main`, the Release workflow tags it (`v0.4.3`) and
+publishes a GitHub release, so HACS shows real version numbers.

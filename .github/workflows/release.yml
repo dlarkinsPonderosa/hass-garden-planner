@@ -1,0 +1,31 @@
+name: Release
+
+# Tags and publishes a GitHub release whenever the version in manifest.json
+# changes on main, so HACS can show and install real versions.
+on:
+  push:
+    branches: [main]
+    paths: [custom_components/reap/manifest.json]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read the version
+        id: version
+        run: echo "tag=v$(jq -r .version custom_components/reap/manifest.json)" >> "$GITHUB_OUTPUT"
+      - name: Publish the release if it's new
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "$TAG already released"
+          else
+            gh release create "$TAG" --target "$GITHUB_SHA" --title "Reap $TAG" --generate-notes
+          fi

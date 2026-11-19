@@ -17,6 +17,9 @@ from .manager import GardenManager
 from .planner import Task
 
 MAX_LISTED = 25
+# Open tasks listed per planting on the plantings sensor. Every task of every
+# planting would go to each open dashboard on every change.
+MAX_PLANTING_TASKS = 10
 
 
 async def async_setup_entry(
@@ -112,7 +115,6 @@ class DueThisWeekSensor(GardenSensor):
     """Open tasks due in the next 7 days, including overdue ones."""
 
     _attr_icon = "mdi:calendar-week"
-    _attr_native_unit_of_measurement = "tasks"
 
     def __init__(self, manager: GardenManager) -> None:
         super().__init__(manager, "due_this_week")
@@ -130,7 +132,6 @@ class OverdueSensor(GardenSensor):
     """Open tasks past their due date."""
 
     _attr_icon = "mdi:alert-circle-outline"
-    _attr_native_unit_of_measurement = "tasks"
 
     def __init__(self, manager: GardenManager) -> None:
         super().__init__(manager, "overdue")
@@ -145,10 +146,9 @@ class OverdueSensor(GardenSensor):
 
 
 class PlantingsSensor(GardenSensor):
-    """Every planting with its full schedule."""
+    """Every planting, with its next open tasks."""
 
     _attr_icon = "mdi:flower"
-    _attr_native_unit_of_measurement = "plantings"
     _unrecorded_attributes = frozenset({"plantings", "locations"})
 
     def __init__(self, manager: GardenManager) -> None:
@@ -160,12 +160,16 @@ class PlantingsSensor(GardenSensor):
         for planting in self.manager.plantings():
             crop = crops.get(planting.crop)
             tasks = [t for t in self.manager.tasks if t.planting_id == planting.id]
+            open_tasks = [t for t in tasks if not t.done_on]
             plantings.append(
                 {
                     **planting.to_dict(),
                     "crop_name": crop.name if crop else planting.crop,
                     "icon": crop.icon if crop else "mdi:sprout",
-                    "tasks": [t.to_dict() for t in tasks],
+                    "sowings": len({t.succession for t in tasks}),
+                    "task_count": len(tasks),
+                    "open_count": len(open_tasks),
+                    "tasks": [t.to_dict() for t in open_tasks[:MAX_PLANTING_TASKS]],
                 }
             )
         self._attr_native_value = len(plantings)

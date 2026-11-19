@@ -51,6 +51,9 @@ from .planner import (
     load_catalog,
     mmdd_to_offset,
     offset_to_mmdd,
+    parse_offset,
+    range_to_offsets,
+    sowing_dates,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -72,6 +75,12 @@ def _empty_data() -> dict[str, Any]:
         "actuals": {},
         # task uid -> to-do item uid on the target list
         "pushed": {},
+        # the list "pushed" refers to
+        "pushed_entity": None,
+        # tasks added to the list whose item couldn't be found afterwards
+        "unmatched": [],
+        # pushed tasks whose item was missing on the last sync
+        "missing": [],
         # task uids the user deleted from the list; never re-added
         "dismissed": [],
         # items of the planner's own list, when it uses one
@@ -104,6 +113,7 @@ class GardenManager:
         self._unsubs: list[Callable[[], None]] = []
         self._syncing = False
         self._resync = False
+        self._crops: dict[str, Crop] | None = None
 
     # ----- config -----
 
@@ -195,12 +205,14 @@ class GardenManager:
     @property
     def crops(self) -> dict[str, Crop]:
         """Every crop on the list: built-in ones (with your edits) and your own."""
-        hidden = set(self.data["hidden_crops"])
-        crops = {k: c for k, c in self.builtin_crops.items() if k not in hidden}
-        for key, raw in self.data["custom_crops"].items():
-            if key not in hidden:
-                crops[key] = Crop.from_dict(raw)
-        return crops
+        if self._crops is None:
+            hidden = set(self.data["hidden_crops"])
+            crops = {k: c for k, c in self.builtin_crops.items() if k not in hidden}
+            for key, raw in self.data["custom_crops"].items():
+                if key not in hidden:
+                    crops[key] = Crop.from_dict(raw)
+            self._crops = crops
+        return self._crops
 
     def hidden_crops(self) -> list[Crop]:
         """Built-in crops removed from the list, which can be restored."""
@@ -359,7 +371,27 @@ class GardenManager:
     def _with_method(self, fields: dict[str, Any]) -> dict[str, Any]:
         if not fields.get("method"):
             fields = {**fields, "method": self.crop_defaults(fields["crop"]).get("method")}
+        if not fields.get("year"):
+            fields = {**fields, "year": self.pick_year(fields)}
         return fields
+
+    def pick_year(self, fields: dict[str, Any], today: date | None = None) -> int:
+        """The first year whose window for this planting hasn't ended yet."""
+        today = today or dt_util.now().date()
+        if start := fields.get("start_date"):
+            return date.fromisoformat(str(start)).year
+        try:
+            crop = self.crop(fields["crop"])
+            for year in (today.year - 1, today.year, today.year + 1):
+                planting = Planting(
+                    id="year", crop=crop.key, method=fields["method"], year=year,
+                    season=fields.get("season"),
+                )
+                if sowing_dates(planting, crop, self.settings).window_end >= today:
+                    return year
+        except (KeyError, PlannerError):
+            pass
+        return default_year(today)
 
     def preview(self, fields: dict[str, Any]) -> tuple[Planting, list[Task]]:
         fields = self._with_method(fields)
@@ -456,14 +488,35 @@ class GardenManager:
                     converted["cover"] = old_cover[converted["season"]]
                 for key in ("indoor", "direct", "transplant", "cover"):
                     if window.get(key):
-                        converted[key] = [
-                            value if OFFSET_RE.match(value) else mmdd_to_offset(
-                                _mmdd(value), last_frost, settings.first_frost
-                            )
-                            for value in window[key]
-                        ]
+                        start, end = window[key]
+                        if OFFSET_RE.match(start) or OFFSET_RE.match(end):
+                            converted[key] = [
+                                v if OFFSET_RE.match(v) else mmdd_to_offset(
+                                    _mmdd(v), last_frost, settings.first_frost
+                                )
+                                for v in (start, end)
+                            ]
+                        else:
+                            converted[key] = list(range_to_offsets(
+                                _mmdd(start), _mmdd(end), last_frost, settings.first_frost
+                            ))
                 windows.append(converted)
             merged["windows"] = windows
+        elif bool(merged.get("frost_tender")) != bool(base.get("frost_tender")):
+            # Frost-tender crops count from the warm-crop frost date. Keep the
+            # calendar dates the same when only that box changes.
+            settings = self.settings
+            if settings.warm_last_frost:
+                gap = (
+                    date.fromisoformat(f"2001-{settings.warm_last_frost}")
+                    - date.fromisoformat(f"2001-{settings.last_frost}")
+                ).days
+                shift = -gap if merged.get("frost_tender") else gap
+                merged["windows"] = _shift_l(merged.get("windows") or [], shift)
+                merged["profiles"] = {
+                    name: _shift_l(ws, shift)
+                    for name, ws in (merged.get("profiles") or {}).items()
+                }
         if not any(
             w.get("indoor") or w.get("direct") or w.get("transplant")
             for w in merged.get("windows") or []
@@ -474,6 +527,18 @@ class GardenManager:
             raise PlannerError(
                 "Give a direct sowing range, or both an indoor start and a transplant range"
             )
+        # Plantings of this crop must still fit its new dates.
+        for planting in self.plantings():
+            if planting.crop != crop.key:
+                continue
+            try:
+                generate_tasks(planting, crop, self.settings)
+            except PlannerError as err:
+                where = f" ({planting.season})" if planting.season else ""
+                raise PlannerError(
+                    f"A {planting.year}{where} planting of {crop.name} can't be "
+                    f"scheduled with these dates: {err}"
+                ) from err
         await self.async_add_crop(crop)
         return crop
 
@@ -486,6 +551,7 @@ class GardenManager:
             "icon": crop.icon,
             "category": crop.category,
             "frost_tender": crop.frost_tender,
+            "planted": crop.planted,
             "perennial": crop.perennial,
             "source": crop.source,
             "custom": crop.key not in self.builtin_crops,
@@ -553,6 +619,7 @@ class GardenManager:
 
     def rebuild(self) -> None:
         """Regenerate every task from the plantings and recorded actual dates."""
+        self._crops = None  # crops may have changed
         tasks: list[Task] = []
         settings = self.settings
         for planting in self.plantings():
@@ -635,17 +702,32 @@ class GardenManager:
         except HomeAssistantError as err:
             _LOGGER.warning("Could not read %s: %s", entity_id, err)
             return
+        changed = False
+        if self.data.get("pushed_entity") != entity_id:
+            if self.data.get("pushed_entity") and self.data["pushed"]:
+                await self._async_leave_list(self.data["pushed_entity"])
+            self.data["pushed_entity"] = entity_id
+            self.data["unmatched"] = []
+            self.data["missing"] = []
+            changed = True
         by_uid = {item.get("uid"): item for item in items if item.get("uid")}
         pushed: dict[str, str] = self.data["pushed"]
         actuals: dict[str, str] = self.data["actuals"]
         dismissed: set[str] = set(self.data["dismissed"])
+        unmatched: set[str] = set(self.data["unmatched"])
+        was_missing: set[str] = set(self.data["missing"])
+        missing: set[str] = set()
         today = dt_util.now().date()
-        changed = False
 
         # 1. Read back what happened on the list.
         for task_uid, item_uid in list(pushed.items()):
             item = by_uid.get(item_uid)
             if item is None:
+                if task_uid not in was_missing:
+                    # Missing once could be a list that hasn't loaded yet.
+                    # Wait for the next sync before treating it as deleted.
+                    missing.add(task_uid)
+                    continue
                 # Deleted from the list by hand: don't add it again.
                 del pushed[task_uid]
                 if task_uid not in actuals:
@@ -660,12 +742,18 @@ class GardenManager:
                 del actuals[task_uid]
                 changed = True
 
+        if sorted(missing) != self.data["missing"]:
+            self.data["missing"] = sorted(missing)
+            changed = True
         if changed:
             self.data["dismissed"] = sorted(dismissed)
             self.rebuild()
 
         # 2. Remove open items whose planting is gone.
         current = {t.uid for t in self.tasks}
+        if unmatched - current:
+            unmatched &= current
+            changed = True
         stale = [uid for uid in pushed if uid not in current]
         for task_uid in stale:
             item_uid = pushed.pop(task_uid)
@@ -683,7 +771,10 @@ class GardenManager:
         horizon = today + timedelta(days=self.lookahead_days)
         added: list[Task] = []
         for task in self.open_tasks():
-            summary = task.summary if has_due else f"{task.summary} ({task.due:%b %-d})"
+            if task.uid in unmatched or task.uid in missing:
+                continue  # added before, but not on the list now; don't add again
+            summary = _item_summary(task, has_due)
+            description = _item_description(task)
             item_uid = pushed.get(task.uid)
             if item_uid:
                 item = by_uid.get(item_uid, {})
@@ -692,6 +783,8 @@ class GardenManager:
                     update["rename"] = summary
                 if has_due and item.get("due") != task.due.isoformat():
                     update["due_date"] = task.due
+                if has_desc and (item.get("description") or "").strip() != description.strip():
+                    update["description"] = description
                 if update:
                     try:
                         await self._async_call(
@@ -707,8 +800,7 @@ class GardenManager:
             if has_due:
                 data["due_date"] = task.due
             if has_desc:
-                desc = f"{task.description}\n\n" if task.description else ""
-                data["description"] = f"{desc}{MARKER_PREFIX}{task.uid}"
+                data["description"] = description
             try:
                 await self._async_call("add_item", data)
             except HomeAssistantError as err:
@@ -718,21 +810,94 @@ class GardenManager:
 
         # 4. Learn the uids of the items just added.
         if added:
-            items = await self._async_get_items(entity_id)
+            try:
+                items = await self._async_get_items(entity_id)
+            except HomeAssistantError as err:
+                _LOGGER.warning("Could not read %s: %s", entity_id, err)
+                items = []
             claimed = set(pushed.values())
             for task in added:
-                summary = (
-                    task.summary if has_due else f"{task.summary} ({task.due:%b %-d})"
+                match = _find_new_item(
+                    items, task.uid, _item_summary(task, has_due), claimed
                 )
-                match = _find_new_item(items, task.uid, summary, claimed)
                 if match:
                     pushed[task.uid] = match
                     claimed.add(match)
+                else:
+                    _LOGGER.warning(
+                        "Added %r to %s but couldn't find it again; "
+                        "it won't be added a second time",
+                        task.summary, entity_id,
+                    )
+                    unmatched.add(task.uid)
             changed = True
 
+        if sorted(unmatched) != self.data["unmatched"]:
+            self.data["unmatched"] = sorted(unmatched)
+            changed = True
         if changed:
             await self._async_save()
         self._notify()
+
+
+    async def _async_leave_list(self, old_entity_id: str) -> None:
+        """The target list changed: take open items off the old list.
+
+        Done items stay where they are. The tasks themselves aren't dismissed,
+        so they are added to the new list on this sync.
+        """
+        pushed: dict[str, str] = self.data["pushed"]
+        if self.hass.states.get(old_entity_id) is not None:
+            try:
+                items = await self._async_get_items(old_entity_id)
+            except HomeAssistantError as err:
+                _LOGGER.warning("Could not read %s: %s", old_entity_id, err)
+                items = []
+            mine = set(pushed.values())
+            open_uids = [
+                item["uid"] for item in items
+                if item.get("uid") in mine and item.get("status") != "completed"
+            ]
+            if open_uids:
+                try:
+                    await self._async_call(
+                        "remove_item", {"entity_id": old_entity_id, "item": open_uids}
+                    )
+                except HomeAssistantError as err:
+                    _LOGGER.warning("Could not tidy %s: %s", old_entity_id, err)
+        else:
+            # Reap's own list isn't loaded once another list is chosen.
+            mine = set(pushed.values())
+            self.data["own_items"] = [
+                raw for raw in self.data["own_items"]
+                if raw.get("uid") not in mine or raw.get("status") == "completed"
+            ]
+        pushed.clear()
+
+
+def _item_summary(task: Task, has_due: bool) -> str:
+    return task.summary if has_due else f"{task.summary} ({task.due:%b %-d})"
+
+
+def _item_description(task: Task) -> str:
+    desc = f"{task.description}\n\n" if task.description else ""
+    return f"{desc}{MARKER_PREFIX}{task.uid}"
+
+
+def _shift_l(windows: list[dict[str, Any]], shift: int) -> list[dict[str, Any]]:
+    """Windows with every last-frost (L) offset moved by shift days."""
+    out = []
+    for window in windows:
+        moved = dict(window)
+        for key in ("indoor", "direct", "transplant", "cover"):
+            if window.get(key):
+                moved[key] = [
+                    f"L{days + shift:+d}" if anchor == "L" else value
+                    for value in window[key]
+                    for anchor, days in [parse_offset(value)]
+                ]
+        out.append(moved)
+    return out
 
 
 def _find_new_item(
