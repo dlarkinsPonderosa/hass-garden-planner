@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 import voluptuous as vol
 
+from homeassistant.components.frontend import add_extra_js_url
+from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import (
@@ -17,6 +20,7 @@ from homeassistant.core import (
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
+from homeassistant.loader import async_get_integration
 
 from .const import DOMAIN
 from .manager import GardenManager, default_year
@@ -28,7 +32,7 @@ CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 PLANTING_FIELDS = {
     vol.Required("crop"): cv.string,
-    vol.Required("method"): vol.In(METHODS),
+    vol.Optional("method"): vol.In(METHODS),
     vol.Optional("year"): vol.All(vol.Coerce(int), vol.Range(min=2000, max=2100)),
     vol.Optional("season"): cv.string,
     vol.Optional("start_date"): cv.date,
@@ -39,6 +43,27 @@ PLANTING_FIELDS = {
     vol.Optional("quantity"): cv.string,
     vol.Optional("location"): cv.string,
     vol.Optional("notes"): cv.string,
+}
+
+def _clearable(validator: Any) -> Any:
+    """Accept a value, or an empty string / None to clear it."""
+    return vol.Any(None, vol.All(str, vol.Length(max=0)), validator)
+
+
+UPDATE_FIELDS = {
+    vol.Required("planting_id"): cv.string,
+    vol.Optional("crop"): cv.string,
+    vol.Optional("method"): vol.In(METHODS),
+    vol.Optional("year"): vol.All(vol.Coerce(int), vol.Range(min=2000, max=2100)),
+    vol.Optional("season"): _clearable(cv.string),
+    vol.Optional("start_date"): _clearable(cv.date),
+    vol.Optional("succession_days"): _clearable(vol.All(vol.Coerce(int), vol.Range(min=0, max=365))),
+    vol.Optional("succession_count"): _clearable(vol.All(vol.Coerce(int), vol.Range(min=1, max=200))),
+    vol.Optional("succession_until"): _clearable(cv.date),
+    vol.Optional("variety"): _clearable(cv.string),
+    vol.Optional("quantity"): _clearable(cv.string),
+    vol.Optional("location"): _clearable(cv.string),
+    vol.Optional("notes"): _clearable(cv.string),
 }
 
 RANGE = vol.All(
@@ -91,8 +116,24 @@ def _planting_fields(call: ServiceCall) -> dict[str, Any]:
     return fields
 
 
+CARD_URL = "/garden_planner/garden-planner-card.js"
+CARD_PATH = Path(__file__).parent / "frontend" / "garden-planner-card.js"
+
+
+async def _async_register_card(hass: HomeAssistant) -> None:
+    """Serve the dashboard card and load it on every dashboard."""
+    if hass.http is None or "frontend" not in hass.config.components:
+        return  # no web UI, such as some test setups
+    version = (await async_get_integration(hass, DOMAIN)).version
+    await hass.http.async_register_static_paths(
+        [StaticPathConfig(CARD_URL, str(CARD_PATH), cache_headers=False)]
+    )
+    add_extra_js_url(hass, f"{CARD_URL}?v={version}")
+
+
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Register the services."""
+    """Register the services and the dashboard card."""
+    await _async_register_card(hass)
 
     async def add_planting(call: ServiceCall) -> ServiceResponse:
         manager = _manager(hass)
@@ -109,6 +150,19 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         except PlannerError as err:
             raise ServiceValidationError(str(err)) from err
         return {"tasks": [t.to_dict() for t in tasks]}
+
+    async def update_planting(call: ServiceCall) -> ServiceResponse:
+        manager = _manager(hass)
+        changes = dict(call.data)
+        planting_id = changes.pop("planting_id")
+        for key in ("start_date", "succession_until"):
+            if changes.get(key) not in (None, ""):
+                changes[key] = changes[key].isoformat()
+        try:
+            planting, tasks = await manager.async_update_planting(planting_id, changes)
+        except PlannerError as err:
+            raise ServiceValidationError(str(err)) from err
+        return {"planting_id": planting.id, "tasks": [t.to_dict() for t in tasks]}
 
     async def remove_planting(call: ServiceCall) -> None:
         try:
@@ -163,10 +217,33 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         manager = _manager(hass)
         return {
             "crops": [
-                {**crop.to_dict(), "methods": crop.methods(manager.settings.profile)}
+                {
+                    "key": crop.key,
+                    "name": crop.name,
+                    "icon": crop.icon,
+                    "frost_tender": crop.frost_tender,
+                    "perennial": crop.perennial,
+                    "source": crop.source,
+                    "notes": crop.notes,
+                    "methods": crop.methods(manager.settings.profile),
+                    "seasons": sorted(
+                        {w.season for w in crop.windows_for(manager.settings.profile)}
+                    ),
+                    "defaults": manager.crop_defaults(crop.key),
+                }
                 for crop in sorted(manager.crops.values(), key=lambda c: c.name)
             ]
         }
+
+    async def set_crop_defaults(call: ServiceCall) -> None:
+        manager = _manager(hass)
+        data = dict(call.data)
+        key = data.pop("crop")
+        clear = data.pop("clear", False)
+        try:
+            await manager.async_set_crop_defaults(key, None if clear else data)
+        except PlannerError as err:
+            raise ServiceValidationError(str(err)) from err
 
     async def sync(call: ServiceCall) -> None:
         await _manager(hass).async_sync()
@@ -178,6 +255,10 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.services.async_register(
         DOMAIN, "preview_planting", preview_planting, vol.Schema(PLANTING_FIELDS),
         supports_response=SupportsResponse.ONLY,
+    )
+    hass.services.async_register(
+        DOMAIN, "update_planting", update_planting, vol.Schema(UPDATE_FIELDS),
+        supports_response=SupportsResponse.OPTIONAL,
     )
     hass.services.async_register(
         DOMAIN, "remove_planting", remove_planting,
@@ -193,6 +274,20 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.services.async_register(
         DOMAIN, "list_crops", list_crops, vol.Schema({}),
         supports_response=SupportsResponse.ONLY,
+    )
+    hass.services.async_register(
+        DOMAIN, "set_crop_defaults", set_crop_defaults,
+        vol.Schema(
+            {
+                vol.Required("crop"): cv.string,
+                vol.Optional("method"): vol.In(METHODS),
+                vol.Optional("succession_days"): vol.All(vol.Coerce(int), vol.Range(min=0, max=365)),
+                vol.Optional("succession_count"): vol.All(vol.Coerce(int), vol.Range(min=1, max=200)),
+                vol.Optional("quantity"): cv.string,
+                vol.Optional("location"): cv.string,
+                vol.Optional("clear", default=False): cv.boolean,
+            }
+        ),
     )
     hass.services.async_register(DOMAIN, "sync", sync, vol.Schema({}))
     return True

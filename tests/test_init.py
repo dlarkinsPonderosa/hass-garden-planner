@@ -217,6 +217,11 @@ async def test_existing_list(hass: HomeAssistant, tmp_path) -> None:
 async def test_options_flow(hass: HomeAssistant) -> None:
     entry = await _setup(hass)
     result = await hass.config_entries.options.async_init(entry.entry_id)
+    assert result["type"] == "menu"
+    assert result["menu_options"] == ["add_planting", "settings"]
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"next_step_id": "settings"}
+    )
     assert result["type"] == "form"
     result = await hass.config_entries.options.async_configure(
         result["flow_id"], {**DEFAULTS, "greenhouse_spring_weeks": 6}
@@ -248,3 +253,133 @@ async def test_add_crop_with_calendar_dates(hass: HomeAssistant) -> None:
     tomato_variety = {"key": "tomato_sungold", "name": "Tomato, Sungold", "based_on": "tomato", "days_to_harvest": 105}
     await hass.services.async_call(DOMAIN, "add_crop", tomato_variety, blocking=True)
     assert entry.runtime_data.crop("tomato_sungold").windows == entry.runtime_data.crop("tomato").windows
+
+
+@pytest.mark.freeze_time("2027-02-20 12:00:00")
+async def test_add_and_remove_planting_from_configure(hass: HomeAssistant) -> None:
+    entry = await _setup(hass)
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"next_step_id": "add_planting"}
+    )
+    assert result["step_id"] == "add_planting"
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"crop": "carrot"}
+    )
+    assert result["step_id"] == "planting_details"
+    # Carrots can only be direct sown.
+    methods = [o["value"] for o in result["data_schema"].schema["method"].config["options"]]
+    assert methods == ["direct_bed", "direct_greenhouse"]
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {"method": "direct_bed", "year": 2027, "succession_days": 7,
+         "succession_count": 3, "location": "Bed 3"},
+    )
+    assert result["step_id"] == "planting_confirm"
+    assert "Sow Carrot in beds (sowing 1 of 3)" in result["description_placeholders"]["tasks"]
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {})
+    assert result["type"] == "create_entry"
+    await hass.async_block_till_done()
+    manager = entry.runtime_data
+    assert [p.crop for p in manager.plantings()] == ["carrot"]
+    assert manager.plantings()[0].location == "Bed 3"
+
+    # The integration wasn't reloaded, so the planting is still there.
+    assert entry.runtime_data is manager
+
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    assert "remove_planting" in flow["menu_options"]
+    result = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"next_step_id": "remove_planting"}
+    )
+    planting_id = manager.plantings()[0].id
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"plantings": [planting_id]}
+    )
+    assert result["type"] == "create_entry"
+    await hass.async_block_till_done()
+    assert manager.plantings() == []
+
+
+
+@pytest.mark.freeze_time("2027-02-20 12:00:00")
+async def test_update_planting(hass: HomeAssistant) -> None:
+    entry = await _setup(hass)
+    resp = await hass.services.async_call(
+        DOMAIN, "add_planting",
+        {"crop": "carrot", "method": "direct_bed", "year": 2027,
+         "succession_days": 7, "location": "Bed 3"},
+        blocking=True, return_response=True,
+    )
+    planting_id = resp["planting_id"]
+    resp = await hass.services.async_call(
+        DOMAIN, "update_planting",
+        {"planting_id": planting_id, "succession_days": 14, "succession_count": 2, "location": ""},
+        blocking=True, return_response=True,
+    )
+    planting = entry.runtime_data.plantings()[0]
+    assert planting.succession_days == 14
+    assert planting.succession_count == 2
+    assert planting.location is None
+    sows = [t for t in resp["tasks"] if t["kind"] == "sow"]
+    assert [t["due"] for t in sows] == ["2027-03-06", "2027-03-20"]
+
+
+async def test_crop_defaults(hass: HomeAssistant) -> None:
+    entry = await _setup(hass)
+    manager = entry.runtime_data
+    # Built-in: carrots are sown every 3 weeks, tomatoes started indoors.
+    assert manager.crop_defaults("carrot") == {"method": "direct_bed", "succession_days": 21}
+    assert manager.crop_defaults("tomato") == {"method": "indoor_bed"}
+
+    await hass.services.async_call(
+        DOMAIN, "set_crop_defaults",
+        {"crop": "tomato", "method": "indoor_greenhouse", "quantity": "6 cells"},
+        blocking=True,
+    )
+    assert manager.crop_defaults("tomato") == {"method": "indoor_greenhouse", "quantity": "6 cells"}
+    crops = await hass.services.async_call(
+        DOMAIN, "list_crops", {}, blocking=True, return_response=True
+    )
+    tomato = next(c for c in crops["crops"] if c["key"] == "tomato")
+    assert tomato["defaults"]["method"] == "indoor_greenhouse"
+    assert tomato["icon"] == "mdi:fruit-cherries"
+
+    # add_planting without a method uses the crop's default.
+    resp = await hass.services.async_call(
+        DOMAIN, "add_planting", {"crop": "tomato", "year": 2027},
+        blocking=True, return_response=True,
+    )
+    assert any("greenhouse" in t["summary"] for t in resp["tasks"])
+
+    await hass.services.async_call(
+        DOMAIN, "set_crop_defaults", {"crop": "tomato", "clear": True}, blocking=True
+    )
+    assert manager.crop_defaults("tomato") == {"method": "indoor_bed"}
+
+
+async def test_configure_prefills_crop_defaults(hass: HomeAssistant) -> None:
+    entry = await _setup(hass)
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"next_step_id": "add_planting"}
+    )
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"crop": "radish"}
+    )
+    schema = result["data_schema"].schema
+    suggested = {
+        str(k): (k.description or {}).get("suggested_value")
+        for k in schema
+    }
+    assert suggested["succession_days"] == 14
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {"method": "direct_bed", "year": 2027, "succession_days": 10,
+         "quantity": "1 row", "save_defaults": True},
+    )
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {})
+    assert result["type"] == "create_entry"
+    assert entry.runtime_data.crop_defaults("radish") == {
+        "method": "direct_bed", "succession_days": 10, "quantity": "1 row",
+    }

@@ -53,6 +53,11 @@ from .planner import (
 _LOGGER = logging.getLogger(__name__)
 
 
+CROP_DEFAULT_KEYS = (
+    "method", "succession_days", "succession_count", "quantity", "location",
+)
+
+
 def _empty_data() -> dict[str, Any]:
     return {
         "plantings": {},
@@ -65,6 +70,8 @@ def _empty_data() -> dict[str, Any]:
         "dismissed": [],
         # items of the planner's own list, when it uses one
         "own_items": [],
+        # crop key -> the user's planting defaults for that crop
+        "crop_defaults": {},
     }
 
 
@@ -183,10 +190,39 @@ class GardenManager:
         except KeyError as err:
             raise PlannerError(f"Unknown crop: {key}") from err
 
+    def crop_defaults(self, key: str) -> dict[str, Any]:
+        """Planting defaults for a crop: built-in, then the user's own."""
+        crop = self.crop(key)
+        merged = {**crop.defaults, **self.data["crop_defaults"].get(key, {})}
+        methods = crop.methods(self.settings.profile)
+        if merged.get("method") not in methods and methods:
+            merged["method"] = methods[0]
+        return {k: v for k, v in merged.items() if v not in (None, "")}
+
+    async def async_set_crop_defaults(
+        self, key: str, values: dict[str, Any] | None
+    ) -> None:
+        """Save the user's defaults for a crop, or clear them with None."""
+        self.crop(key)
+        if values is None:
+            self.data["crop_defaults"].pop(key, None)
+        else:
+            self.data["crop_defaults"][key] = {
+                k: v for k, v in values.items() if k in CROP_DEFAULT_KEYS
+            }
+        await self._async_save()
+        self._notify()
+
     def plantings(self) -> list[Planting]:
         return [Planting.from_dict(p) for p in self.data["plantings"].values()]
 
+    def _with_method(self, fields: dict[str, Any]) -> dict[str, Any]:
+        if not fields.get("method"):
+            fields = {**fields, "method": self.crop_defaults(fields["crop"]).get("method")}
+        return fields
+
     def preview(self, fields: dict[str, Any]) -> tuple[Planting, list[Task]]:
+        fields = self._with_method(fields)
         planting = Planting.from_dict({"id": "preview", **fields})
         tasks = generate_tasks(planting, self.crop(planting.crop), self.settings)
         return planting, tasks
@@ -195,8 +231,28 @@ class GardenManager:
         self, fields: dict[str, Any]
     ) -> tuple[Planting, list[Task]]:
         planting_id = uuid.uuid4().hex[:8]
+        fields = self._with_method(fields)
         planting = Planting.from_dict({**fields, "id": planting_id})
         # Validates the planting before it is saved.
+        generate_tasks(planting, self.crop(planting.crop), self.settings)
+        self.data["plantings"][planting_id] = planting.to_dict()
+        self.rebuild()
+        await self._async_save()
+        await self.async_sync()
+        return planting, [t for t in self.tasks if t.planting_id == planting_id]
+
+    async def async_update_planting(
+        self, planting_id: str, changes: dict[str, Any]
+    ) -> tuple[Planting, list[Task]]:
+        """Change a planting. Keys set to None or "" are cleared."""
+        if planting_id not in self.data["plantings"]:
+            raise PlannerError(f"Unknown planting: {planting_id}")
+        merged = dict(self.data["plantings"][planting_id])
+        for key, value in changes.items():
+            if key == "id":
+                continue
+            merged[key] = None if value == "" else value
+        planting = Planting.from_dict(merged)
         generate_tasks(planting, self.crop(planting.crop), self.settings)
         self.data["plantings"][planting_id] = planting.to_dict()
         self.rebuild()

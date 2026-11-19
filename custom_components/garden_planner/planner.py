@@ -150,6 +150,8 @@ class Crop:
     profiles: dict[str, list[Window]] = field(default_factory=dict)
     # Profiles whose windows were estimated rather than read off a chart.
     estimated_profiles: list[str] = field(default_factory=list)
+    # What a new planting starts with: method, succession_days, ...
+    defaults: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Crop:
@@ -163,6 +165,7 @@ class Crop:
                 for name, windows in (data.get("profiles") or {}).items()
             },
             estimated_profiles=list(data.get("estimated_profiles") or []),
+            defaults=dict(data.get("defaults") or {}),
             weeks_indoor=data.get("weeks_indoor"),
             days_to_harvest=int(data.get("days_to_harvest", 60)),
             harvest_weeks=int(data.get("harvest_weeks", 4)),

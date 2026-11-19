@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Calendar: left half -->
+  <path d="M256 92 H84 a44 44 0 0 0 -44 44 V428 a44 44 0 0 0 44 44 H256 Z" fill="#FFFFFF"/>
+  <path d="M256 92 H84 a44 44 0 0 0 -44 44 V188 H256 Z" fill="#2E7D32"/>
+  <path d="M256 92 H84 a44 44 0 0 0 -44 44 V428 a44 44 0 0 0 44 44 H256" fill="none" stroke="#2E7D32" stroke-width="20" stroke-linejoin="round"/>
+  <rect x="104" y="48" width="28" height="80" rx="14" fill="#2E7D32" stroke="#FFFFFF" stroke-width="8"/>
+  <rect x="190" y="48" width="28" height="80" rx="14" fill="#2E7D32" stroke="#FFFFFF" stroke-width="8"/>
+  <g fill="#2E7D32">
+    <rect x="80" y="226" width="56" height="48" rx="10"/>
+    <rect x="160" y="226" width="56" height="48" rx="10"/>
+    <rect x="80" y="300" width="56" height="48" rx="10"/>
+    <rect x="80" y="374" width="56" height="48" rx="10"/>
+  </g>
+  <rect x="160" y="300" width="56" height="48" rx="10" fill="#FFB300"/>
+  <!-- Plant: right half -->
+  <path d="M256 472 C 262 380, 270 300, 300 230" fill="none" stroke="#2E7D32" stroke-width="22" stroke-linecap="round"/>
+  <path d="M296 238 C 300 130, 380 60, 476 52 C 478 160, 410 236, 296 238 Z" fill="#2E7D32"/>
+  <path d="M300 232 C 350 180, 400 120, 452 76" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round"/>
+  <path d="M268 362 C 296 292, 372 276, 448 292 C 418 362, 340 392, 268 362 Z" fill="#2E7D32"/>
+  <path d="M272 356 C 320 334, 370 318, 420 306" fill="none" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round"/>
+  <path d="M236 472 C 280 440, 400 436, 472 472 Z" fill="#2E7D32"/>
+</svg>
