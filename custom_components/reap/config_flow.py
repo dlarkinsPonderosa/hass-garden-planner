@@ -334,7 +334,7 @@ class ReapOptionsFlow(OptionsFlow):
             else:
                 return self._done()
         crops = sorted(manager.crops.values(), key=lambda c: c.name)
-        date = selector.DateSelector()
+        date = selector.TextSelector(selector.TextSelectorConfig())
         fields: dict[Any, Any] = {
             vol.Required("name"): str,
             vol.Required("category", default="vegetable"): selector.SelectSelector(

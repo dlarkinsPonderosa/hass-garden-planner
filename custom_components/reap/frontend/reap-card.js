@@ -73,6 +73,7 @@ function moistureLevel(value) {
 }
 
 const LIGHT_DOMAINS = ["light.", "switch.", "input_boolean."];
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const CATEGORIES = [["vegetable", "Vegetable"], ["herb", "Herb"], ["fruit", "Fruit"], ["flower", "Flower"]];
 // Crop form date fields: [form key, window season, window kind, end of range?]
 const CROP_DATES = [
@@ -354,7 +355,6 @@ class ReapCard extends HTMLElement {
   _startCrop(crop) {
     this._mode = "crop";
     this._editing = crop ? crop.key : null;
-    const year = new Date().getFullYear();
     this._form = crop
       ? {
         name: crop.name, category: crop.category || "vegetable", icon: crop.icon || "",
@@ -369,8 +369,8 @@ class ReapCard extends HTMLElement {
         for (const kind of ["indoor", "transplant", "direct"]) {
           const key = `${season}_${kind}`;
           if (w[kind] && CROP_DATES.some(([k]) => k === key) && !this._form[`${key}_from`]) {
-            this._form[`${key}_from`] = `${year}-${w[kind][0]}`;
-            this._form[`${key}_to`] = `${year}-${w[kind][1]}`;
+            this._form[`${key}_from`] = w[kind][0];
+            this._form[`${key}_to`] = w[kind][1];
           }
         }
       }
@@ -401,7 +401,7 @@ class ReapCard extends HTMLElement {
     for (const [field, season, kind] of CROP_DATES) {
       const from = f[`${field}_from`], to = f[`${field}_to`];
       if (!from && !to) continue;
-      if (!from || !to) throw new Error("Give both a from and a to date for each range you use.");
+      if (!from || !to || from === "?" || to === "?") throw new Error("Give both a month and a day for the from and to date of each range you use.");
       windows[season] = windows[season] || { season };
       windows[season][kind] = [from, to];
     }
@@ -705,6 +705,28 @@ class ReapCard extends HTMLElement {
     return wrap;
   }
 
+  // A month and day picker; the value is "MM-DD" (no year, it repeats yearly).
+  _monthDay(key, label) {
+    const [mm, dd] = (this._form[key] || "").split("-");
+    const month = h("select", {}, h("option", { value: "" }, "--"),
+      MONTHS.map((name, i) => {
+        const v = String(i + 1).padStart(2, "0");
+        return h("option", { value: v, selected: v === mm }, name);
+      }));
+    const day = h("select", {}, h("option", { value: "" }, "--"),
+      Array.from({ length: 31 }, (_, i) => {
+        const v = String(i + 1).padStart(2, "0");
+        return h("option", { value: v, selected: v === dd }, String(i + 1));
+      }));
+    const update = () => {
+      this._form[key] = month.value && day.value ? `${month.value}-${day.value}` : (month.value || day.value ? "?" : "");
+      this._form._dates_changed = true;
+    };
+    month.addEventListener("change", () => { if (month.value && !day.value) day.value = "01"; update(); });
+    day.addEventListener("change", update);
+    return h("label", { class: "field" }, h("span", {}, label), h("div", { class: "md" }, month, day));
+  }
+
   _check(key, label) {
     return h("label", { class: "check" },
       h("input", { type: "checkbox", checked: !!this._form[key], onchange: (e) => { this._form[key] = e.target.checked; } }),
@@ -738,11 +760,11 @@ class ReapCard extends HTMLElement {
       ? "Dates are optional. Leave them empty to use the copied crop's timing."
       : this._editing
       ? "These are the dates for your garden. Change any of them, and the rest of the crop stays as it is."
-      : "Enter the dates you'd usually do each step in your garden, using the ones that apply. The year doesn't matter."));
+      : "Enter the dates you'd usually do each step in your garden, using the ones that apply. They repeat every year."));
     const range = (field, label) => h("div", { class: "range" },
       h("span", { class: "range-label" }, label),
-      this._input(`${field}_from`, "From", "date"),
-      this._input(`${field}_to`, "To", "date"));
+      this._monthDay(`${field}_from`, "From"),
+      this._monthDay(`${field}_to`, "To"));
     form.append(range("spring_indoor", "Start indoors"));
     form.append(range("spring_transplant", "Transplant out"));
     form.append(range("spring_direct", "Direct sow (spring)"));
@@ -922,6 +944,9 @@ const STYLE = `
     display: flex; flex-direction: column; gap: 4px; }
   .check { display: flex; align-items: center; gap: 8px; font-size: 0.9em; }
   .range { display: grid; grid-template-columns: minmax(110px, 1fr) 1fr 1fr; gap: 8px; align-items: end; }
+  .md { display: flex; gap: 4px; }
+  .md select { font: inherit; font-size: 1rem; padding: 8px 4px; border-radius: 6px; border: 1px solid var(--divider-color);
+    background: var(--card-background-color); color: var(--primary-text-color); min-width: 0; flex: 1; }
   .range-label { font-size: 0.9em; padding-bottom: 10px; }
   .search { font: inherit; padding: 8px; border-radius: 6px; border: 1px solid var(--divider-color);
     background: var(--card-background-color); color: var(--primary-text-color); }
