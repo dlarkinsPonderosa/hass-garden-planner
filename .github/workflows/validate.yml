@@ -17,7 +17,8 @@ jobs:
       - uses: hacs/action@main
         with:
           category: integration
-          ignore: brands
+          # Topics and brands only matter for the HACS default store.
+          ignore: brands topics
 
   tests:
     runs-on: ubuntu-latest
