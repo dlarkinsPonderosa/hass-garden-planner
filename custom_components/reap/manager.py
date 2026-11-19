@@ -64,7 +64,10 @@ CROP_DEFAULT_KEYS = (
 def _empty_data() -> dict[str, Any]:
     return {
         "plantings": {},
+        # Your own crops, and your edits of built-in ones (same key).
         "custom_crops": {},
+        # Built-in crops you removed from the list.
+        "hidden_crops": [],
         # task uid -> ISO date it was done
         "actuals": {},
         # task uid -> to-do item uid on the target list
@@ -191,10 +194,20 @@ class GardenManager:
 
     @property
     def crops(self) -> dict[str, Crop]:
-        crops = dict(self.builtin_crops)
+        """Every crop on the list: built-in ones (with your edits) and your own."""
+        hidden = set(self.data["hidden_crops"])
+        crops = {k: c for k, c in self.builtin_crops.items() if k not in hidden}
         for key, raw in self.data["custom_crops"].items():
-            crops[key] = Crop.from_dict(raw)
+            if key not in hidden:
+                crops[key] = Crop.from_dict(raw)
         return crops
+
+    def hidden_crops(self) -> list[Crop]:
+        """Built-in crops removed from the list, which can be restored."""
+        return [
+            self.builtin_crops[k] for k in self.data["hidden_crops"]
+            if k in self.builtin_crops
+        ]
 
     def crop(self, key: str) -> Crop:
         try:
@@ -418,6 +431,9 @@ class GardenManager:
         base: dict[str, Any] = {}
         if based_on := data.pop("based_on", None):
             base = self.crop(based_on).to_dict()
+        elif data.get("key") in self.crops:
+            # Editing: keep what the change doesn't mention.
+            base = self.crops[data["key"]].to_dict()
         merged = {**base, **data, "source": "custom"}
         if not merged.get("name"):
             raise PlannerError("A new crop needs a name")
@@ -429,9 +445,15 @@ class GardenManager:
             last_frost = settings.last_frost
             if merged.get("frost_tender") and settings.warm_last_frost:
                 last_frost = settings.warm_last_frost
+            old_cover = {
+                w.get("season"): w.get("cover")
+                for w in base.get("windows") or [] if w.get("cover")
+            }
             windows = []
             for window in data["windows"]:
                 converted = {"season": window.get("season") or "spring"}
+                if "cover" not in window and old_cover.get(converted["season"]):
+                    converted["cover"] = old_cover[converted["season"]]
                 for key in ("indoor", "direct", "transplant", "cover"):
                     if window.get(key):
                         converted[key] = [
@@ -466,51 +488,68 @@ class GardenManager:
             "frost_tender": crop.frost_tender,
             "perennial": crop.perennial,
             "source": crop.source,
-            "custom": crop.key in self.data["custom_crops"],
+            "custom": crop.key not in self.builtin_crops,
+            "builtin": crop.key in self.builtin_crops,
+            "edited": crop.key in self.builtin_crops
+            and crop.key in self.data["custom_crops"],
             "notes": crop.notes,
             "methods": crop.methods(profile),
             "seasons": sorted({w.season for w in crop.windows_for(profile)}),
             "defaults": self.crop_defaults(crop.key),
         }
-        if info["custom"]:
-            settings = self.settings
-            info.update(
-                days_to_harvest=crop.days_to_harvest,
-                harvest_weeks=crop.harvest_weeks,
-                weeks_indoor=crop.weeks_indoor,
-                in_use=any(p.crop == crop.key for p in self.plantings()),
-                windows=[
-                    {
-                        "season": w.season,
-                        **{
-                            key: [offset_to_mmdd(v, crop, settings) for v in rng]
-                            for key in ("indoor", "direct", "transplant")
-                            if (rng := getattr(w, key))
-                        },
-                    }
-                    for w in crop.windows
-                ],
-            )
+        settings = self.settings
+        info.update(
+            days_to_harvest=crop.days_to_harvest,
+            harvest_weeks=crop.harvest_weeks,
+            weeks_indoor=crop.weeks_indoor,
+            in_use=any(p.crop == crop.key for p in self.plantings()),
+            windows=[
+                {
+                    "season": w.season,
+                    **{
+                        key: [offset_to_mmdd(v, crop, settings) for v in rng]
+                        for key in ("indoor", "direct", "transplant")
+                        if (rng := getattr(w, key))
+                    },
+                }
+                for w in crop.windows_for(profile)
+            ],
+        )
         return info
 
     async def async_add_crop(self, crop: Crop) -> None:
         self.data["custom_crops"][crop.key] = crop.to_dict()
+        self.data["hidden_crops"] = [k for k in self.data["hidden_crops"] if k != crop.key]
         self.rebuild()
         await self._async_save()
         await self.async_sync()
 
     async def async_remove_crop(self, key: str) -> None:
-        if key not in self.data["custom_crops"]:
-            raise PlannerError(f"{key} is not a custom crop")
+        """Remove a crop. A built-in one is hidden and can be restored."""
+        if key not in self.crops:
+            raise PlannerError(f"Unknown crop: {key}")
         in_use = [p.id for p in self.plantings() if p.crop == key]
         if in_use:
             raise PlannerError(
-                f"{key} is used by plantings {', '.join(in_use)}; remove them first"
+                f"{self.crops[key].name} is used by {len(in_use)} planting(s); "
+                "remove them first"
             )
-        del self.data["custom_crops"][key]
+        self.data["custom_crops"].pop(key, None)
+        if key in self.builtin_crops:
+            self.data["hidden_crops"].append(key)
+        self.data["crop_defaults"].pop(key, None)
         self.rebuild()
         await self._async_save()
-        self._notify()
+
+    async def async_reset_crop(self, key: str) -> None:
+        """Undo edits to a built-in crop, or bring a removed one back."""
+        if key not in self.builtin_crops:
+            raise PlannerError(f"{key} is not a built-in crop")
+        self.data["custom_crops"].pop(key, None)
+        self.data["hidden_crops"] = [k for k in self.data["hidden_crops"] if k != key]
+        self.rebuild()
+        await self._async_save()
+        await self.async_sync()
 
     def rebuild(self) -> None:
         """Regenerate every task from the plantings and recorded actual dates."""

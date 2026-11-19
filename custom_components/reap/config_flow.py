@@ -180,7 +180,7 @@ CROP_DATE_FIELDS = (
 def _crop_key(manager: Any, name: str) -> str:
     base = re.sub(r"[^a-z0-9]+", "_", name.lower()).strip("_") or "crop"
     key, n = base, 2
-    while key in manager.crops:
+    while key in manager.crops or key in manager.builtin_crops:
         key, n = f"{base}_{n}", n + 1
     return key
 

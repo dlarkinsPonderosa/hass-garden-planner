@@ -792,3 +792,10 @@ remove_location:
       selector:
         text:
 list_locations:
+reset_crop:
+  fields:
+    key:
+      required: true
+      example: tomato
+      selector:
+        text:
