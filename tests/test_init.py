@@ -383,3 +383,44 @@ async def test_configure_prefills_crop_defaults(hass: HomeAssistant) -> None:
     assert entry.runtime_data.crop_defaults("radish") == {
         "method": "direct_bed", "succession_days": 10, "quantity": "1 row",
     }
+
+
+async def test_card_resource_added_and_updated(hass) -> None:
+    """The card is added once as a dashboard resource and kept on the current version."""
+    from types import SimpleNamespace
+
+    from custom_components.reap import CARD_URL, _async_ensure_resource
+
+    class FakeResources:
+        loaded = True
+
+        def __init__(self, items):
+            self.items = items
+
+        def async_items(self):
+            return self.items
+
+        async def async_create_item(self, data):
+            self.items.append({"id": "new", "type": data["res_type"], "url": data["url"]})
+
+        async def async_update_item(self, item_id, updates):
+            for item in self.items:
+                if item["id"] == item_id:
+                    item.update(updates)
+
+    res = FakeResources([{"id": "a", "type": "module", "url": "/other/card.js"}])
+    hass.data["lovelace"] = SimpleNamespace(resource_mode="storage", resources=res)
+    await _async_ensure_resource(hass, f"{CARD_URL}?v=1")
+    await _async_ensure_resource(hass, f"{CARD_URL}?v=1")
+    assert [i["url"] for i in res.items] == ["/other/card.js", f"{CARD_URL}?v=1"]
+
+    # A manually added resource without a version is reused and updated.
+    res.items = [{"id": "m", "type": "module", "url": CARD_URL}]
+    await _async_ensure_resource(hass, f"{CARD_URL}?v=2")
+    assert res.items == [{"id": "m", "type": "module", "url": f"{CARD_URL}?v=2"}]
+
+    # YAML-mode resources are left alone.
+    yaml_res = FakeResources([])
+    hass.data["lovelace"] = SimpleNamespace(resource_mode="yaml", resources=yaml_res)
+    await _async_ensure_resource(hass, f"{CARD_URL}?v=2")
+    assert yaml_res.items == []

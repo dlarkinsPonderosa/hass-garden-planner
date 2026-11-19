@@ -41,6 +41,10 @@ Assistant treats it as a new integration:
 4. Delete any leftover Garden Planner tasks from your task list, and change
    dashboard cards from `custom:garden-planner-card` to `custom:reap-card`.
 
+If a dashboard says `Custom element doesn't exist: reap-card` (for example when
+dashboard resources are managed in YAML), add `/reap/reap-card.js` as a
+**JavaScript module** under **Settings > Dashboards > Resources**.
+
 ### Setup options
 
 Setup starts with the task list and a starting point for frost dates: Victoria
@@ -82,7 +86,8 @@ All of these can be changed later under **Configure**.
 ## Dashboard card
 
 The integration includes a card, loaded automatically (no separate install).
-Edit a dashboard, add a card and pick **Reap**, or use YAML:
+Reap adds its card to your dashboard resources when it starts. Edit a dashboard,
+add a card and pick **Reap**, or use YAML:
 
 ```yaml
 type: custom:reap-card

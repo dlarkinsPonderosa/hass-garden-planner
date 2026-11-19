@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -116,6 +117,8 @@ def _planting_fields(call: ServiceCall) -> dict[str, Any]:
     return fields
 
 
+_LOGGER = logging.getLogger(__name__)
+
 CARD_URL = "/reap/reap-card.js"
 CARD_PATH = Path(__file__).parent / "frontend" / "reap-card.js"
 
@@ -128,7 +131,38 @@ async def _async_register_card(hass: HomeAssistant) -> None:
     await hass.http.async_register_static_paths(
         [StaticPathConfig(CARD_URL, str(CARD_PATH), cache_headers=False)]
     )
-    add_extra_js_url(hass, f"{CARD_URL}?v={version}")
+    url = f"{CARD_URL}?v={version}"
+    add_extra_js_url(hass, url)
+    try:
+        await _async_ensure_resource(hass, url)
+    except Exception:  # noqa: BLE001 - never block setup over the card
+        _LOGGER.warning(
+            "Could not add the Reap card to dashboard resources; add %s as a "
+            "JavaScript module under Settings > Dashboards > Resources",
+            CARD_URL,
+            exc_info=True,
+        )
+
+
+async def _async_ensure_resource(hass: HomeAssistant, url: str) -> None:
+    """Add (or update) the card as a dashboard resource in storage mode.
+
+    Some frontends do not load extra module URLs reliably, while dashboard
+    resources always load. Only storage-mode resources can be edited.
+    """
+    lovelace = hass.data.get("lovelace")
+    resources = getattr(lovelace, "resources", None)
+    if resources is None or getattr(lovelace, "resource_mode", "storage") != "storage":
+        return
+    if not getattr(resources, "loaded", True):
+        await resources.async_load()
+        resources.loaded = True
+    for item in resources.async_items():
+        if str(item.get("url", "")).split("?")[0] == CARD_URL:
+            if item["url"] != url:
+                await resources.async_update_item(item["id"], {"url": url})
+            return
+    await resources.async_create_item({"res_type": "module", "url": url})
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
