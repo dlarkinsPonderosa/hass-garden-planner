@@ -164,3 +164,25 @@ def test_task_icons():
     assert sow.summary == "Sow Carrot in beds"
     assert sow.icon == "mdi:seed"
     assert sow.crop_icon == "mdi:carrot"
+
+
+def test_fall_garlic_harvest_is_next_summer_and_stays_put() -> None:
+    """Overwintered garlic is harvested the next summer, whenever it went in."""
+    garlic = load_catalog()["garlic"]
+    planting = Planting(id="g", crop="garlic", method="direct_bed", year=2026, season="fall")
+    tasks = generate_tasks(planting, garlic, VICTORIA)
+    harvest = next(t for t in tasks if t.kind == TASK_HARVEST)
+    assert harvest.due == date(2027, 6, 30)  # 90 days after Apr 1
+
+    late = apply_actuals(generate_tasks(planting, garlic, VICTORIA), {"g:0:sow": "2026-11-15"})
+    assert next(t for t in late if t.kind == TASK_SOW).due == date(2026, 11, 15)
+    assert next(t for t in late if t.kind == TASK_HARVEST).due == date(2027, 6, 30)
+
+
+def test_spring_garlic_still_counts_days_from_planting() -> None:
+    garlic = load_catalog()["garlic"]
+    planting = Planting(id="g", crop="garlic", method="direct_bed", year=2027, season="spring")
+    tasks = generate_tasks(planting, garlic, VICTORIA)
+    sow = next(t for t in tasks if t.kind == TASK_SOW)
+    harvest = next(t for t in tasks if t.kind == TASK_HARVEST)
+    assert (harvest.due - sow.due).days == garlic.days_to_harvest

@@ -152,6 +152,9 @@ class Crop:
     estimated_profiles: list[str] = field(default_factory=list)
     # What a new planting starts with: method, succession_days, ...
     defaults: dict[str, Any] = field(default_factory=dict)
+    # For crops that overwinter (summer or fall plantings): days after the
+    # next spring's warm last frost when harvest starts. Not tied to sowing.
+    overwinter_harvest: int | None = None
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Crop:
@@ -174,6 +177,11 @@ class Crop:
             perennial=bool(data.get("perennial", False)),
             source=data.get("source", "custom"),
             notes=data.get("notes"),
+            overwinter_harvest=(
+                int(data["overwinter_harvest"])
+                if data.get("overwinter_harvest") is not None
+                else None
+            ),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -247,6 +255,8 @@ class Task:
     done_on: date | None = None
     icon: str = "mdi:sprout"
     crop_icon: str = "mdi:sprout"
+    # Fixed tasks keep their date when earlier tasks are done early or late.
+    fixed: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -407,7 +417,10 @@ def generate_tasks(
     total = len(schedule.dates)
     tasks: list[Task] = []
 
-    def add(idx: int, kind: str, due: date, summary: str, extra: str = "") -> None:
+    def add(
+        idx: int, kind: str, due: date, summary: str, extra: str = "",
+        fixed: bool = False,
+    ) -> None:
         suffix = f" (sowing {idx + 1} of {total})" if total > 1 else ""
         parts = [p for p in (extra, planting.quantity and f"Quantity: {planting.quantity}",
                              planting.location and f"Location: {planting.location}",
@@ -424,6 +437,7 @@ def generate_tasks(
                 description="\n".join(parts),
                 icon=TASK_ICONS.get(kind, "mdi:sprout"),
                 crop_icon=crop.icon,
+                fixed=fixed,
             )
         )
 
@@ -460,11 +474,21 @@ def generate_tasks(
                 add(idx, TASK_COVER, cover_start, f"Cover {label}",
                     "Row cover or cloche to extend the season.")
 
-        harvest = seeded + timedelta(days=crop.days_to_harvest)
+        overwinter = crop.overwinter_harvest is not None and window.season != "spring"
+        if overwinter:
+            spring = month_day(
+                planting.year + 1, settings.warm_last_frost or settings.last_frost
+            )
+            harvest = spring + timedelta(
+                days=crop.overwinter_harvest + settings.offset_days
+            )
+        else:
+            harvest = seeded + timedelta(days=crop.days_to_harvest)
         harvest_end = harvest + timedelta(weeks=crop.harvest_weeks)
         add(idx, TASK_HARVEST, harvest, f"Harvest {label}",
             f"Expected harvest window: {harvest:%b %-d, %Y} to {harvest_end:%b %-d, %Y}."
-            + (f" {crop.notes}" if crop.notes else ""))
+            + (f" {crop.notes}" if crop.notes else ""),
+            fixed=overwinter)
 
     tasks.sort(key=lambda t: (t.due, t.succession))
     return tasks
@@ -483,7 +507,7 @@ def apply_actuals(tasks: list[Task], actuals: dict[str, str | date]) -> list[Tas
         chain.sort(key=lambda t: t.planned)
         delta = timedelta(0)
         for task in chain:
-            task.due = task.planned + delta
+            task.due = task.planned if task.fixed else task.planned + delta
             done = parse_date(actuals.get(task.uid)) if task.uid in actuals else None
             if done:
                 task.done_on = done

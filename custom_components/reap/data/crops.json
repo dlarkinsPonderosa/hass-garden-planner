@@ -335,7 +335,8 @@
    "icon": "mdi:seed",
    "defaults": {
     "method": "direct_bed"
-   }
+   },
+   "overwinter_harvest": 45
   },
   {
    "key": "bean_bush_pole",
@@ -793,7 +794,8 @@
    "icon": "mdi:leaf-circle",
    "defaults": {
     "method": "indoor_bed"
-   }
+   },
+   "overwinter_harvest": 15
   },
   {
    "key": "carrot",
@@ -1418,7 +1420,8 @@
    "icon": "mdi:sprout",
    "defaults": {
     "method": "direct_bed"
-   }
+   },
+   "overwinter_harvest": 90
   },
   {
    "key": "kale",
@@ -1975,7 +1978,8 @@
    "icon": "mdi:sprout",
    "defaults": {
     "method": "indoor_bed"
-   }
+   },
+   "overwinter_harvest": 75
   },
   {
    "key": "scallion",

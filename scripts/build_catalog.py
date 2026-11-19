@@ -433,6 +433,17 @@ for c in C:
 # Planting defaults: what a new planting of the crop starts with. People can
 # override these per crop in Home Assistant, and per planting.
 # ---------------------------------------------------------------------------
+# Crops sown in summer or fall that overwinter: harvest starts this many days
+# after the next spring's warm last frost (04-01 in Victoria), whatever the
+# planting date. Coastal timings: fava mid-May, cabbage April, onion and
+# garlic June to July.
+OVERWINTER_HARVEST = {
+    "bean_broad": 45,
+    "cabbage_overwinter": 15,
+    "garlic": 90,
+    "onion_overwinter": 75,
+}
+
 SUCCESSION = {
     # key: (repeat every N days, number of sowings or None for the whole window)
     "arugula": (14, None), "cress": (14, None), "radish": (14, None), "spinach": (14, None),
@@ -456,6 +467,8 @@ for c in C:
         if count:
             defaults["succession_count"] = count
     c["defaults"] = defaults
+    if c["key"] in OVERWINTER_HARVEST:
+        c["overwinter_harvest"] = OVERWINTER_HARVEST[c["key"]]
 
 out = {
     "source": "South Coastal BC Vegetable and Flower & Herb Planting Guides (West Coast Seeds), plus added crops",
