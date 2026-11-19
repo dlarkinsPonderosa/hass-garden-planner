@@ -73,6 +73,18 @@ function moistureLevel(value) {
 }
 
 const LIGHT_DOMAINS = ["light.", "switch.", "input_boolean."];
+const CATEGORIES = [["vegetable", "Vegetable"], ["herb", "Herb"], ["fruit", "Fruit"], ["flower", "Flower"]];
+// Crop form date fields: [form key, window season, window kind, end of range?]
+const CROP_DATES = [
+  ["spring_indoor", "spring", "indoor"],
+  ["spring_transplant", "spring", "transplant"],
+  ["spring_direct", "spring", "direct"],
+  ["fall_direct", "fall", "direct"],
+];
+
+function slug(text) {
+  return text.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "") || "crop";
+}
 
 function defaultYear() {
   const now = new Date();
@@ -82,7 +94,7 @@ function defaultYear() {
 class ReapCard extends HTMLElement {
   setConfig(config) {
     this._config = { ...CARD_DEFAULTS, ...config };
-    this._mode = null; // null | "add" | "edit" | "locations" | "location"
+    this._mode = null; // null | "add" | "edit" | "locations" | "location" | "crops" | "crop"
     this._form = {};
     this._editing = null;
     this._confirmDelete = null;
@@ -331,12 +343,108 @@ class ReapCard extends HTMLElement {
     this._render();
   }
 
+  _openCrops() {
+    this._mode = "crops";
+    this._error = null;
+    this._confirmDelete = null;
+    this._render();
+  }
+
+  _startCrop(crop) {
+    this._mode = "crop";
+    this._editing = crop ? crop.key : null;
+    const year = new Date().getFullYear();
+    this._form = crop
+      ? {
+        name: crop.name, category: crop.category || "vegetable", icon: crop.icon || "",
+        days_to_harvest: crop.days_to_harvest, harvest_weeks: crop.harvest_weeks,
+        weeks_indoor: crop.weeks_indoor || "", frost_tender: crop.frost_tender, perennial: crop.perennial,
+        notes: crop.notes || "", based_on: "",
+      }
+      : { name: "", category: "vegetable", icon: "", based_on: "", frost_tender: false, perennial: false };
+    if (crop) {
+      for (const w of crop.windows || []) {
+        const season = w.season === "spring" ? "spring" : "fall";
+        for (const kind of ["indoor", "transplant", "direct"]) {
+          const key = `${season}_${kind}`;
+          if (w[kind] && CROP_DATES.some(([k]) => k === key) && !this._form[`${key}_from`]) {
+            this._form[`${key}_from`] = `${year}-${w[kind][0]}`;
+            this._form[`${key}_to`] = `${year}-${w[kind][1]}`;
+          }
+        }
+      }
+    }
+    this._error = null;
+    this._render();
+  }
+
+  _cropPayload() {
+    const f = this._form;
+    const name = (f.name || "").trim();
+    if (!name) throw new Error("Give the crop a name.");
+    let key = this._editing;
+    if (!key) {
+      const taken = new Set((this._crops || []).map((c) => c.key));
+      const base = slug(name);
+      key = base;
+      for (let n = 2; taken.has(key); n++) key = `${base}_${n}`;
+    }
+    const data = { key, name, category: f.category || "vegetable", frost_tender: !!f.frost_tender, perennial: !!f.perennial };
+    if ((f.icon || "").trim()) data.icon = f.icon.trim();
+    if (f.based_on) data.based_on = f.based_on;
+    for (const k of ["days_to_harvest", "harvest_weeks", "weeks_indoor"]) {
+      if (f[k] !== undefined && f[k] !== null && f[k] !== "") data[k] = Number(f[k]);
+    }
+    if ((f.notes || "").trim()) data.notes = f.notes.trim();
+    const windows = {};
+    for (const [field, season, kind] of CROP_DATES) {
+      const from = f[`${field}_from`], to = f[`${field}_to`];
+      if (!from && !to) continue;
+      if (!from || !to) throw new Error("Give both a from and a to date for each range you use.");
+      windows[season] = windows[season] || { season };
+      windows[season][kind] = [from, to];
+    }
+    if (Object.keys(windows).length) data.windows = Object.values(windows);
+    else if (!data.based_on && !this._editing) throw new Error("Give at least one date range, or copy timing from a crop.");
+    return data;
+  }
+
+  async _saveCrop() {
+    this._busy = true;
+    this._error = null;
+    this._render();
+    try {
+      await this._call("add_crop", this._cropPayload());
+      await this._loadCrops();
+      this._mode = "crops";
+      this._form = {};
+      this._editing = null;
+    } catch (err) {
+      this._error = err.message || String(err);
+    }
+    this._busy = false;
+    this._render();
+  }
+
+  async _deleteCrop(key) {
+    this._busy = true;
+    try {
+      await this._call("remove_crop", { key });
+      this._confirmDelete = null;
+      await this._loadCrops();
+    } catch (err) {
+      this._error = err.message || String(err);
+    }
+    this._busy = false;
+    this._render();
+  }
+
   _moreInfo(entityId) {
     this.dispatchEvent(new CustomEvent("hass-more-info", { bubbles: true, composed: true, detail: { entityId } }));
   }
 
   _cancel() {
-    this._mode = this._mode === "location" ? "locations" : null;
+    this._mode = { location: "locations", crop: "crops" }[this._mode] || null;
     this._form = {};
     this._preview = null;
     this._error = null;
@@ -372,6 +480,14 @@ class ReapCard extends HTMLElement {
       body.append(this._renderLocationForm());
       return;
     }
+    if (this._mode === "crops") {
+      body.append(this._renderCrops());
+      return;
+    }
+    if (this._mode === "crop") {
+      body.append(this._renderCropForm());
+      return;
+    }
     if (this._mode) {
       body.append(this._renderForm());
       return;
@@ -392,6 +508,7 @@ class ReapCard extends HTMLElement {
     if (this._config.editable) {
       card.append(h("div", { class: "actions" },
         h("button", { onclick: () => this._openLocations() }, icon("mdi:map-marker-outline"), "Locations"),
+        h("button", { onclick: () => this._openCrops(), disabled: !this._crops }, icon("mdi:sprout-outline"), "Crops"),
         h("button", { class: "primary", onclick: () => this._startAdd(), disabled: !this._crops },
           icon("mdi:plus"), "Add planting")));
     }
@@ -506,6 +623,96 @@ class ReapCard extends HTMLElement {
       h("button", { onclick: () => this._cancel() }, "Done"),
       h("button", { class: "primary", onclick: () => this._startLocation(null) }, icon("mdi:plus"), "Add location")));
     return wrap;
+  }
+
+  _renderCrops() {
+    const wrap = h("div", { class: "form" });
+    wrap.append(h("div", { class: "form-title" }, icon("mdi:sprout-outline"), "Crops"));
+    const all = this._crops || [];
+    const mine = all.filter((c) => c.custom);
+    wrap.append(h("p", { class: "muted small" },
+      `${all.length - mine.length} built-in crops. Add your own crop or variety below. To make a variety, copy timing from the crop it's a variety of.`));
+    const list = h("div", { class: "list" });
+    if (!mine.length) list.append(h("p", { class: "muted" }, "You haven't added any crops yet."));
+    for (const crop of mine) {
+      const label = (CATEGORIES.find(([v]) => v === crop.category) || [null, "Vegetable"])[1];
+      list.append(h("div", { class: "row" },
+        h("div", { class: "crop-icon small-icon" }, icon(crop.icon || "mdi:sprout")),
+        h("div", { class: "info" },
+          h("div", { class: "name" }, crop.name),
+          h("div", { class: "muted small" }, [label, crop.in_use ? "in use" : null].filter(Boolean).join(" · "))),
+        h("div", { class: "row-actions" },
+          h("button", { class: "icon-btn", title: "Edit", onclick: () => this._startCrop(crop) }, icon("mdi:pencil")),
+          h("button", {
+            class: "icon-btn", title: crop.in_use ? "In use, so it can't be removed" : "Remove", disabled: crop.in_use,
+            onclick: () => { this._confirmDelete = crop.key; this._render(); },
+          }, icon("mdi:delete-outline")))));
+      if (this._confirmDelete === crop.key) {
+        list.append(h("div", { class: "confirm" },
+          `Remove ${crop.name}?`,
+          h("button", { onclick: () => { this._confirmDelete = null; this._render(); } }, "Keep"),
+          h("button", { class: "danger", disabled: this._busy, onclick: () => this._deleteCrop(crop.key) }, "Remove")));
+      }
+    }
+    wrap.append(list);
+    wrap.append(h("div", { class: "actions" },
+      h("button", { onclick: () => this._cancel() }, "Done"),
+      h("button", { class: "primary", onclick: () => this._startCrop(null) }, icon("mdi:plus"), "Add crop")));
+    return wrap;
+  }
+
+  _check(key, label) {
+    return h("label", { class: "check" },
+      h("input", { type: "checkbox", checked: !!this._form[key], onchange: (e) => { this._form[key] = e.target.checked; } }),
+      label);
+  }
+
+  _renderCropForm() {
+    const f = this._form;
+    const form = h("div", { class: "form" });
+    const preview = icon(f.icon || "mdi:sprout");
+    form.append(h("div", { class: "form-title" }, preview,
+      this._editing ? `Edit ${f.name || "crop"}` : "Add a crop"));
+    form.append(h("div", { class: "grid" },
+      this._input("name", "Name", "text", { placeholder: "Tomato, Sungold" }),
+      this._select("category", "Category", CATEGORIES)));
+    const iconField = this._input("icon", "Icon (optional)", "text", { placeholder: "mdi:chili-mild" });
+    iconField.querySelector("input").addEventListener("input", (e) => { preview.icon = e.target.value || "mdi:sprout"; });
+    form.append(iconField);
+    if (!this._editing) {
+      const others = (this._crops || []).map((c) => [c.key, c.name]);
+      form.append(this._select("based_on", "Copy timing from (optional)", [["", "Nothing, I'll enter dates"], ...others],
+        (value) => {
+          f.based_on = value;
+          const base = this._crop(value);
+          if (base && !f.icon) f.icon = base.icon;
+          if (base && !f.category) f.category = base.category;
+          this._render();
+        }));
+    }
+    form.append(h("p", { class: "muted small" }, f.based_on
+      ? "Dates are optional. Leave them empty to use the copied crop's timing."
+      : "Enter the dates you'd usually do each step in your garden, using the ones that apply. The year doesn't matter."));
+    const range = (field, label) => h("div", { class: "range" },
+      h("span", { class: "range-label" }, label),
+      this._input(`${field}_from`, "From", "date"),
+      this._input(`${field}_to`, "To", "date"));
+    form.append(range("spring_indoor", "Start indoors"));
+    form.append(range("spring_transplant", "Transplant out"));
+    form.append(range("spring_direct", "Direct sow (spring)"));
+    form.append(range("fall_direct", "Direct sow or plant (fall)"));
+    form.append(h("div", { class: "grid" },
+      this._input("days_to_harvest", "Days to harvest", "number", { min: 1, max: 1100, placeholder: "60" }),
+      this._input("harvest_weeks", "Harvest lasts (weeks)", "number", { min: 1, max: 52, placeholder: "4" }),
+      this._input("weeks_indoor", "Weeks indoors (optional)", "number", { min: 1, max: 30 })));
+    form.append(this._check("frost_tender", "Frost tender (timed from the warm-crop frost date)"));
+    form.append(this._check("perennial", "Perennial"));
+    form.append(this._input("notes", "Notes"));
+    form.append(h("div", { class: "actions" },
+      h("button", { onclick: () => this._cancel() }, "Cancel"),
+      h("button", { class: "primary", disabled: this._busy, onclick: () => this._saveCrop() },
+        icon("mdi:content-save-outline"), this._editing ? "Save" : "Add")));
+    return form;
   }
 
   _entityOptions(filter, current) {
@@ -664,6 +871,9 @@ const STYLE = `
   .preview { max-height: 260px; overflow: auto; padding: 8px; border-radius: 8px; background: var(--secondary-background-color);
     display: flex; flex-direction: column; gap: 4px; }
   .check { display: flex; align-items: center; gap: 8px; font-size: 0.9em; }
+  .range { display: grid; grid-template-columns: minmax(110px, 1fr) 1fr 1fr; gap: 8px; align-items: end; }
+  .range-label { font-size: 0.9em; padding-bottom: 10px; }
+  .crop-icon.small-icon { width: 36px; height: 36px; --mdc-icon-size: 22px; }
   .error { color: var(--error-color); display: flex; align-items: center; gap: 6px; padding: 8px 0; }
 `;
 

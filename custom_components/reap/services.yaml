@@ -690,6 +690,18 @@ add_crop:
     notes:
       selector:
         text:
+    icon:
+      example: mdi:chili-mild
+      selector:
+        icon:
+    category:
+      selector:
+        select:
+          options:
+            - vegetable
+            - herb
+            - fruit
+            - flower
 remove_crop:
   fields:
     key:

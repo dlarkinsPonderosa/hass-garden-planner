@@ -1,16 +1,16 @@
 {
- "source": "South Coastal BC Vegetable and Flower & Herb Planting Guides (West Coast Seeds), plus added crops",
+ "source": "Built-in catalog: regional planting charts for cool-spring, continental and Atlantic climates, plus added crops",
  "format": "Ranges are days from the last spring frost (L) or first fall frost (F).",
  "profiles": {
-  "cool_spring": "South Coastal BC chart (long, cool spring)",
-  "continental": "South Central BC and South Central Prairies charts, averaged (spring warms fast)",
-  "atlantic": "Maritimes chart"
+  "cool_spring": "Long, cool spring",
+  "continental": "Spring warms fast",
+  "atlantic": "Cool, late spring with a long fall"
  },
  "crops": [
   {
    "key": "amaranth",
    "name": "Amaranth",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -49,12 +49,13 @@
    "icon": "mdi:grain",
    "defaults": {
     "method": "direct_bed"
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "artichoke",
    "name": "Artichoke",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -105,12 +106,13 @@
    "icon": "mdi:flower",
    "defaults": {
     "method": "indoor_bed"
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "arugula",
    "name": "Arugula",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -157,12 +159,13 @@
    "defaults": {
     "method": "direct_bed",
     "succession_days": 14
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "asparagus",
    "name": "Asparagus",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -214,12 +217,13 @@
    "icon": "mdi:sprout",
    "defaults": {
     "method": "indoor_bed"
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "bean_asparagus",
    "name": "Bean, asparagus",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -270,12 +274,13 @@
    "icon": "mdi:seed",
    "defaults": {
     "method": "indoor_bed"
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "bean_broad",
    "name": "Bean, broad",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -336,12 +341,13 @@
    "defaults": {
     "method": "direct_bed"
    },
-   "overwinter_harvest": 45
+   "overwinter_harvest": 45,
+   "category": "vegetable"
   },
   {
    "key": "bean_bush_pole",
    "name": "Bean, bush & pole",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -382,12 +388,13 @@
     "method": "direct_bed",
     "succession_days": 21,
     "succession_count": 4
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "bean_soya",
    "name": "Bean, soya",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -426,12 +433,13 @@
    "icon": "mdi:seed",
    "defaults": {
     "method": "direct_bed"
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "beet",
    "name": "Beet",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -471,12 +479,13 @@
    "defaults": {
     "method": "direct_bed",
     "succession_days": 21
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "broccoli",
    "name": "Broccoli",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -535,12 +544,13 @@
    "icon": "mdi:tree",
    "defaults": {
     "method": "indoor_bed"
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "broccoli_sprouting",
    "name": "Broccoli, sprouting",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -606,12 +616,13 @@
    "icon": "mdi:tree",
    "defaults": {
     "method": "indoor_bed"
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "brussels_sprouts",
    "name": "Brussels sprouts",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -662,12 +673,13 @@
    "icon": "mdi:leaf-circle",
    "defaults": {
     "method": "indoor_bed"
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "cabbage",
    "name": "Cabbage",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -730,12 +742,13 @@
    "icon": "mdi:leaf-circle",
    "defaults": {
     "method": "direct_bed"
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "cabbage_overwinter",
    "name": "Cabbage, overwinter",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "summer",
@@ -795,12 +808,13 @@
    "defaults": {
     "method": "indoor_bed"
    },
-   "overwinter_harvest": 15
+   "overwinter_harvest": 15,
+   "category": "vegetable"
   },
   {
    "key": "carrot",
    "name": "Carrot",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -840,12 +854,13 @@
    "defaults": {
     "method": "direct_bed",
     "succession_days": 21
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "cauliflower",
    "name": "Cauliflower",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -907,12 +922,13 @@
    "icon": "mdi:tree",
    "defaults": {
     "method": "indoor_bed"
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "celery",
    "name": "Celery/Celeriac",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -963,12 +979,13 @@
    "icon": "mdi:leaf",
    "defaults": {
     "method": "indoor_bed"
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "corn",
    "name": "Corn",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -1009,12 +1026,13 @@
     "method": "direct_bed",
     "succession_days": 14,
     "succession_count": 3
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "corn_salad",
    "name": "Corn salad",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -1086,12 +1104,13 @@
    "icon": "mdi:leaf",
    "defaults": {
     "method": "direct_bed"
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "cress",
    "name": "Cress",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -1138,12 +1157,13 @@
    "defaults": {
     "method": "direct_bed",
     "succession_days": 14
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "cucumber",
    "name": "Cucumber",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -1202,12 +1222,13 @@
    "icon": "mdi:food-variant",
    "defaults": {
     "method": "indoor_bed"
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "eggplant",
    "name": "Eggplant",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -1258,12 +1279,13 @@
    "icon": "mdi:food-variant",
    "defaults": {
     "method": "indoor_bed"
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "endive",
    "name": "Endive/Escarole",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -1324,12 +1346,13 @@
    "icon": "mdi:leaf",
    "defaults": {
     "method": "direct_bed"
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "fennel",
    "name": "Fennel",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -1368,12 +1391,13 @@
    "icon": "mdi:leaf",
    "defaults": {
     "method": "direct_bed"
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "garlic",
    "name": "Garlic",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -1421,12 +1445,13 @@
    "defaults": {
     "method": "direct_bed"
    },
-   "overwinter_harvest": 90
+   "overwinter_harvest": 90,
+   "category": "vegetable"
   },
   {
    "key": "kale",
    "name": "Kale & Collard",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -1465,12 +1490,13 @@
    "icon": "mdi:leaf",
    "defaults": {
     "method": "direct_bed"
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "kohlrabi",
    "name": "Kohlrabi",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -1532,12 +1558,13 @@
    "defaults": {
     "method": "direct_bed",
     "succession_days": 21
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "leek",
    "name": "Leek",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -1607,12 +1634,13 @@
    "icon": "mdi:sprout",
    "defaults": {
     "method": "indoor_bed"
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "lettuce",
    "name": "Lettuce",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -1680,12 +1708,13 @@
    "defaults": {
     "method": "direct_bed",
     "succession_days": 14
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "melon",
    "name": "Melon",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -1736,12 +1765,13 @@
    "icon": "mdi:fruit-watermelon",
    "defaults": {
     "method": "indoor_bed"
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "mustard",
    "name": "Mustard",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -1806,12 +1836,13 @@
    "defaults": {
     "method": "direct_bed",
     "succession_days": 14
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "okra",
    "name": "Okra",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -1862,12 +1893,13 @@
    "icon": "mdi:leaf",
    "defaults": {
     "method": "indoor_bed"
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "onion",
    "name": "Onion",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -1922,12 +1954,13 @@
    "icon": "mdi:sprout",
    "defaults": {
     "method": "indoor_bed"
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "onion_overwinter",
    "name": "Onion, overwinter",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "summer",
@@ -1979,12 +2012,13 @@
    "defaults": {
     "method": "indoor_bed"
    },
-   "overwinter_harvest": 75
+   "overwinter_harvest": 75,
+   "category": "vegetable"
   },
   {
    "key": "scallion",
    "name": "Onion, scallion",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -2032,12 +2066,13 @@
    "defaults": {
     "method": "direct_bed",
     "succession_days": 21
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "pac_choi",
    "name": "Pac choi & choi sum",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -2103,12 +2138,13 @@
    "defaults": {
     "method": "direct_bed",
     "succession_days": 21
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "parsnip",
    "name": "Parsnip",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -2147,12 +2183,13 @@
    "icon": "mdi:carrot",
    "defaults": {
     "method": "direct_bed"
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "pea",
    "name": "Pea",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -2214,12 +2251,13 @@
     "method": "direct_bed",
     "succession_days": 21,
     "succession_count": 3
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "pepper",
    "name": "Pepper",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -2270,12 +2308,13 @@
    "icon": "mdi:chili-mild",
    "defaults": {
     "method": "indoor_bed"
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "radicchio",
    "name": "Radicchio",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -2340,12 +2379,13 @@
    "icon": "mdi:leaf",
    "defaults": {
     "method": "indoor_bed"
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "radish",
    "name": "Radish",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -2418,12 +2458,13 @@
    "defaults": {
     "method": "direct_bed",
     "succession_days": 14
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "rhubarb",
    "name": "Rhubarb",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -2475,12 +2516,13 @@
    "icon": "mdi:leaf",
    "defaults": {
     "method": "indoor_bed"
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "rutabaga",
    "name": "Rutabaga",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -2527,12 +2569,13 @@
    "icon": "mdi:sprout",
    "defaults": {
     "method": "direct_bed"
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "spinach",
    "name": "Spinach",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -2613,12 +2656,13 @@
    "defaults": {
     "method": "direct_bed",
     "succession_days": 14
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "squash",
    "name": "Squash/pumpkin",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -2681,12 +2725,13 @@
    "icon": "mdi:pumpkin",
    "defaults": {
     "method": "indoor_bed"
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "strawberry",
    "name": "Strawberry",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -2737,12 +2782,13 @@
    "icon": "mdi:fruit-cherries",
    "defaults": {
     "method": "indoor_bed"
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "swiss_chard",
    "name": "Swiss chard",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -2781,12 +2827,13 @@
    "icon": "mdi:leaf",
    "defaults": {
     "method": "direct_bed"
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "tomato",
    "name": "Tomato",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -2837,12 +2884,13 @@
    "icon": "mdi:fruit-cherries",
    "defaults": {
     "method": "indoor_bed"
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "turnip",
    "name": "Turnip",
-   "source": "pdf",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -2882,12 +2930,13 @@
    "defaults": {
     "method": "direct_bed",
     "succession_days": 21
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "potato",
    "name": "Potato",
-   "source": "added",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -2931,12 +2980,13 @@
    "icon": "mdi:sprout",
    "defaults": {
     "method": "direct_bed"
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "tomatillo",
    "name": "Tomatillo",
-   "source": "added",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -2991,12 +3041,13 @@
    "icon": "mdi:fruit-cherries",
    "defaults": {
     "method": "indoor_bed"
-   }
+   },
+   "category": "vegetable"
   },
   {
    "key": "basil",
    "name": "Basil",
-   "source": "pdf_herbs",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -3051,12 +3102,13 @@
    "icon": "mdi:spa",
    "defaults": {
     "method": "indoor_bed"
-   }
+   },
+   "category": "herb"
   },
   {
    "key": "bergamot",
    "name": "Bergamot",
-   "source": "pdf_herbs",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -3144,12 +3196,13 @@
    "icon": "mdi:spa",
    "defaults": {
     "method": "indoor_bed"
-   }
+   },
+   "category": "herb"
   },
   {
    "key": "borage",
    "name": "Borage",
-   "source": "pdf_herbs",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -3192,12 +3245,13 @@
    "icon": "mdi:spa",
    "defaults": {
     "method": "direct_bed"
-   }
+   },
+   "category": "herb"
   },
   {
    "key": "chamomile",
    "name": "Chamomile",
-   "source": "pdf_herbs",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -3261,12 +3315,13 @@
    "icon": "mdi:spa",
    "defaults": {
     "method": "direct_bed"
-   }
+   },
+   "category": "herb"
   },
   {
    "key": "chervil",
    "name": "Chervil",
-   "source": "pdf_herbs",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -3322,12 +3377,13 @@
    "defaults": {
     "method": "direct_bed",
     "succession_days": 21
-   }
+   },
+   "category": "herb"
   },
   {
    "key": "chives",
    "name": "Chives",
-   "source": "pdf_herbs",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -3415,12 +3471,13 @@
    "icon": "mdi:spa",
    "defaults": {
     "method": "direct_bed"
-   }
+   },
+   "category": "herb"
   },
   {
    "key": "cilantro",
    "name": "Cilantro",
-   "source": "pdf_herbs",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -3465,12 +3522,13 @@
    "defaults": {
     "method": "direct_bed",
     "succession_days": 21
-   }
+   },
+   "category": "herb"
   },
   {
    "key": "dill",
    "name": "Dill",
-   "source": "pdf_herbs",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -3514,12 +3572,13 @@
    "defaults": {
     "method": "direct_bed",
     "succession_days": 21
-   }
+   },
+   "category": "herb"
   },
   {
    "key": "lavender",
    "name": "Lavender",
-   "source": "pdf_herbs",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -3574,12 +3633,13 @@
    "icon": "mdi:spa",
    "defaults": {
     "method": "indoor_bed"
-   }
+   },
+   "category": "herb"
   },
   {
    "key": "lemon_balm",
    "name": "Lemon balm",
-   "source": "pdf_herbs",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -3646,12 +3706,13 @@
    "icon": "mdi:spa",
    "defaults": {
     "method": "direct_bed"
-   }
+   },
+   "category": "herb"
   },
   {
    "key": "lemongrass",
    "name": "Lemongrass",
-   "source": "pdf_herbs",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -3706,12 +3767,13 @@
    "icon": "mdi:spa",
    "defaults": {
     "method": "indoor_bed"
-   }
+   },
+   "category": "herb"
   },
   {
    "key": "lovage",
    "name": "Lovage",
-   "source": "pdf_herbs",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -3799,12 +3861,13 @@
    "icon": "mdi:spa",
    "defaults": {
     "method": "indoor_bed"
-   }
+   },
+   "category": "herb"
   },
   {
    "key": "mint",
    "name": "Mint",
-   "source": "pdf_herbs",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -3859,12 +3922,13 @@
    "icon": "mdi:spa",
    "defaults": {
     "method": "indoor_bed"
-   }
+   },
+   "category": "herb"
   },
   {
    "key": "oregano",
    "name": "Oregano",
-   "source": "pdf_herbs",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -3919,12 +3983,13 @@
    "icon": "mdi:spa",
    "defaults": {
     "method": "indoor_bed"
-   }
+   },
+   "category": "herb"
   },
   {
    "key": "parsley",
    "name": "Parsley",
-   "source": "pdf_herbs",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -3968,12 +4033,13 @@
    "icon": "mdi:spa",
    "defaults": {
     "method": "direct_bed"
-   }
+   },
+   "category": "herb"
   },
   {
    "key": "rosemary",
    "name": "Rosemary",
-   "source": "pdf_herbs",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -4028,12 +4094,13 @@
    "icon": "mdi:spa",
    "defaults": {
     "method": "indoor_bed"
-   }
+   },
+   "category": "herb"
   },
   {
    "key": "sage",
    "name": "Sage",
-   "source": "pdf_herbs",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -4088,12 +4155,13 @@
    "icon": "mdi:spa",
    "defaults": {
     "method": "indoor_bed"
-   }
+   },
+   "category": "herb"
   },
   {
    "key": "savory",
    "name": "Savory",
-   "source": "pdf_herbs",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -4148,12 +4216,13 @@
    "icon": "mdi:spa",
    "defaults": {
     "method": "indoor_bed"
-   }
+   },
+   "category": "herb"
   },
   {
    "key": "shiso",
    "name": "Shiso",
-   "source": "pdf_herbs",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -4220,12 +4289,13 @@
    "icon": "mdi:spa",
    "defaults": {
     "method": "direct_bed"
-   }
+   },
+   "category": "herb"
   },
   {
    "key": "stevia",
    "name": "Stevia",
-   "source": "pdf_herbs",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -4280,12 +4350,13 @@
    "icon": "mdi:spa",
    "defaults": {
     "method": "indoor_bed"
-   }
+   },
+   "category": "herb"
   },
   {
    "key": "marjoram",
    "name": "Sweet marjoram",
-   "source": "pdf_herbs",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -4340,12 +4411,13 @@
    "icon": "mdi:spa",
    "defaults": {
     "method": "indoor_bed"
-   }
+   },
+   "category": "herb"
   },
   {
    "key": "thyme",
    "name": "Thyme",
-   "source": "pdf_herbs",
+   "source": "builtin",
    "windows": [
     {
      "season": "spring",
@@ -4400,7 +4472,8 @@
    "icon": "mdi:spa",
    "defaults": {
     "method": "indoor_bed"
-   }
+   },
+   "category": "herb"
   }
  ]
 }

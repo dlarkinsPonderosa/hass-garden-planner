@@ -25,7 +25,7 @@ from homeassistant.loader import async_get_integration
 
 from .const import DOMAIN
 from .manager import GardenManager, default_year
-from .planner import METHODS, OFFSET_RE, Crop, PlannerError, mmdd_to_offset
+from .planner import METHODS, OFFSET_RE, PlannerError
 
 PLATFORMS = [Platform.SENSOR, Platform.TODO]
 
@@ -69,7 +69,7 @@ UPDATE_FIELDS = {
 
 RANGE = vol.All(
     cv.ensure_list,
-    [cv.matches_regex(r"^(\d{1,2}-\d{1,2}|[LF][+-]\d+)$")],
+    [cv.matches_regex(r"^((\d{4}-)?\d{1,2}-\d{1,2}|[LF][+-]\d+)$")],
     vol.Length(2, 2),
 )
 WINDOW_SCHEMA = vol.Schema(
@@ -93,6 +93,8 @@ CROP_FIELDS = {
     vol.Optional("pot_up"): cv.boolean,
     vol.Optional("perennial"): cv.boolean,
     vol.Optional("notes"): cv.string,
+    vol.Optional("icon"): cv.icon,
+    vol.Optional("category"): vol.In(["vegetable", "herb", "fruit", "flower"]),
 }
 
 
@@ -101,11 +103,6 @@ def _manager(hass: HomeAssistant) -> GardenManager:
     if not entries:
         raise ServiceValidationError("Reap is not set up")
     return entries[0].runtime_data
-
-
-def _mmdd(value: str) -> str:
-    month, day = (int(p) for p in value.split("-"))
-    return f"{month:02d}-{day:02d}"
 
 
 def _planting_fields(call: ServiceCall) -> dict[str, Any]:
@@ -205,41 +202,10 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             raise ServiceValidationError(str(err)) from err
 
     async def add_crop(call: ServiceCall) -> None:
-        manager = _manager(hass)
-        data = dict(call.data)
-        base: dict[str, Any] = {}
-        if based_on := data.pop("based_on", None):
-            try:
-                base = manager.crop(based_on).to_dict()
-            except PlannerError as err:
-                raise ServiceValidationError(str(err)) from err
-        merged = {**base, **data, "source": "custom"}
-        if "name" not in merged:
-            raise ServiceValidationError("A new crop needs a name")
-        if not merged.get("windows"):
-            raise ServiceValidationError("A new crop needs windows or based_on")
-        if "windows" in data:
-            # Calendar dates (MM-DD) are this garden's dates; store them as
-            # offsets from its frost dates so they follow later changes.
-            settings = manager.settings
-            last_frost = settings.last_frost
-            if merged.get("frost_tender") and settings.warm_last_frost:
-                last_frost = settings.warm_last_frost
-            windows = []
-            for window in data["windows"]:
-                converted = dict(window)
-                for key in ("indoor", "direct", "transplant", "cover"):
-                    if key in window:
-                        converted[key] = [
-                            value if OFFSET_RE.match(value) else mmdd_to_offset(
-                                _mmdd(value), last_frost, settings.first_frost
-                            )
-                            for value in window[key]
-                        ]
-                windows.append(converted)
-            merged["windows"] = windows
-        crop = Crop.from_dict(merged)
-        await manager.async_add_crop(crop)
+        try:
+            await _manager(hass).async_save_crop(dict(call.data))
+        except PlannerError as err:
+            raise ServiceValidationError(str(err)) from err
 
     async def remove_crop(call: ServiceCall) -> None:
         try:
@@ -251,20 +217,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         manager = _manager(hass)
         return {
             "crops": [
-                {
-                    "key": crop.key,
-                    "name": crop.name,
-                    "icon": crop.icon,
-                    "frost_tender": crop.frost_tender,
-                    "perennial": crop.perennial,
-                    "source": crop.source,
-                    "notes": crop.notes,
-                    "methods": crop.methods(manager.settings.profile),
-                    "seasons": sorted(
-                        {w.season for w in crop.windows_for(manager.settings.profile)}
-                    ),
-                    "defaults": manager.crop_defaults(crop.key),
-                }
+                manager.crop_info(crop)
                 for crop in sorted(manager.crops.values(), key=lambda c: c.name)
             ]
         }

@@ -20,26 +20,27 @@ from custom_components.reap.planner import (
 )
 
 CATALOG = load_catalog()
-# Victoria: early last frost, but warm crops keep the chart's April 1 date.
-VICTORIA = Settings(last_frost="03-06", first_frost="11-16", warm_last_frost="04-01")
+# A garden with an early last frost, but warm crops timed from April 1.
+GARDEN = Settings(last_frost="03-06", first_frost="11-16", warm_last_frost="04-01")
 # The chart as printed: April 1 last frost for everything.
 AS_PRINTED = Settings(last_frost="04-01", first_frost="11-16")
 
 
 def tasks_for(**kwargs):
     planting = Planting(id="p1", year=2027, **kwargs)
-    return generate_tasks(planting, CATALOG[planting.crop], kwargs.pop("settings", VICTORIA))
+    return generate_tasks(planting, CATALOG[planting.crop], kwargs.pop("settings", GARDEN))
 
 
 def by_kind(tasks):
     return {t.kind: t.due for t in tasks}
 
 
-def test_catalog_has_pdf_and_added_crops():
-    assert len([c for c in CATALOG.values() if c.source == "pdf"]) == 49
-    assert len([c for c in CATALOG.values() if c.source == "pdf_herbs"]) == 22
+def test_catalog_has_vegetables_and_herbs():
+    assert all(c.source == "builtin" for c in CATALOG.values())
+    assert len([c for c in CATALOG.values() if c.category == "vegetable"]) == 51
+    assert len([c for c in CATALOG.values() if c.category == "herb"]) == 22
     for key in ("potato", "tomatillo"):
-        assert CATALOG[key].source == "added"
+        assert key in CATALOG
     for crop in CATALOG.values():
         assert crop.methods(), crop.key
 
@@ -59,8 +60,8 @@ def test_tomato_greenhouse_is_four_weeks_earlier():
     assert dates[TASK_HARDEN_OFF] == date(2027, 3, 31)  # 3 day greenhouse step
 
 
-def test_hardy_crop_shifted_for_victoria():
-    # Carrot window starts Apr 1 on the chart; Victoria's last frost is 26 days
+def test_hardy_crop_shifted_for_early_frost():
+    # Carrot window starts Apr 1 on the chart; this garden's last frost is 26 days
     # earlier than the Apr 1 baseline.
     shifted = by_kind(tasks_for(crop="carrot", method="direct_bed"))
     assert shifted[TASK_SOW] == date(2027, 3, 6)
@@ -159,7 +160,7 @@ def test_continental_profile_saskatoon():
 
 def test_task_icons():
     planting = Planting(id="p1", year=2027, crop="carrot", method="direct_bed")
-    tasks = generate_tasks(planting, CATALOG["carrot"], VICTORIA)
+    tasks = generate_tasks(planting, CATALOG["carrot"], GARDEN)
     sow = next(t for t in tasks if t.kind == TASK_SOW)
     assert sow.summary == "Sow Carrot in beds"
     assert sow.icon == "mdi:seed"
@@ -170,11 +171,11 @@ def test_fall_garlic_harvest_is_next_summer_and_stays_put() -> None:
     """Overwintered garlic is harvested the next summer, whenever it went in."""
     garlic = load_catalog()["garlic"]
     planting = Planting(id="g", crop="garlic", method="direct_bed", year=2026, season="fall")
-    tasks = generate_tasks(planting, garlic, VICTORIA)
+    tasks = generate_tasks(planting, garlic, GARDEN)
     harvest = next(t for t in tasks if t.kind == TASK_HARVEST)
     assert harvest.due == date(2027, 6, 30)  # 90 days after Apr 1
 
-    late = apply_actuals(generate_tasks(planting, garlic, VICTORIA), {"g:0:sow": "2026-11-15"})
+    late = apply_actuals(generate_tasks(planting, garlic, GARDEN), {"g:0:sow": "2026-11-15"})
     assert next(t for t in late if t.kind == TASK_SOW).due == date(2026, 11, 15)
     assert next(t for t in late if t.kind == TASK_HARVEST).due == date(2027, 6, 30)
 
@@ -182,7 +183,7 @@ def test_fall_garlic_harvest_is_next_summer_and_stays_put() -> None:
 def test_spring_garlic_still_counts_days_from_planting() -> None:
     garlic = load_catalog()["garlic"]
     planting = Planting(id="g", crop="garlic", method="direct_bed", year=2027, season="spring")
-    tasks = generate_tasks(planting, garlic, VICTORIA)
+    tasks = generate_tasks(planting, garlic, GARDEN)
     sow = next(t for t in tasks if t.kind == TASK_SOW)
     harvest = next(t for t in tasks if t.kind == TASK_HARVEST)
     assert (harvest.due - sow.due).days == garlic.days_to_harvest

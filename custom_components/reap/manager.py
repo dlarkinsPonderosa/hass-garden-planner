@@ -40,6 +40,7 @@ from .const import (
     SYNC_INTERVAL_MINUTES,
 )
 from .planner import (
+    OFFSET_RE,
     Crop,
     Planting,
     PlannerError,
@@ -48,6 +49,8 @@ from .planner import (
     apply_actuals,
     generate_tasks,
     load_catalog,
+    mmdd_to_offset,
+    offset_to_mmdd,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -404,6 +407,92 @@ class GardenManager:
         await self._async_save()
         await self.async_sync()
 
+    async def async_save_crop(self, data: dict[str, Any]) -> Crop:
+        """Add or replace a custom crop.
+
+        based_on copies another crop first. Window ranges can be calendar
+        dates (MM-DD) for this garden, stored as offsets from its frost dates
+        so they follow later changes, or offsets (L-14, F+7) directly.
+        """
+        data = dict(data)
+        base: dict[str, Any] = {}
+        if based_on := data.pop("based_on", None):
+            base = self.crop(based_on).to_dict()
+        merged = {**base, **data, "source": "custom"}
+        if not merged.get("name"):
+            raise PlannerError("A new crop needs a name")
+        if "windows" in data:
+            # Its own dates replace every climate profile of the base crop.
+            merged["profiles"] = {}
+            merged["estimated_profiles"] = []
+            settings = self.settings
+            last_frost = settings.last_frost
+            if merged.get("frost_tender") and settings.warm_last_frost:
+                last_frost = settings.warm_last_frost
+            windows = []
+            for window in data["windows"]:
+                converted = {"season": window.get("season") or "spring"}
+                for key in ("indoor", "direct", "transplant", "cover"):
+                    if window.get(key):
+                        converted[key] = [
+                            value if OFFSET_RE.match(value) else mmdd_to_offset(
+                                _mmdd(value), last_frost, settings.first_frost
+                            )
+                            for value in window[key]
+                        ]
+                windows.append(converted)
+            merged["windows"] = windows
+        if not any(
+            w.get("indoor") or w.get("direct") or w.get("transplant")
+            for w in merged.get("windows") or []
+        ):
+            raise PlannerError("A new crop needs sowing dates or a crop to copy")
+        crop = Crop.from_dict(merged)
+        if not crop.methods(self.settings.profile):
+            raise PlannerError(
+                "Give a direct sowing range, or both an indoor start and a transplant range"
+            )
+        await self.async_add_crop(crop)
+        return crop
+
+    def crop_info(self, crop: Crop) -> dict[str, Any]:
+        """What the card needs to list, add with and edit a crop."""
+        profile = self.settings.profile
+        info: dict[str, Any] = {
+            "key": crop.key,
+            "name": crop.name,
+            "icon": crop.icon,
+            "category": crop.category,
+            "frost_tender": crop.frost_tender,
+            "perennial": crop.perennial,
+            "source": crop.source,
+            "custom": crop.key in self.data["custom_crops"],
+            "notes": crop.notes,
+            "methods": crop.methods(profile),
+            "seasons": sorted({w.season for w in crop.windows_for(profile)}),
+            "defaults": self.crop_defaults(crop.key),
+        }
+        if info["custom"]:
+            settings = self.settings
+            info.update(
+                days_to_harvest=crop.days_to_harvest,
+                harvest_weeks=crop.harvest_weeks,
+                weeks_indoor=crop.weeks_indoor,
+                in_use=any(p.crop == crop.key for p in self.plantings()),
+                windows=[
+                    {
+                        "season": w.season,
+                        **{
+                            key: [offset_to_mmdd(v, crop, settings) for v in rng]
+                            for key in ("indoor", "direct", "transplant")
+                            if (rng := getattr(w, key))
+                        },
+                    }
+                    for w in crop.windows
+                ],
+            )
+        return info
+
     async def async_add_crop(self, crop: Crop) -> None:
         self.data["custom_crops"][crop.key] = crop.to_dict()
         self.rebuild()
@@ -618,6 +707,14 @@ def _find_new_item(
         if item.get("uid") not in claimed and item.get("summary") == summary:
             return item["uid"]
     return None
+
+
+def _mmdd(value: str) -> str:
+    try:
+        month, day = (int(p) for p in value.split("-")[-2:])
+        return f"{month:02d}-{day:02d}"
+    except ValueError as err:
+        raise PlannerError(f"Bad date {value!r}; use MM-DD") from err
 
 
 def default_year(today: date | None = None) -> int:

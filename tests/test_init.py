@@ -28,8 +28,15 @@ async def _items(hass: HomeAssistant, entity_id: str) -> list[dict[str, Any]]:
     return resp[entity_id]["items"]
 
 
+# Test garden: early last frost, with warm crops timed from Apr 1, cool spring.
+GARDEN = {
+    "last_frost": "03-06", "first_frost": "11-16",
+    "warm_last_frost": "04-01", "profile": "cool_spring",
+}
+
+
 async def _setup(hass: HomeAssistant, **data: Any) -> MockConfigEntry:
-    entry = MockConfigEntry(domain=DOMAIN, data={**DEFAULTS, **data}, unique_id=DOMAIN)
+    entry = MockConfigEntry(domain=DOMAIN, data={**DEFAULTS, **GARDEN, **data}, unique_id=DOMAIN)
     entry.add_to_hass(hass)
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
@@ -49,11 +56,11 @@ async def _start_flow(hass: HomeAssistant, zone: str) -> dict[str, Any]:
     )
 
 
-async def test_config_flow_victoria(hass: HomeAssistant) -> None:
-    result = await _start_flow(hass, "victoria")
+async def test_config_flow_own_dates(hass: HomeAssistant) -> None:
+    result = await _start_flow(hass, "custom")
     assert result["step_id"] == "location"
     result = await hass.config_entries.flow.async_configure(
-        result["flow_id"], {**LOCATION, "last_frost": "3-6"}
+        result["flow_id"], {**LOCATION, **GARDEN, "last_frost": "3-6"}
     )
     assert result["type"] == "create_entry"
     assert result["data"]["last_frost"] == "03-06"
@@ -166,17 +173,17 @@ async def test_deleted_task_is_not_re_added(hass: HomeAssistant) -> None:
 
 @pytest.mark.freeze_time("2027-03-01 12:00:00")
 async def test_existing_list(hass: HomeAssistant, tmp_path) -> None:
-    """Tasks go onto an existing Local To-do list, like Darren's List."""
+    """Tasks go onto an existing Local To-do list."""
     local = MockConfigEntry(
         domain="local_todo",
-        data={"todo_list_name": "Darren's List", "storage_key": "darrens_list"},
+        data={"todo_list_name": "Family List", "storage_key": "family_list"},
     )
     local.add_to_hass(hass)
     hass.config.config_dir = str(tmp_path)
     (tmp_path / ".storage").mkdir()
     assert await hass.config_entries.async_setup(local.entry_id)
     await hass.async_block_till_done()
-    target = "todo.darren_s_list"
+    target = "todo.family_list"
     assert hass.states.get(target) is not None
     await hass.services.async_call(
         "todo", "add_item", {"entity_id": target, "item": "Buy milk"}, blocking=True
@@ -218,7 +225,7 @@ async def test_options_flow(hass: HomeAssistant) -> None:
     entry = await _setup(hass)
     result = await hass.config_entries.options.async_init(entry.entry_id)
     assert result["type"] == "menu"
-    assert result["menu_options"] == ["add_planting", "settings"]
+    assert result["menu_options"] == ["add_planting", "add_crop", "settings"]
     result = await hass.config_entries.options.async_configure(
         result["flow_id"], {"next_step_id": "settings"}
     )
@@ -480,3 +487,59 @@ async def test_existing_free_text_locations_are_migrated(hass: HomeAssistant, ha
     await hass.async_block_till_done()
     names = [l["name"] for l in entry.runtime_data.locations()]
     assert names == ["Seedling Tray", "Garden", "Greenhouse", "Seed tray 1"]
+
+
+async def test_custom_crop_round_trip(hass: HomeAssistant) -> None:
+    """A crop added with garden dates lists those dates back for editing."""
+    from homeassistant.exceptions import ServiceValidationError
+
+    entry = await _setup(hass, profile="continental")
+    await _call(hass, "add_crop", {
+        "key": "okra", "name": "Okra", "based_on": "tomato", "icon": "mdi:chili-mild",
+        "category": "vegetable", "days_to_harvest": 60,
+        "windows": [{"season": "spring", "indoor": ["2027-03-01", "03-20"], "transplant": ["05-15", "06-01"]}],
+    })
+    crop = entry.runtime_data.crop("okra")
+    # Its own dates win over the base crop's climate profiles.
+    assert crop.profiles == {}
+    resp = await _call(hass, "list_crops", {}, True)
+    okra = next(c for c in resp["crops"] if c["key"] == "okra")
+    assert okra["custom"] and not okra["in_use"]
+    assert okra["icon"] == "mdi:chili-mild"
+    assert okra["windows"] == [{"season": "spring", "indoor": ["03-01", "03-20"], "transplant": ["05-15", "06-01"]}]
+    tomato = next(c for c in resp["crops"] if c["key"] == "tomato")
+    assert not tomato["custom"] and "windows" not in tomato
+
+    with pytest.raises(ServiceValidationError):
+        await _call(hass, "add_crop", {"key": "nothing", "name": "Nothing"})
+    with pytest.raises(ServiceValidationError):
+        await _call(hass, "add_crop", {"key": "bad", "name": "Bad", "windows": [{"indoor": ["03-01", "03-20"]}]})
+
+
+async def test_add_crop_from_configure(hass: HomeAssistant) -> None:
+    entry = await _setup(hass)
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    assert "add_crop" in flow["menu_options"]
+    result = await hass.config_entries.options.async_configure(flow["flow_id"], {"next_step_id": "add_crop"})
+    assert result["step_id"] == "add_crop"
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"name": "Tulsi", "category": "herb", "spring_direct_from": "2026-04-15"}
+    )
+    assert result["errors"] == {"base": "crop_error"}
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {"name": "Tulsi", "category": "herb", "icon": "mdi:leaf",
+         "spring_direct_from": "2026-04-15", "spring_direct_to": "2026-05-31", "days_to_harvest": 60},
+    )
+    assert result["type"] == "create_entry"
+    crop = entry.runtime_data.crop("tulsi")
+    assert crop.category == "herb" and crop.icon == "mdi:leaf"
+    assert crop.windows[0].direct == ("L+40", "L+86")
+    # Adding the same name again makes a second key instead of overwriting.
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(flow["flow_id"], {"next_step_id": "add_crop"})
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"name": "Tomato", "category": "vegetable", "based_on": "tomato"}
+    )
+    assert result["type"] == "create_entry"
+    assert entry.runtime_data.crop("tomato_2").name == "Tomato"

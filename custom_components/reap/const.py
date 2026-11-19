@@ -21,14 +21,12 @@ NEW_LIST = "__new__"
 
 DEFAULTS = {
     CONF_TODO_ENTITY: NEW_LIST,
-    # Victoria, from the South Coastal BC Vegetable Planting Guide.
-    CONF_LAST_FROST: "03-06",
-    CONF_FIRST_FROST: "11-16",
-    # Warm crops in Victoria keep the chart's April 1 frost date, since the
-    # early last frost there doesn't mean warm soil.
-    CONF_WARM_LAST_FROST: "04-01",
+    # A mid-temperate starting point; setup suggests dates by zone.
+    CONF_LAST_FROST: "04-20",
+    CONF_FIRST_FROST: "10-20",
+    CONF_WARM_LAST_FROST: "",
     CONF_OFFSET_DAYS: 0,
-    CONF_PROFILE: "cool_spring",
+    CONF_PROFILE: "continental",
     CONF_GREENHOUSE_SPRING_WEEKS: 4,
     CONF_GREENHOUSE_FALL_WEEKS: 4,
     CONF_HARDEN_OFF_DAYS: 7,
@@ -44,7 +42,6 @@ MARKER_PREFIX = "reap:"
 
 SIGNAL_UPDATED = f"{DOMAIN}_updated"
 
-ZONE_VICTORIA = "victoria"
 ZONE_CUSTOM = "custom"
 
 # Rough average last spring and first fall frost dates by USDA hardiness zone.

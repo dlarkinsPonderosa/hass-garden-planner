@@ -74,12 +74,12 @@ class Settings:
     last_frost: str = "03-06"
     first_frost: str = "11-16"
     # Last frost date used for frost-tender crops. Warm crops need warm soil
-    # and nights, so where the last frost is unusually early (like Victoria)
+    # and nights, so where the last frost is unusually early
     # this can be set later than last_frost. Empty means the same date.
     warm_last_frost: str | None = None
     # Moves every date earlier (negative) or later (positive).
     offset_days: int = 0
-    # Climate profile: cool_spring (coastal), continental or atlantic.
+    # Climate profile: cool_spring, continental or atlantic.
     profile: str = "cool_spring"
     greenhouse_spring_weeks: int = 4
     greenhouse_fall_weeks: int = 4
@@ -143,6 +143,7 @@ class Crop:
     pot_up: bool = False
     perennial: bool = False
     source: str = "custom"
+    category: str = "vegetable"
     notes: str | None = None
     icon: str = "mdi:sprout"
     # Windows for other climate profiles. "windows" is the cool_spring set and
@@ -176,6 +177,7 @@ class Crop:
             pot_up=bool(data.get("pot_up", False)),
             perennial=bool(data.get("perennial", False)),
             source=data.get("source", "custom"),
+            category=data.get("category") or "vegetable",
             notes=data.get("notes"),
             overwinter_harvest=(
                 int(data["overwinter_harvest"])
@@ -311,6 +313,18 @@ def mmdd_to_offset(mmdd: str, last_frost: str, first_frost: str) -> str:
     if day.month < 7:
         return format_offset("L", (day - month_day(2001, last_frost)).days)
     return format_offset("F", (day - month_day(2001, first_frost)).days)
+
+
+def offset_to_mmdd(token: str, crop: Crop, settings: Settings) -> str:
+    """The calendar date (MM-DD) of a frost offset, ignoring the date shift."""
+    anchor, days = parse_offset(token)
+    if anchor == "L":
+        mmdd = settings.last_frost
+        if crop.frost_tender and settings.warm_last_frost:
+            mmdd = settings.warm_last_frost
+    else:
+        mmdd = settings.first_frost
+    return f"{month_day(2001, mmdd) + timedelta(days=days):%m-%d}"
 
 
 def resolve(token: str, year: int, crop: Crop, settings: Settings) -> date:
