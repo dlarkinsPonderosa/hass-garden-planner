@@ -1,4 +1,4 @@
-"""Garden Planner: seed starting and planting schedules as Home Assistant tasks."""
+"""Reap: seed starting and planting schedules as Home Assistant tasks."""
 
 from __future__ import annotations
 
@@ -98,7 +98,7 @@ CROP_FIELDS = {
 def _manager(hass: HomeAssistant) -> GardenManager:
     entries = hass.config_entries.async_loaded_entries(DOMAIN)
     if not entries:
-        raise ServiceValidationError("Garden Planner is not set up")
+        raise ServiceValidationError("Reap is not set up")
     return entries[0].runtime_data
 
 
@@ -116,8 +116,8 @@ def _planting_fields(call: ServiceCall) -> dict[str, Any]:
     return fields
 
 
-CARD_URL = "/garden_planner/garden-planner-card.js"
-CARD_PATH = Path(__file__).parent / "frontend" / "garden-planner-card.js"
+CARD_URL = "/reap/reap-card.js"
+CARD_PATH = Path(__file__).parent / "frontend" / "reap-card.js"
 
 
 async def _async_register_card(hass: HomeAssistant) -> None:
@@ -294,7 +294,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up Garden Planner from a config entry."""
+    """Set up Reap from a config entry."""
     manager = GardenManager(hass, entry)
     await manager.async_setup()
     entry.runtime_data = manager

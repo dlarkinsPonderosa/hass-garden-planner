@@ -1,9 +1,9 @@
 /*
- * Garden Planner card: lists plantings with their icons and next task, and
- * adds, edits and removes them through the garden_planner actions.
+ * Reap card: lists plantings with their icons and next task, and
+ * adds, edits and removes them through the reap actions.
  *
- * type: custom:garden-planner-card
- * entity: sensor.garden_planner_plantings   # optional
+ * type: custom:reap-card
+ * entity: sensor.reap_plantings   # optional
  * title: Garden                              # optional
  * show_done: false                           # optional, show finished plantings
  */
@@ -56,9 +56,9 @@ function defaultYear() {
   return now.getMonth() < 8 ? now.getFullYear() : now.getFullYear() + 1;
 }
 
-class GardenPlannerCard extends HTMLElement {
+class ReapCard extends HTMLElement {
   setConfig(config) {
-    this._config = { entity: "sensor.garden_planner_plantings", show_done: false, ...config };
+    this._config = { entity: "sensor.reap_plantings", show_done: false, ...config };
     this._mode = null; // null | "add" | "edit"
     this._form = {};
     this._editing = null;
@@ -85,11 +85,11 @@ class GardenPlannerCard extends HTMLElement {
   }
 
   static getStubConfig() {
-    return { entity: "sensor.garden_planner_plantings" };
+    return { entity: "sensor.reap_plantings" };
   }
 
   async _call(service, data, response = false) {
-    const msg = { type: "call_service", domain: "garden_planner", service, service_data: data };
+    const msg = { type: "call_service", domain: "reap", service, service_data: data };
     if (response) msg.return_response = true;
     const result = await this._hass.connection.sendMessagePromise(msg);
     return response ? result.response : result;
@@ -256,7 +256,7 @@ class GardenPlannerCard extends HTMLElement {
     root.append(card);
 
     if (!state) {
-      body.append(h("p", { class: "muted" }, `Entity ${this._config.entity} not found. Is Garden Planner set up?`));
+      body.append(h("p", { class: "muted" }, `Entity ${this._config.entity} not found. Is Reap set up?`));
       return;
     }
     if (this._error) body.append(h("div", { class: "error" }, icon("mdi:alert-circle-outline"), this._error));
@@ -431,12 +431,12 @@ const STYLE = `
   .error { color: var(--error-color); display: flex; align-items: center; gap: 6px; padding: 8px 0; }
 `;
 
-if (!customElements.get("garden-planner-card")) {
-  customElements.define("garden-planner-card", GardenPlannerCard);
+if (!customElements.get("reap-card")) {
+  customElements.define("reap-card", ReapCard);
   window.customCards = window.customCards || [];
   window.customCards.push({
-    type: "garden-planner-card",
-    name: "Garden Planner",
-    description: "Your plantings with their next task. Add, edit and remove plantings.",
+    type: "reap-card",
+    name: "Reap",
+    description: "Reap what you Sow. Your plantings with their next task. Add, edit and remove plantings.",
   });
 }

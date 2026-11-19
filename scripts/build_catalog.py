@@ -1,4 +1,4 @@
-"""Build custom_components/garden_planner/data/crops.json.
+"""Build custom_components/reap/data/crops.json.
 
 The windows below are calendar dates read off West Coast Seeds' regional
 planting charts (to roughly half-month accuracy). The crop list and the
@@ -20,7 +20,7 @@ from pathlib import Path
 
 CHART_LAST_FROST = date(2001, 4, 1)
 CHART_FIRST_FROST = date(2001, 11, 16)
-OUT = Path(__file__).resolve().parent.parent / "custom_components/garden_planner/data/crops.json"
+OUT = Path(__file__).resolve().parent.parent / "custom_components/reap/data/crops.json"
 
 
 def to_offset(mmdd):

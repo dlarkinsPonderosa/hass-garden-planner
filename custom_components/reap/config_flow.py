@@ -1,4 +1,4 @@
-"""Config flow for Garden Planner."""
+"""Config flow for Reap."""
 
 from __future__ import annotations
 
@@ -170,8 +170,8 @@ def _clean(user_input: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
-class GardenPlannerConfigFlow(ConfigFlow, domain=DOMAIN):
-    """Set up Garden Planner."""
+class ReapConfigFlow(ConfigFlow, domain=DOMAIN):
+    """Set up Reap."""
 
     VERSION = 1
 
@@ -209,7 +209,7 @@ class GardenPlannerConfigFlow(ConfigFlow, domain=DOMAIN):
             errors = _validate(user_input)
             if not errors:
                 return self.async_create_entry(
-                    title="Garden Planner",
+                    title="Reap",
                     data=_clean({**self._data, **user_input}),
                 )
         return self.async_show_form(
@@ -221,7 +221,7 @@ class GardenPlannerConfigFlow(ConfigFlow, domain=DOMAIN):
     @staticmethod
     @callback
     def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlow:
-        return GardenPlannerOptionsFlow()
+        return ReapOptionsFlow()
 
 
 METHOD_LABELS = {
@@ -246,8 +246,8 @@ def _box(minimum: int, maximum: int, unit: str | None = None) -> selector.Number
     return selector.NumberSelector(config)
 
 
-class GardenPlannerOptionsFlow(OptionsFlow):
-    """Add or remove plantings, or change Garden Planner settings."""
+class ReapOptionsFlow(OptionsFlow):
+    """Add or remove plantings, or change Reap settings."""
 
     def __init__(self) -> None:
         self._crop: str | None = None

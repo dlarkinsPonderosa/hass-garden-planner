@@ -1,6 +1,8 @@
-<img src="custom_components/garden_planner/brand/icon.png" alt="Garden Planner icon" width="96" align="right">
+<img src="custom_components/reap/brand/icon.png" alt="Reap icon" width="96" align="right">
 
-# Garden Planner for Home Assistant
+# Reap for Home Assistant
+
+*Reap what you Sow.*
 
 Turns a list of crops into dated garden tasks on a Home Assistant to-do list:
 sowing indoors, potting up, hardening off, transplanting, direct sowing,
@@ -23,9 +25,21 @@ crops and varieties.
 
 1. In HACS, open the three-dot menu, choose **Custom repositories**, add
    `https://github.com/dlarkinsPonderosa/hass-garden-planner` as an
-   **Integration**, then download **Garden Planner**.
+   **Integration**, then download **Reap**.
 2. Restart Home Assistant.
-3. Go to **Settings > Devices & services > Add integration > Garden Planner**.
+3. Go to **Settings > Devices & services > Add integration > Reap**.
+
+### Upgrading from Garden Planner (0.2.x)
+
+Version 0.3.0 renamed the integration from Garden Planner (`garden_planner`)
+to Reap (`reap`) so it no longer shares a name with other projects. Home
+Assistant treats it as a new integration:
+
+1. Delete the Garden Planner integration in **Settings > Devices & services**.
+2. Update in HACS and restart.
+3. Add **Reap** and re-enter your plantings.
+4. Delete any leftover Garden Planner tasks from your task list, and change
+   dashboard cards from `custom:garden-planner-card` to `custom:reap-card`.
 
 ### Setup options
 
@@ -68,10 +82,10 @@ All of these can be changed later under **Configure**.
 ## Dashboard card
 
 The integration includes a card, loaded automatically (no separate install).
-Edit a dashboard, add a card and pick **Garden Planner**, or use YAML:
+Edit a dashboard, add a card and pick **Reap**, or use YAML:
 
 ```yaml
-type: custom:garden-planner-card
+type: custom:reap-card
 title: Garden              # optional
 show_done: false           # optional: also list plantings with no open tasks
 ```
@@ -92,7 +106,7 @@ peas, bush beans and corn a few times). Change them from the card or the
 Configure menu with "Save as the default", or with the action:
 
 ```yaml
-action: garden_planner.set_crop_defaults
+action: reap.set_crop_defaults
 data:
   crop: carrot
   method: direct_bed
@@ -105,7 +119,7 @@ override them.
 
 ## Adding plantings
 
-Go to **Settings > Devices & services > Garden Planner > Configure** and pick
+Go to **Settings > Devices & services > Reap > Configure** and pick
 **Add a planting**:
 
 1. Choose the crop.
@@ -115,11 +129,11 @@ Go to **Settings > Devices & services > Garden Planner > Configure** and pick
 
 **Remove plantings** and **Settings** are on the same menu.
 
-You can also use the `garden_planner.add_planting` action from Developer tools
+You can also use the `reap.add_planting` action from Developer tools
 > Actions, a script or a dashboard button.
 
 ```yaml
-action: garden_planner.add_planting
+action: reap.add_planting
 data:
   crop: carrot
   method: direct_bed
@@ -138,9 +152,9 @@ data:
 | `succession_days`, `succession_count`, `succession_until` | Repeat sowings |
 | `variety`, `quantity`, `location`, `notes` | Shown on the tasks |
 
-`garden_planner.preview_planting` takes the same fields and returns the tasks
-without saving anything. `garden_planner.update_planting` takes a
-`planting_id` plus any fields to change (an empty value clears a field). `garden_planner.remove_planting` removes a planting
+`reap.preview_planting` takes the same fields and returns the tasks
+without saving anything. `reap.update_planting` takes a
+`planting_id` plus any fields to change (an empty value clears a field). `reap.remove_planting` removes a planting
 and its open tasks (completed ones stay on your list).
 
 ## How dates are worked out
@@ -164,7 +178,7 @@ and its open tasks (completed ones stay on your list).
 ## Custom crops and varieties
 
 ```yaml
-action: garden_planner.add_crop
+action: reap.add_crop
 data:
   key: tomato_sungold
   name: Tomato, Sungold
@@ -183,18 +197,18 @@ offsets directly (`L-14`, `F+7`):
       transplant: ["05-01", "06-15"]
 ```
 
-Using a built-in key overrides that crop. `garden_planner.list_crops` returns
+Using a built-in key overrides that crop. `reap.list_crops` returns
 every crop with its icon, methods, seasons and defaults.
 
 ## Entities
 
 | Entity | State | Attributes |
 | --- | --- | --- |
-| `sensor.garden_planner_next_task` | Next open task | due date, crop, method |
-| `sensor.garden_planner_tasks_due_this_week` | Count, including overdue | task list |
-| `sensor.garden_planner_overdue_tasks` | Count | task list |
-| `sensor.garden_planner_plantings` | Count | every planting with its full schedule |
-| `todo.garden_planner_garden_tasks` | Only when the planner makes its own list | |
+| `sensor.reap_next_task` | Next open task | due date, crop, method |
+| `sensor.reap_tasks_due_this_week` | Count, including overdue | task list |
+| `sensor.reap_overdue_tasks` | Count | task list |
+| `sensor.reap_plantings` | Count | every planting with its full schedule |
+| `todo.reap_garden_tasks` | Only when the planner makes its own list | |
 
 Each crop has a Material Design icon (`mdi:carrot`, `mdi:chili-mild`,
 `mdi:spa` for herbs and so on) and each kind of task has one too (`mdi:seed`

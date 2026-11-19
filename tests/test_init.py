@@ -11,14 +11,14 @@ from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
 from homeassistant.setup import async_setup_component
 
-from custom_components.garden_planner.const import (
+from custom_components.reap.const import (
     CONF_TODO_ENTITY,
     DEFAULTS,
     DOMAIN,
     NEW_LIST,
 )
 
-OWN_LIST = "todo.garden_planner_garden_tasks"
+OWN_LIST = "todo.reap_garden_tasks"
 
 
 async def _items(hass: HomeAssistant, entity_id: str) -> list[dict[str, Any]]:
@@ -115,9 +115,9 @@ async def test_own_list_planting_flow(hass: HomeAssistant) -> None:
     assert items[0]["due"] == "2027-02-13"
     assert "6 cells" in items[0]["description"]
 
-    assert hass.states.get("sensor.garden_planner_overdue_tasks").state == "1"
-    assert hass.states.get("sensor.garden_planner_next_task").state == "Sow Tomato indoors"
-    plantings = hass.states.get("sensor.garden_planner_plantings")
+    assert hass.states.get("sensor.reap_overdue_tasks").state == "1"
+    assert hass.states.get("sensor.reap_next_task").state == "Sow Tomato indoors"
+    plantings = hass.states.get("sensor.reap_plantings")
     assert plantings.state == "1"
     assert plantings.attributes["plantings"][0]["crop_name"] == "Tomato"
 
@@ -131,7 +131,7 @@ async def test_own_list_planting_flow(hass: HomeAssistant) -> None:
     await hass.async_block_till_done()
     items = {i["summary"]: i for i in await _items(hass, OWN_LIST)}
     assert items["Pot up Tomato"]["due"] == "2027-03-16"
-    assert hass.states.get("sensor.garden_planner_overdue_tasks").state == "0"
+    assert hass.states.get("sensor.reap_overdue_tasks").state == "0"
 
     # Removing the planting clears its open tasks but leaves completed ones.
     await hass.services.async_call(
