@@ -36,25 +36,49 @@ async def _setup(hass: HomeAssistant, **data: Any) -> MockConfigEntry:
     return entry
 
 
-async def test_config_flow_defaults(hass: HomeAssistant) -> None:
+LOCATION = {k: v for k, v in DEFAULTS.items() if k != CONF_TODO_ENTITY}
+
+
+async def _start_flow(hass: HomeAssistant, zone: str) -> dict[str, Any]:
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": config_entries.SOURCE_USER}
     )
     assert result["type"] == "form"
+    return await hass.config_entries.flow.async_configure(
+        result["flow_id"], {CONF_TODO_ENTITY: NEW_LIST, "zone": zone}
+    )
+
+
+async def test_config_flow_victoria(hass: HomeAssistant) -> None:
+    result = await _start_flow(hass, "victoria")
+    assert result["step_id"] == "location"
     result = await hass.config_entries.flow.async_configure(
-        result["flow_id"], {**DEFAULTS, "last_frost": "3-6"}
+        result["flow_id"], {**LOCATION, "last_frost": "3-6"}
     )
     assert result["type"] == "create_entry"
     assert result["data"]["last_frost"] == "03-06"
+    assert result["data"]["warm_last_frost"] == "04-01"
     assert result["data"][CONF_TODO_ENTITY] == NEW_LIST
 
 
+async def test_config_flow_zone_suggests_frost_dates(hass: HomeAssistant) -> None:
+    result = await _start_flow(hass, "5")
+    schema = result["data_schema"].schema
+    defaults = {str(k): k.default() for k in schema if callable(getattr(k, "default", None))}
+    assert defaults["last_frost"] == "04-30"
+    assert defaults["first_frost"] == "10-10"
+    user = {**LOCATION, "last_frost": "04-30", "first_frost": "10-10", "offset_days": -7}
+    user.pop("warm_last_frost")
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], user)
+    assert result["type"] == "create_entry"
+    assert result["data"]["warm_last_frost"] == ""
+    assert result["data"]["offset_days"] == -7
+
+
 async def test_config_flow_bad_date(hass: HomeAssistant) -> None:
-    result = await hass.config_entries.flow.async_init(
-        DOMAIN, context={"source": config_entries.SOURCE_USER}
-    )
+    result = await _start_flow(hass, "custom")
     result = await hass.config_entries.flow.async_configure(
-        result["flow_id"], {**DEFAULTS, "first_frost": "13-40"}
+        result["flow_id"], {**LOCATION, "first_frost": "13-40"}
     )
     assert result["errors"] == {"first_frost": "invalid_month_day"}
 
@@ -197,3 +221,27 @@ async def test_options_flow(hass: HomeAssistant) -> None:
     assert result["type"] == "create_entry"
     await hass.async_block_till_done()
     assert entry.runtime_data.settings.greenhouse_spring_weeks == 6
+
+
+async def test_add_crop_with_calendar_dates(hass: HomeAssistant) -> None:
+    entry = await _setup(hass)
+    await hass.services.async_call(
+        DOMAIN, "add_crop",
+        {
+            "key": "sweet_potato", "name": "Sweet potato", "frost_tender": True,
+            "windows": [{"season": "spring", "transplant": ["05-15", "06-15"]}],
+            "days_to_harvest": 110,
+        },
+        blocking=True,
+    )
+    crop = entry.runtime_data.crop("sweet_potato")
+    # Stored relative to the warm-crop frost date (Apr 1), so May 15 = L+44.
+    assert crop.windows[0].transplant == ("L+44", "L+75")
+    _, tasks = entry.runtime_data.preview(
+        {"crop": "sweet_potato", "method": "indoor_bed", "year": 2027}
+    )
+    assert any(t.kind == "transplant" and t.due.isoformat() == "2027-05-15" for t in tasks)
+
+    tomato_variety = {"key": "tomato_sungold", "name": "Tomato, Sungold", "based_on": "tomato", "days_to_harvest": 105}
+    await hass.services.async_call(DOMAIN, "add_crop", tomato_variety, blocking=True)
+    assert entry.runtime_data.crop("tomato_sungold").windows == entry.runtime_data.crop("tomato").windows

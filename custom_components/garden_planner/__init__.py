@@ -20,7 +20,7 @@ from homeassistant.helpers.typing import ConfigType
 
 from .const import DOMAIN
 from .manager import GardenManager, default_year
-from .planner import METHODS, Crop, PlannerError, Window
+from .planner import METHODS, OFFSET_RE, Crop, PlannerError, mmdd_to_offset
 
 PLATFORMS = [Platform.SENSOR, Platform.TODO]
 
@@ -41,7 +41,11 @@ PLANTING_FIELDS = {
     vol.Optional("notes"): cv.string,
 }
 
-RANGE = vol.All(cv.ensure_list, [cv.matches_regex(r"^\d{2}-\d{2}$")], vol.Length(2, 2))
+RANGE = vol.All(
+    cv.ensure_list,
+    [cv.matches_regex(r"^(\d{1,2}-\d{1,2}|[LF][+-]\d+)$")],
+    vol.Length(2, 2),
+)
 WINDOW_SCHEMA = vol.Schema(
     {
         vol.Optional("season", default="spring"): cv.string,
@@ -71,6 +75,11 @@ def _manager(hass: HomeAssistant) -> GardenManager:
     if not entries:
         raise ServiceValidationError("Garden Planner is not set up")
     return entries[0].runtime_data
+
+
+def _mmdd(value: str) -> str:
+    month, day = (int(p) for p in value.split("-"))
+    return f"{month:02d}-{day:02d}"
 
 
 def _planting_fields(call: ServiceCall) -> dict[str, Any]:
@@ -121,8 +130,27 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             raise ServiceValidationError("A new crop needs a name")
         if not merged.get("windows"):
             raise ServiceValidationError("A new crop needs windows or based_on")
+        if "windows" in data:
+            # Calendar dates (MM-DD) are this garden's dates; store them as
+            # offsets from its frost dates so they follow later changes.
+            settings = manager.settings
+            last_frost = settings.last_frost
+            if merged.get("frost_tender") and settings.warm_last_frost:
+                last_frost = settings.warm_last_frost
+            windows = []
+            for window in data["windows"]:
+                converted = dict(window)
+                for key in ("indoor", "direct", "transplant", "cover"):
+                    if key in window:
+                        converted[key] = [
+                            value if OFFSET_RE.match(value) else mmdd_to_offset(
+                                _mmdd(value), last_frost, settings.first_frost
+                            )
+                            for value in window[key]
+                        ]
+                windows.append(converted)
+            merged["windows"] = windows
         crop = Crop.from_dict(merged)
-        crop.windows = [Window.from_dict(w) for w in merged["windows"]]
         await manager.async_add_crop(crop)
 
     async def remove_crop(call: ServiceCall) -> None:

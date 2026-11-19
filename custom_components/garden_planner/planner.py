@@ -9,6 +9,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field, fields
 from datetime import date, timedelta
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -34,6 +35,7 @@ TASK_COVER = "cover"
 TASK_HARVEST = "harvest"
 
 CATALOG_PATH = Path(__file__).parent / "data" / "crops.json"
+OFFSET_RE = re.compile(r"^([LF])([+-]\d+)$")
 
 
 class PlannerError(ValueError):
@@ -61,15 +63,12 @@ class Settings:
 
     last_frost: str = "03-06"
     first_frost: str = "11-16"
-    # The chart covers all of South Coastal BC. Shifting moves spring dates by
-    # (last_frost - baseline_last_frost) and fall dates by
-    # (first_frost - baseline_first_frost).
-    shift_windows: bool = True
-    # Warm-season crops depend on soil and night temperature more than on the
-    # last frost, so by default their bed dates are not moved earlier.
-    shift_frost_tender: bool = False
-    baseline_last_frost: str = "04-01"
-    baseline_first_frost: str = "11-16"
+    # Last frost date used for frost-tender crops. Warm crops need warm soil
+    # and nights, so where the last frost is unusually early (like Victoria)
+    # this can be set later than last_frost. Empty means the same date.
+    warm_last_frost: str | None = None
+    # Moves every date earlier (negative) or later (positive).
+    offset_days: int = 0
     greenhouse_spring_weeks: int = 4
     greenhouse_fall_weeks: int = 4
     harden_off_days: int = 7
@@ -83,7 +82,11 @@ class Settings:
 
 @dataclass
 class Window:
-    """One growing window of a crop, with "MM-DD" ranges."""
+    """One growing window of a crop.
+
+    Each range is a pair of frost offsets such as ("L-31", "L+14"): days from
+    the last spring frost (L) or the first fall frost (F).
+    """
 
     season: str
     indoor: tuple[str, str] | None = None
@@ -236,21 +239,40 @@ def _window_supports(window: Window, method: str) -> bool:
     return window.direct is not None
 
 
-def _shift_days(settings: Settings, crop: Crop, day: date) -> int:
-    if not settings.shift_windows:
-        return 0
-    if crop.frost_tender and not settings.shift_frost_tender:
-        return 0
-    year = day.year
+def parse_offset(token: str) -> tuple[str, int]:
+    """Split "L-26" into ("L", -26). L is last frost, F is first frost."""
+    match = OFFSET_RE.match(token)
+    if not match:
+        raise PlannerError(f"Bad date offset {token!r}; use L-14 or F+7 style")
+    return match.group(1), int(match.group(2))
+
+
+def format_offset(anchor: str, days: int) -> str:
+    return f"{anchor}{days:+d}"
+
+
+def mmdd_to_offset(mmdd: str, last_frost: str, first_frost: str) -> str:
+    """Turn a calendar date into an offset from that location's frost dates.
+
+    Dates before July are measured from the last frost, later ones from the
+    first frost.
+    """
+    day = month_day(2001, mmdd)
     if day.month < 7:
-        return (
-            month_day(year, settings.last_frost)
-            - month_day(year, settings.baseline_last_frost)
-        ).days
-    return (
-        month_day(year, settings.first_frost)
-        - month_day(year, settings.baseline_first_frost)
-    ).days
+        return format_offset("L", (day - month_day(2001, last_frost)).days)
+    return format_offset("F", (day - month_day(2001, first_frost)).days)
+
+
+def resolve(token: str, year: int, crop: Crop, settings: Settings) -> date:
+    """The calendar date of a frost offset for this location."""
+    anchor, days = parse_offset(token)
+    if anchor == "L":
+        mmdd = settings.last_frost
+        if crop.frost_tender and settings.warm_last_frost:
+            mmdd = settings.warm_last_frost
+    else:
+        mmdd = settings.first_frost
+    return month_day(year, mmdd) + timedelta(days=days + settings.offset_days)
 
 
 def effective_range(
@@ -260,11 +282,9 @@ def effective_range(
     settings: Settings,
     greenhouse: bool,
 ) -> tuple[date, date]:
-    """A chart range for this location and growing place."""
-    start = month_day(year, rng[0])
-    end = month_day(year, rng[1])
-    start += timedelta(days=_shift_days(settings, crop, start))
-    end += timedelta(days=_shift_days(settings, crop, end))
+    """A crop range as calendar dates for this location and growing place."""
+    start = resolve(rng[0], year, crop, settings)
+    end = resolve(rng[1], year, crop, settings)
     if greenhouse:
         start -= timedelta(weeks=settings.greenhouse_spring_weeks)
         end += timedelta(weeks=settings.greenhouse_fall_weeks)
@@ -294,8 +314,10 @@ def _weeks_indoor(crop: Crop, window: Window) -> int:
     if crop.weeks_indoor:
         return int(crop.weeks_indoor)
     if window.indoor and window.transplant:
-        gap = month_day(2000, window.transplant[0]) - month_day(2000, window.indoor[0])
-        return max(1, round(gap.days / 7))
+        a_anchor, a_days = parse_offset(window.indoor[0])
+        b_anchor, b_days = parse_offset(window.transplant[0])
+        if a_anchor == b_anchor:
+            return max(1, round((b_days - a_days) / 7))
     return 6
 
 

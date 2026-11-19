@@ -6,9 +6,13 @@ covering and harvest. It handles three ways of growing (indoor starts under
 lights, beds, heated greenhouse), repeat sowings such as carrots every week,
 and moves later tasks when you tick one off early or late.
 
-The built-in crop catalog is transcribed from the
-*South Coastal BC Vegetable Planting Guide* (49 crops), plus potato, tomatillo,
-cilantro, dill and Italian parsley. You can add your own crops and varieties.
+It works anywhere: every crop's timing is stored as days before or after the
+last spring frost and the first fall frost, so your own frost dates turn it
+into a calendar for your garden.
+
+The built-in crop catalog is transcribed from West Coast Seeds' *South Coastal
+BC Vegetable Planting Guide* (49 crops), plus potato, tomatillo, cilantro, dill
+and Italian parsley. You can add your own crops and varieties.
 
 ## Install
 
@@ -20,16 +24,21 @@ cilantro, dill and Italian parsley. You can add your own crops and varieties.
 
 ### Setup options
 
-| Option | Default | What it does |
+Setup starts with the task list and a starting point for frost dates: Victoria
+(the planting guide's dates), a USDA hardiness zone, or your own. Zones only
+roughly predict frost dates, since they measure winter cold rather than season
+length, so check the suggested dates against your local averages.
+
+| Option | Victoria default | What it does |
 | --- | --- | --- |
 | Task list | Create a new Garden Tasks list | Pick an existing to-do list (any list that supports due dates works best) or let the planner create its own |
-| Last spring frost | 03-06 | Victoria, from the planting guide |
-| First fall frost | 11-16 | Victoria, from the planting guide |
-| Shift the chart's dates | On | Moves spring dates by how far your last frost is from the chart's April 1 baseline (26 days earlier for Victoria) and fall dates by your first frost |
-| Also shift frost-tender crops in beds | Off | Tomatoes, peppers, squash and other warm crops keep the chart's bed dates unless this is on |
+| Last spring frost | 03-06 | Average last frost |
+| First fall frost | 11-16 | Average first frost |
+| Last frost for warm crops | 04-01 | Tomatoes, peppers, squash and other frost-tender crops are timed from this instead. Useful where spring stays cool after the last frost, like coastal BC. Leave empty to use the last frost |
+| Move all dates by | 0 days | Fine-tune for a warm (negative) or cold (positive) garden |
 | Greenhouse weeks earlier in spring / later in fall | 4 / 4 | Widens every window for greenhouse plantings |
 | Harden off days (beds / greenhouse) | 7 / 3 | Set to 0 to skip the task |
-| Look-ahead days | 30 | Tasks are added to the list when they are this close, so long succession sowings don't flood it |
+| Look-ahead days | 30 | Tasks are added to the list this many days before they're due, with their real due date, so long succession sowings don't flood it |
 
 All of these can be changed later under **Configure**.
 
@@ -64,6 +73,12 @@ and its open tasks (completed ones stay on your list).
 
 ## How dates are worked out
 
+- **Frost offsets**: each crop window is stored as offsets such as `L-31`
+  (31 days before last frost) or `F-57` (57 days before first frost). Dates
+  before July on the chart are measured from the last frost (April 1 on the
+  chart), later ones from the first frost (November 16). Your frost dates and
+  offset turn them back into calendar dates.
+
 - **Indoor starts**: sow indoors = transplant date minus the crop's weeks
   indoors (tomato 7, pepper 10, onion and leek 10). Tomatoes, peppers,
   eggplant, tomatillos and artichokes get a pot-up task halfway.
@@ -85,7 +100,9 @@ data:
   days_to_harvest: 105
 ```
 
-A new crop without `based_on` needs `windows`, using month-day ranges:
+A new crop without `based_on` needs `windows`. Ranges can be your garden's
+calendar dates (MM-DD), which are saved as offsets from your frost dates, or
+offsets directly (`L-14`, `F+7`):
 
 ```yaml
   windows:
@@ -113,3 +130,7 @@ the whole catalog.
 pip install -r requirements_test.txt
 pytest
 ```
+
+The catalog is generated from the chart transcription in
+`scripts/build_catalog.py`: edit that file and run it to rebuild
+`data/crops.json`.

@@ -20,8 +20,10 @@ from custom_components.garden_planner.planner import (
 )
 
 CATALOG = load_catalog()
-VICTORIA = Settings()
-AS_PRINTED = Settings(shift_windows=False)
+# Victoria: early last frost, but warm crops keep the chart's April 1 date.
+VICTORIA = Settings(last_frost="03-06", first_frost="11-16", warm_last_frost="04-01")
+# The chart as printed: April 1 last frost for everything.
+AS_PRINTED = Settings(last_frost="04-01", first_frost="11-16")
 
 
 def tasks_for(**kwargs):
@@ -107,3 +109,24 @@ def test_late_task_shifts_rest_of_chain():
     moved = next(t for t in tasks if t.kind == TASK_TRANSPLANT)
     assert (moved.due - transplant).days == 5
     assert moved.planned == transplant
+
+
+def test_other_location_uses_its_frost_dates():
+    # A zone 5 garden: last frost Apr 30, first frost Oct 10, one week colder.
+    zone5 = Settings(last_frost="04-30", first_frost="10-10", offset_days=7)
+    planting = Planting(id="p1", year=2027, crop="tomato", method="indoor_bed")
+    dates = by_kind(generate_tasks(planting, CATALOG["tomato"], zone5))
+    # Chart: transplant 30 days after last frost, plus the 7 day offset.
+    assert dates[TASK_TRANSPLANT] == date(2027, 6, 6)
+    planting = Planting(id="p2", year=2027, crop="garlic", method="direct_bed", season="fall")
+    dates = by_kind(generate_tasks(planting, CATALOG["garlic"], zone5))
+    # Chart: garlic from 57 days before first frost, plus 7.
+    assert dates[TASK_SOW] == date(2027, 8, 21)
+
+
+def test_catalog_matches_chart_when_frost_dates_match():
+    # With the chart's own frost dates, the stored offsets give back the
+    # calendar dates read off the chart.
+    planting = Planting(id="p1", year=2027, crop="pepper", method="indoor_bed")
+    dates = by_kind(generate_tasks(planting, CATALOG["pepper"], AS_PRINTED))
+    assert dates[TASK_TRANSPLANT] == date(2027, 6, 1)

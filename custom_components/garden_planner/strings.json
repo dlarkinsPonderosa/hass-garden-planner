@@ -9,24 +9,36 @@
     "step": {
       "user": {
         "title": "Garden Planner",
-        "description": "Frost dates are month-day. The defaults are Victoria's dates from the South Coastal BC Vegetable Planting Guide.",
+        "description": "Choose where tasks go and a starting point for your frost dates. You can adjust the dates on the next page.",
         "data": {
           "todo_entity": "Task list",
+          "zone": "Starting point"
+        },
+        "data_description": {
+          "todo_entity": "Pick an existing to-do list, or let the planner create its own.",
+          "zone": "Hardiness zones only roughly predict frost dates, so check them against local averages on the next page."
+        }
+      },
+      "location": {
+        "title": "Frost dates and greenhouse",
+        "description": "Crop timings are stored as days before or after your frost dates.",
+        "data": {
           "last_frost": "Last spring frost (MM-DD)",
           "first_frost": "First fall frost (MM-DD)",
-          "shift_windows": "Shift the chart's dates to these frost dates",
-          "shift_frost_tender": "Also shift frost-tender crops in beds",
           "greenhouse_spring_weeks": "Greenhouse: weeks earlier in spring",
           "greenhouse_fall_weeks": "Greenhouse: weeks later in fall",
           "harden_off_days": "Days to harden off before planting in beds",
           "greenhouse_harden_off_days": "Days to harden off before planting in the greenhouse",
-          "lookahead_days": "Add tasks to the list this many days ahead"
+          "lookahead_days": "Add tasks to the list this many days ahead",
+          "warm_last_frost": "Last frost for warm crops (MM-DD, optional)",
+          "offset_days": "Move all dates by"
         },
         "data_description": {
-          "todo_entity": "Pick an existing to-do list, or let the planner create its own.",
-          "shift_windows": "The chart covers all of South Coastal BC. When on, spring dates move by how much earlier your last frost is than April 1.",
-          "shift_frost_tender": "Tomatoes, peppers, squash and other warm crops need warm soil and nights, so they keep the chart's bed dates unless this is on.",
-          "lookahead_days": "Tasks further out stay in the planner until they come into view, so long succession sowings don't flood the list."
+          "lookahead_days": "Tasks further out stay in the planner until they come into view, so long succession sowings don't flood the list.",
+          "last_frost": "Average date of the last frost in spring.",
+          "first_frost": "Average date of the first frost in fall.",
+          "warm_last_frost": "Tomatoes, peppers, squash and other frost-tender crops are timed from this date instead. Set it later than your last frost where spring stays cool, like coastal BC. Leave empty to use the last frost.",
+          "offset_days": "Negative for earlier, positive for later. Use this to fine-tune for a warm or cold garden."
         }
       }
     }
@@ -39,22 +51,24 @@
       "init": {
         "title": "Garden Planner settings",
         "data": {
-          "todo_entity": "Task list",
           "last_frost": "Last spring frost (MM-DD)",
           "first_frost": "First fall frost (MM-DD)",
-          "shift_windows": "Shift the chart's dates to these frost dates",
-          "shift_frost_tender": "Also shift frost-tender crops in beds",
           "greenhouse_spring_weeks": "Greenhouse: weeks earlier in spring",
           "greenhouse_fall_weeks": "Greenhouse: weeks later in fall",
           "harden_off_days": "Days to harden off before planting in beds",
           "greenhouse_harden_off_days": "Days to harden off before planting in the greenhouse",
-          "lookahead_days": "Add tasks to the list this many days ahead"
+          "lookahead_days": "Add tasks to the list this many days ahead",
+          "warm_last_frost": "Last frost for warm crops (MM-DD, optional)",
+          "offset_days": "Move all dates by",
+          "todo_entity": "Task list"
         },
         "data_description": {
-          "todo_entity": "Pick an existing to-do list, or let the planner create its own.",
-          "shift_windows": "The chart covers all of South Coastal BC. When on, spring dates move by how much earlier your last frost is than April 1.",
-          "shift_frost_tender": "Tomatoes, peppers, squash and other warm crops need warm soil and nights, so they keep the chart's bed dates unless this is on.",
-          "lookahead_days": "Tasks further out stay in the planner until they come into view, so long succession sowings don't flood the list."
+          "lookahead_days": "Tasks further out stay in the planner until they come into view, so long succession sowings don't flood the list.",
+          "last_frost": "Average date of the last frost in spring.",
+          "first_frost": "Average date of the first frost in fall.",
+          "warm_last_frost": "Tomatoes, peppers, squash and other frost-tender crops are timed from this date instead. Set it later than your last frost where spring stays cool, like coastal BC. Leave empty to use the last frost.",
+          "offset_days": "Negative for earlier, positive for later. Use this to fine-tune for a warm or cold garden.",
+          "todo_entity": "Pick an existing to-do list, or let the planner create its own."
         }
       }
     }
@@ -217,7 +231,7 @@
         },
         "windows": {
           "name": "Windows",
-          "description": "List of windows with season and MM-DD ranges for indoor, direct, transplant and cover."
+          "description": "List of windows with a season and ranges for indoor, direct, transplant and cover. Each range is two dates, either MM-DD for your garden or offsets like L-14 (14 days before last frost) and F+7 (7 days after first frost)."
         },
         "weeks_indoor": {
           "name": "Weeks indoors",
