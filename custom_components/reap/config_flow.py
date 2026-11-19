@@ -194,6 +194,10 @@ def _crop_from_form(manager: Any, user_input: dict[str, Any]) -> dict[str, Any]:
         "frost_tender": bool(user_input.get("frost_tender")),
         "perennial": bool(user_input.get("perennial")),
     }
+    if base := manager.crops.get(user_input.get("based_on") or ""):
+        # A copy of a frost-tender or perennial crop stays that way.
+        data["frost_tender"] = data["frost_tender"] or base.frost_tender
+        data["perennial"] = data["perennial"] or base.perennial
     for key in ("icon", "based_on", "notes"):
         if user_input.get(key):
             data[key] = user_input[key]
@@ -435,7 +439,7 @@ class ReapOptionsFlow(OptionsFlow):
                 return await self.async_step_planting_confirm()
 
         methods = crop.methods(profile)
-        seasons = sorted({w.season for w in crop.windows_for(profile)})
+        seasons = crop.seasons(profile)
         defaults = manager.crop_defaults(crop.key)
         fields: dict[Any, Any] = {
             vol.Required("method", default=defaults.get("method", methods[0])): selector.SelectSelector(
@@ -563,13 +567,24 @@ class ReapOptionsFlow(OptionsFlow):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         errors: dict[str, str] = {}
+        placeholders = {"plantings": ""}
         if user_input is not None:
             errors = _validate(user_input)
             if not errors:
-                return self.async_create_entry(data=_clean(user_input))
+                options = _clean(user_input)
+                manager = self._manager
+                problems = manager.unschedulable(manager.settings_with(options))
+                # Say which plantings a change breaks; saving again keeps it.
+                if problems and problems != getattr(self, "_warned", None):
+                    self._warned = problems
+                    errors["base"] = "plantings_break"
+                    placeholders["plantings"] = "\n".join(f"- {p}" for p in problems)
+                else:
+                    return self.async_create_entry(data=options)
         current = {**self.config_entry.data, **self.config_entry.options}
         return self.async_show_form(
             step_id="settings",
             data_schema=_schema(self.hass, user_input or current),
             errors=errors,
+            description_placeholders=placeholders,
         )

@@ -80,10 +80,18 @@ from the cool-spring timing, shifted by the typical difference for crops that
 have both (`estimated_profiles` in `crops.json`).
 
 **Southern hemisphere:** enter your frost dates as usual (for example a last
-frost of 09-15 and a first frost of 05-01). When the first frost falls earlier
-in the calendar than the last frost, Reap treats the season as running across
-the new year: a planting's year is the year its spring falls in, and its fall
-tasks land in the next calendar year.
+frost of 09-15 and a first frost of 05-01). Reap uses your Home Assistant home
+location to tell the hemisphere (or, without one, a first frost earlier in the
+calendar than the last frost). Down south the season runs across the new year:
+a planting's year is the year its spring falls in, and its fall tasks land in
+the next calendar year.
+
+**Changing settings with plantings in place:** some crops have different
+seasons or methods in each climate profile. If a change in Settings would
+leave a planting that can't be scheduled, Configure lists it first; save
+again to keep the change. The card then marks that planting "Needs attention"
+until you change its season or method, or remove it. Its items stay on your
+list in the meantime.
 
 All of these can be changed later under **Configure**.
 
@@ -210,6 +218,9 @@ and its open tasks (completed ones stay on your list).
 - **Ticking a task off**: the date you tick it is recorded. If it was 5 days
   late, the rest of that planting's tasks move 5 days later. Un-ticking undoes
   it. Deleting a task from the list means it won't be added back.
+- **Notes on a task**: Reap keeps each item's description up to date (quantity,
+  location, notes) down to its `reap:` line. Anything you type below that line
+  is yours and is kept.
 
 ## Custom crops and varieties
 
@@ -285,6 +296,10 @@ The catalog is generated from the chart transcription in
 `data/crops.json`. The tests check that the two match
 (`python scripts/build_catalog.py --check`), so edit the script rather than
 the JSON.
+
+Service error messages come from the planner in English. The
+`exceptions` entries in `strings.json` pass that text through (`{error}`), so
+other languages would need the planner's messages translated first.
 
 Releases: bump `version` in `manifest.json` (it also busts the card's cache).
 When that reaches `main`, the Release workflow tags it (`v0.4.3`) and

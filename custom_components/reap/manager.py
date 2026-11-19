@@ -92,6 +92,9 @@ def _empty_data() -> dict[str, Any]:
     }
 
 
+# What pushed_entity holds while Reap uses its own list.
+OWN_LIST_KEY = "own"
+
 DEFAULT_LOCATIONS = ("Seedling Tray", "Garden", "Greenhouse")
 LOCATION_ENTITY_KEYS = ("soil_sensor", "light")
 
@@ -114,6 +117,8 @@ class GardenManager:
         self._syncing = False
         self._resync = False
         self._crops: dict[str, Crop] | None = None
+        # planting id -> why it can't be scheduled right now
+        self.problems: dict[str, str] = {}
 
     # ----- config -----
 
@@ -146,6 +151,7 @@ class GardenManager:
             greenhouse_harden_off_days=int(
                 self.option(CONF_GREENHOUSE_HARDEN_OFF_DAYS)
             ),
+            southern=_southern(self.hass),
         )
 
     @property
@@ -492,13 +498,15 @@ class GardenManager:
                         if OFFSET_RE.match(start) or OFFSET_RE.match(end):
                             converted[key] = [
                                 v if OFFSET_RE.match(v) else mmdd_to_offset(
-                                    _mmdd(v), last_frost, settings.first_frost
+                                    _mmdd(v), last_frost, settings.first_frost,
+                                    settings.southern,
                                 )
                                 for v in (start, end)
                             ]
                         else:
                             converted[key] = list(range_to_offsets(
-                                _mmdd(start), _mmdd(end), last_frost, settings.first_frost
+                                _mmdd(start), _mmdd(end), last_frost,
+                                settings.first_frost, settings.southern,
                             ))
                 windows.append(converted)
             merged["windows"] = windows
@@ -528,17 +536,8 @@ class GardenManager:
                 "Give a direct sowing range, or both an indoor start and a transplant range"
             )
         # Plantings of this crop must still fit its new dates.
-        for planting in self.plantings():
-            if planting.crop != crop.key:
-                continue
-            try:
-                generate_tasks(planting, crop, self.settings)
-            except PlannerError as err:
-                where = f" ({planting.season})" if planting.season else ""
-                raise PlannerError(
-                    f"A {planting.year}{where} planting of {crop.name} can't be "
-                    f"scheduled with these dates: {err}"
-                ) from err
+        if problems := self.unschedulable(crops={crop.key: crop}):
+            raise PlannerError(f"{problems[0]}. Change or remove that planting first")
         await self.async_add_crop(crop)
         return crop
 
@@ -560,7 +559,7 @@ class GardenManager:
             and crop.key in self.data["custom_crops"],
             "notes": crop.notes,
             "methods": crop.methods(profile),
-            "seasons": sorted({w.season for w in crop.windows_for(profile)}),
+            "seasons": crop.seasons(profile),
             "defaults": self.crop_defaults(crop.key),
         }
         settings = self.settings
@@ -611,6 +610,11 @@ class GardenManager:
         """Undo edits to a built-in crop, or bring a removed one back."""
         if key not in self.builtin_crops:
             raise PlannerError(f"{key} is not a built-in crop")
+        if problems := self.unschedulable(crops={key: self.builtin_crops[key]}):
+            raise PlannerError(
+                f"{problems[0]} once its edits are undone. "
+                "Change or remove that planting first"
+            )
         self.data["custom_crops"].pop(key, None)
         self.data["hidden_crops"] = [k for k in self.data["hidden_crops"] if k != key]
         self.rebuild()
@@ -621,6 +625,7 @@ class GardenManager:
         """Regenerate every task from the plantings and recorded actual dates."""
         self._crops = None  # crops may have changed
         tasks: list[Task] = []
+        problems: dict[str, str] = {}
         settings = self.settings
         for planting in self.plantings():
             try:
@@ -628,9 +633,60 @@ class GardenManager:
                     generate_tasks(planting, self.crop(planting.crop), settings)
                 )
             except PlannerError as err:
-                _LOGGER.warning("Skipping planting %s: %s", planting.id, err)
+                # Shown on the card; its items stay on the list until it's fixed.
+                _LOGGER.warning("Can't schedule planting %s: %s", planting.id, err)
+                problems[planting.id] = str(err)
+        self.problems = problems
         self.tasks = apply_actuals(tasks, self.data["actuals"])
         self._notify()
+
+    def unschedulable(
+        self,
+        settings: Settings | None = None,
+        crops: dict[str, Crop] | None = None,
+    ) -> list[str]:
+        """Plantings that couldn't be scheduled with these settings or crops.
+
+        Each is described for the person. Plantings already broken now aren't
+        listed, so a change is only blamed for what it breaks.
+        """
+        settings = settings or self.settings
+        out = []
+        for planting in self.plantings():
+            if planting.id in self.problems:
+                continue
+            crop = (crops or {}).get(planting.crop) or self.crops.get(planting.crop)
+            if crop is None:
+                continue
+            try:
+                generate_tasks(planting, crop, settings)
+            except PlannerError as err:
+                where = f" {planting.season}" if planting.season else ""
+                out.append(
+                    f"The {planting.year}{where} planting of {crop.name} "
+                    f"can't be scheduled ({err})"
+                )
+        return out
+
+    def settings_with(self, options: dict[str, Any]) -> Settings:
+        """The settings these Configure options would give."""
+        current = self.settings
+        merged = {**self.entry.data, **self.entry.options, **options}
+        return Settings(
+            last_frost=merged.get(CONF_LAST_FROST, current.last_frost),
+            first_frost=merged.get(CONF_FIRST_FROST, current.first_frost),
+            warm_last_frost=merged.get(CONF_WARM_LAST_FROST) or None,
+            offset_days=int(merged.get(CONF_OFFSET_DAYS, current.offset_days)),
+            profile=merged.get(CONF_PROFILE, current.profile),
+            greenhouse_spring_weeks=int(merged.get(
+                CONF_GREENHOUSE_SPRING_WEEKS, current.greenhouse_spring_weeks)),
+            greenhouse_fall_weeks=int(merged.get(
+                CONF_GREENHOUSE_FALL_WEEKS, current.greenhouse_fall_weeks)),
+            harden_off_days=int(merged.get(CONF_HARDEN_OFF_DAYS, current.harden_off_days)),
+            greenhouse_harden_off_days=int(merged.get(
+                CONF_GREENHOUSE_HARDEN_OFF_DAYS, current.greenhouse_harden_off_days)),
+            southern=current.southern,
+        )
 
     def open_tasks(self) -> list[Task]:
         dismissed = set(self.data["dismissed"])
@@ -703,10 +759,17 @@ class GardenManager:
             _LOGGER.warning("Could not read %s: %s", entity_id, err)
             return
         changed = False
-        if self.data.get("pushed_entity") != entity_id:
-            if self.data.get("pushed_entity") and self.data["pushed"]:
-                await self._async_leave_list(self.data["pushed_entity"])
-            self.data["pushed_entity"] = entity_id
+        # Reap's own list is known by "own", so renaming its entity isn't
+        # mistaken for a switch to another list.
+        list_key = OWN_LIST_KEY if self.uses_own_list else entity_id
+        stored = self.data.get("pushed_entity")
+        if stored == entity_id and list_key == OWN_LIST_KEY:
+            stored = self.data["pushed_entity"] = OWN_LIST_KEY  # older installs
+            changed = True
+        if stored != list_key:
+            if stored and self.data["pushed"]:
+                await self._async_leave_list(stored)
+            self.data["pushed_entity"] = list_key
             self.data["unmatched"] = []
             self.data["missing"] = []
             changed = True
@@ -719,13 +782,28 @@ class GardenManager:
         missing: set[str] = set()
         today = dt_util.now().date()
 
+        # 0. Find items added earlier whose uid wasn't learned then (the
+        # read-back failed), by their marker or summary.
+        if unmatched:
+            claimed = set(pushed.values())
+            by_task = {t.uid: t for t in self.tasks}
+            for task_uid in sorted(unmatched):
+                task = by_task.get(task_uid)
+                summary = _item_summary(task, has_due) if task else ""
+                if match := _find_new_item(items, task_uid, summary, claimed):
+                    pushed[task_uid] = match
+                    claimed.add(match)
+                    unmatched.discard(task_uid)
+                    changed = True
+
         # 1. Read back what happened on the list.
         for task_uid, item_uid in list(pushed.items()):
             item = by_uid.get(item_uid)
             if item is None:
-                if task_uid not in was_missing:
+                if task_uid not in was_missing and not self.uses_own_list:
                     # Missing once could be a list that hasn't loaded yet.
                     # Wait for the next sync before treating it as deleted.
+                    # (Reap's own list is always loaded.)
                     missing.add(task_uid)
                     continue
                 # Deleted from the list by hand: don't add it again.
@@ -754,7 +832,12 @@ class GardenManager:
         if unmatched - current:
             unmatched &= current
             changed = True
-        stale = [uid for uid in pushed if uid not in current]
+        # Keep the items of a planting that can't be scheduled right now (after
+        # a profile change, say); they come back in step once it's fixed.
+        stale = [
+            uid for uid in pushed
+            if uid not in current and uid.split(":")[0] not in self.problems
+        ]
         for task_uid in stale:
             item_uid = pushed.pop(task_uid)
             item = by_uid.get(item_uid)
@@ -783,8 +866,11 @@ class GardenManager:
                     update["rename"] = summary
                 if has_due and item.get("due") != task.due.isoformat():
                     update["due_date"] = task.due
-                if has_desc and (item.get("description") or "").strip() != description.strip():
-                    update["description"] = description
+                if has_desc:
+                    # Keep anything the person wrote after Reap's marker.
+                    merged = _merge_description(item.get("description"), description)
+                    if (item.get("description") or "").strip() != merged.strip():
+                        update["description"] = merged
                 if update:
                     try:
                         await self._async_call(
@@ -839,7 +925,6 @@ class GardenManager:
             await self._async_save()
         self._notify()
 
-
     async def _async_leave_list(self, old_entity_id: str) -> None:
         """The target list changed: take open items off the old list.
 
@@ -879,6 +964,20 @@ def _item_summary(task: Task, has_due: bool) -> str:
     return task.summary if has_due else f"{task.summary} ({task.due:%b %-d})"
 
 
+def _merge_description(existing: str | None, ours: str) -> str:
+    """Reap's description, followed by the person's own text, if any.
+
+    Reap owns everything up to and including its marker line; text after it
+    is the person's and is kept.
+    """
+    marker = ours.rsplit("\n", 1)[-1]
+    if existing and marker in existing:
+        tail = existing.split(marker, 1)[1]
+        if tail.strip():
+            return f"{ours}{tail}"
+    return ours
+
+
 def _item_description(task: Task) -> str:
     desc = f"{task.description}\n\n" if task.description else ""
     return f"{desc}{MARKER_PREFIX}{task.uid}"
@@ -898,6 +997,12 @@ def _shift_l(windows: list[dict[str, Any]], shift: int) -> list[dict[str, Any]]:
                 ]
         out.append(moved)
     return out
+
+
+def _southern(hass: HomeAssistant) -> bool | None:
+    """The hemisphere from Home Assistant's home location, if it's set."""
+    latitude = hass.config.latitude
+    return None if not latitude else latitude < 0
 
 
 def _find_new_item(

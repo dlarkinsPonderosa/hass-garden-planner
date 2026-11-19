@@ -553,7 +553,7 @@ class ReapCard extends HTMLElement {
 
     const plantings = this._plantings()
       .map((p) => ({ ...p, open: (p.tasks || []).filter((t) => !t.done_on) }))
-      .filter((p) => this._config.show_done || p.open.length || p.open_count)
+      .filter((p) => this._config.show_done || p.open.length || p.open_count || p.problem)
       .sort((a, b) => ((a.open[0] || {}).due || "9999").localeCompare((b.open[0] || {}).due || "9999"));
 
     if (!plantings.length) {
@@ -590,7 +590,11 @@ class ReapCard extends HTMLElement {
     const size = Math.max(16, Number(cfg.icon_size) || 40);
     const lines = [h("div", { class: "name" }, name, " ", icon(METHOD_ICONS[p.method] || "mdi:sprout", "method"))];
     if (cfg.show_info && details) lines.push(h("div", { class: "muted small" }, details));
-    if (cfg.show_next) {
+    if (p.problem) {
+      // Can't be scheduled (after a settings change, say): say why.
+      lines.push(h("div", { class: "error small" }, icon("mdi:alert-circle-outline"),
+        `Needs attention: ${p.problem}`));
+    } else if (cfg.show_next) {
       lines.push(next
         ? h("div", { class: "next small" }, icon(next.icon || "mdi:calendar"), `${shortDate(next.due)}: ${next.summary}`)
         : h("div", { class: "muted small" }, icon("mdi:check"), "All done"));
@@ -795,7 +799,12 @@ class ReapCard extends HTMLElement {
           const base = this._crop(value);
           if (base && !f.icon) f.icon = base.icon;
           if (base && !f.category) f.category = base.category;
-          if (base) f.planted = !!base.planted;
+          if (base) {
+            // A copy keeps how the crop is grown and timed.
+            f.planted = !!base.planted;
+            f.frost_tender = !!base.frost_tender;
+            f.perennial = !!base.perennial;
+          }
           this._render();
         }));
     }
@@ -1013,6 +1022,7 @@ const STYLE = `
   .removed summary { cursor: pointer; color: var(--secondary-text-color); padding: 8px 0; }
   .crop-icon.small-icon { width: 36px; height: 36px; --mdc-icon-size: 22px; }
   .error { color: var(--error-color); display: flex; align-items: center; gap: 6px; padding: 8px 0; }
+  .info .error { padding: 2px 0; }
 `;
 
 const EDITOR_SCHEMA = [

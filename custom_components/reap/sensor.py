@@ -149,7 +149,7 @@ class PlantingsSensor(GardenSensor):
     """Every planting, with its next open tasks."""
 
     _attr_icon = "mdi:flower"
-    _unrecorded_attributes = frozenset({"plantings", "locations"})
+    _unrecorded_attributes = frozenset({"plantings", "locations", "problems"})
 
     def __init__(self, manager: GardenManager) -> None:
         super().__init__(manager, "plantings")
@@ -170,10 +170,16 @@ class PlantingsSensor(GardenSensor):
                     "task_count": len(tasks),
                     "open_count": len(open_tasks),
                     "tasks": [t.to_dict() for t in open_tasks[:MAX_PLANTING_TASKS]],
+                    # Why it can't be scheduled right now, if it can't.
+                    "problem": self.manager.problems.get(planting.id),
                 }
             )
         self._attr_native_value = len(plantings)
         self._attr_extra_state_attributes = {
             "plantings": plantings,
             "locations": self.manager.locations(),
+            "problems": [
+                {"planting_id": pid, "problem": text}
+                for pid, text in self.manager.problems.items()
+            ],
         }
