@@ -1,0 +1,13 @@
+{
+  "domain": "garden_planner",
+  "name": "Garden Planner",
+  "codeowners": ["@dlarkinsPonderosa"],
+  "config_flow": true,
+  "dependencies": ["todo"],
+  "documentation": "https://github.com/dlarkinsPonderosa/hass-garden-planner",
+  "integration_type": "service",
+  "iot_class": "calculated",
+  "issue_tracker": "https://github.com/dlarkinsPonderosa/hass-garden-planner/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}
