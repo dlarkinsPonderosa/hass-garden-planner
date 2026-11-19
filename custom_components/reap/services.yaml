@@ -1,4 +1,3 @@
-# Generated crop options come from data/crops.json.
 add_planting:
   fields:
     crop:
@@ -20,7 +19,7 @@ add_planting:
     year:
       selector:
         number:
-          min: 2024
+          min: 2000
           max: 2100
           mode: box
     season:
@@ -83,7 +82,7 @@ preview_planting:
     year:
       selector:
         number:
-          min: 2024
+          min: 2000
           max: 2100
           mode: box
     season:
@@ -149,7 +148,7 @@ update_planting:
     year:
       selector:
         number:
-          min: 2024
+          min: 2000
           max: 2100
           mode: box
     season:

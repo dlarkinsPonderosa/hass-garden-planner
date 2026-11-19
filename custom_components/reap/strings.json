@@ -48,7 +48,8 @@
   "options": {
     "error": {
       "invalid_month_day": "Use month-day, for example 03-06.",
-      "crop_error": "{error}"
+      "crop_error": "{error}",
+      "plantings_break": "These plantings can't be scheduled with the new settings:\n{plantings}\n\nSave again to keep the change anyway. The card marks them until you change their season or method, or remove them."
     },
     "step": {
       "init": {
@@ -156,7 +157,7 @@
         },
         "data_description": {
           "based_on": "Optional. Starts from that crop's timing, icon and harvest.",
-          "frost_tender": "Timed from the warm-crop frost date, like tomatoes and squash.",
+          "frost_tender": "Timed from the warm-crop frost date, like tomatoes and squash. A copy of a frost-tender crop is frost tender too.",
           "notes": "Added to harvest tasks."
         }
       }

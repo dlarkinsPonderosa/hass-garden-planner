@@ -92,12 +92,13 @@ async def test_switching_list_moves_open_tasks(hass: HomeAssistant, tmp_path) ->
 
 
 @pytest.mark.freeze_time("2027-03-01 12:00:00")
-async def test_list_briefly_empty_dismisses_nothing(hass: HomeAssistant) -> None:
-    entry = await _setup(hass)
+async def test_list_briefly_empty_dismisses_nothing(hass: HomeAssistant, tmp_path) -> None:
+    target = await _local_list(hass, tmp_path)
+    entry = await _setup(hass, todo_entity=target)
     manager = entry.runtime_data
     await _call(hass, "add_planting", {"crop": "radish", "method": "direct_bed", "year": 2027})
     await hass.async_block_till_done()
-    count = len(manager.own_items)
+    count = len(await _items(hass, target))
     assert count
     real_get = manager._async_get_items
 
@@ -114,7 +115,7 @@ async def test_list_briefly_empty_dismisses_nothing(hass: HomeAssistant) -> None
     await manager.async_sync()
     assert manager.data["missing"] == []
     assert manager.data["dismissed"] == []
-    assert len(manager.own_items) == count
+    assert len(await _items(hass, target)) == count
 
 
 # ----- H2: editing a crop that has summer windows -----
@@ -186,6 +187,7 @@ def test_southern_hemisphere_season_crosses_new_year() -> None:
 
 
 async def test_southern_custom_crop_dates(hass: HomeAssistant) -> None:
+    hass.config.latitude = -36.8  # Auckland
     entry = await _setup(hass, last_frost="09-15", first_frost="05-01", warm_last_frost="")
     manager = entry.runtime_data
     await _call(hass, "add_crop", {

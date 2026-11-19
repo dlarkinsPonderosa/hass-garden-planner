@@ -44,6 +44,8 @@ TASK_ICONS = {
     TASK_HARVEST: "mdi:basket",
 }
 
+SEASON_ORDER = ("spring", "summer", "fall", "winter")
+
 CATALOG_PATH = Path(__file__).parent / "data" / "crops.json"
 OFFSET_RE = re.compile(r"^([LF])([+-]\d+)$")
 
@@ -85,6 +87,9 @@ class Settings:
     greenhouse_fall_weeks: int = 4
     harden_off_days: int = 7
     greenhouse_harden_off_days: int = 3
+    # Southern hemisphere, from Home Assistant's latitude. None guesses from
+    # the frost dates.
+    southern: bool | None = None
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Settings:
@@ -206,6 +211,11 @@ class Crop:
     def supports(self, method: str, profile: str | None = None) -> bool:
         return any(_window_supports(w, method) for w in self.windows_for(profile))
 
+    def seasons(self, profile: str | None = None) -> list[str]:
+        """The crop's seasons in calendar order: spring, summer, fall, winter."""
+        found = {w.season for w in self.windows_for(profile)}
+        return sorted(found, key=lambda s: (SEASON_ORDER.index(s) if s in SEASON_ORDER else 9, s))
+
     def methods(self, profile: str | None = None) -> list[str]:
         return [m for m in METHODS if self.supports(m, profile)]
 
@@ -306,16 +316,33 @@ def format_offset(anchor: str, days: int) -> str:
     return f"{anchor}{days:+d}"
 
 
-def is_southern(settings_or_last: Settings | str, first_frost: str | None = None) -> bool:
+def frost_wraps(last_frost: str, first_frost: str) -> bool:
     """True when the first frost comes earlier in the calendar than the last
-    frost, as in the southern hemisphere. The growing season then crosses the
-    new year: a planting's year is the one its spring falls in, and its first
-    frost is in the next calendar year."""
+    frost. The first frost of a season is then in the next calendar year."""
+    return month_day(2001, first_frost) < month_day(2001, last_frost)
+
+
+def is_southern(
+    settings_or_last: Settings | str,
+    first_frost: str | None = None,
+    southern: bool | None = None,
+) -> bool:
+    """Whether the garden is in the southern hemisphere.
+
+    Uses the hemisphere when it's known (from Home Assistant's latitude), and
+    otherwise guesses from the frost dates: a first frost earlier in the
+    calendar than the last frost. The growing year then starts in July, and a
+    planting's year is the one its spring falls in.
+    """
     if isinstance(settings_or_last, Settings):
+        if settings_or_last.southern is not None:
+            return settings_or_last.southern
         last, first = settings_or_last.last_frost, settings_or_last.first_frost
     else:
+        if southern is not None:
+            return southern
         last, first = settings_or_last, first_frost or ""
-    return month_day(2001, first) < month_day(2001, last)
+    return frost_wraps(last, first)
 
 
 def _season_order(mmdd: str, southern: bool) -> tuple[int, int]:
@@ -324,25 +351,36 @@ def _season_order(mmdd: str, southern: bool) -> tuple[int, int]:
     return ((month - 7) % 12 if southern else month - 1, day)
 
 
-def mmdd_to_offset(mmdd: str, last_frost: str, first_frost: str) -> str:
+def mmdd_to_offset(
+    mmdd: str, last_frost: str, first_frost: str, southern: bool | None = None
+) -> str:
     """Turn a calendar date into an offset from that location's frost dates.
 
     Dates in the first half of the growing year (January to June, or July to
     December in the southern hemisphere) are measured from the last frost,
     later ones from the first frost.
     """
-    day = month_day(2001, mmdd)
-    southern = is_southern(last_frost, first_frost)
-    if (day.month >= 7) == southern:
-        return format_offset("L", (day - month_day(2001, last_frost)).days)
-    return format_offset("F", (day - month_day(2001, first_frost)).days)
+    southern = is_southern(last_frost, first_frost, southern)
+    month = int(mmdd.split("-")[0])
+    if (month >= 7) == southern:
+        return format_offset(
+            "L", (month_day(2001, mmdd) - month_day(2001, last_frost)).days
+        )
+    # Second-half dates are in the next calendar year down south; so is the
+    # first frost when it comes earlier in the calendar than the last.
+    day = month_day(2002 if southern else 2001, mmdd)
+    frost = month_day(
+        2002 if frost_wraps(last_frost, first_frost) else 2001, first_frost
+    )
+    return format_offset("F", (day - frost).days)
 
 
 MAX_RANGE_DAYS = 240
 
 
 def range_to_offsets(
-    start: str, end: str, last_frost: str, first_frost: str
+    start: str, end: str, last_frost: str, first_frost: str,
+    southern: bool | None = None,
 ) -> tuple[str, str]:
     """A calendar range (MM-DD to MM-DD) as frost offsets.
 
@@ -350,10 +388,10 @@ def range_to_offsets(
     into the next year; its end is then measured from the same frost date as
     its start so it stays after it.
     """
-    first = mmdd_to_offset(start, last_frost, first_frost)
-    southern = is_southern(last_frost, first_frost)
+    southern = is_southern(last_frost, first_frost, southern)
+    first = mmdd_to_offset(start, last_frost, first_frost, southern)
     if _season_order(end, southern) >= _season_order(start, southern):
-        return first, mmdd_to_offset(end, last_frost, first_frost)
+        return first, mmdd_to_offset(end, last_frost, first_frost, southern)
     span = (month_day(2001, end) - month_day(2001, start)).days % 365
     if span > MAX_RANGE_DAYS:
         raise PlannerError(
@@ -370,8 +408,10 @@ def _anchor_date(anchor: str, year: int, crop: Crop, settings: Settings) -> date
         if crop.frost_tender and settings.warm_last_frost:
             mmdd = settings.warm_last_frost
         return month_day(year, mmdd)
-    # The first frost follows the last one, in the next year down south.
-    return month_day(year + (1 if is_southern(settings) else 0), settings.first_frost)
+    # The first frost follows the last one: in the next calendar year when it
+    # comes earlier in the calendar (southern gardens, or a January frost).
+    wraps = frost_wraps(settings.last_frost, settings.first_frost)
+    return month_day(year + (1 if wraps else 0), settings.first_frost)
 
 
 def offset_to_mmdd(token: str, crop: Crop, settings: Settings) -> str:
