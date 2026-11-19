@@ -1,0 +1,1382 @@
+{
+ "source": "South Coastal BC Vegetable Planting Guide, plus added crops",
+ "baseline_last_frost": "04-01",
+ "baseline_first_frost": "11-16",
+ "crops": [
+  {
+   "key": "amaranth",
+   "name": "Amaranth",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "direct": [
+      "05-01",
+      "06-15"
+     ]
+    }
+   ],
+   "weeks_indoor": null,
+   "days_to_harvest": 60,
+   "harvest_weeks": 8,
+   "frost_tender": true,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "artichoke",
+   "name": "Artichoke",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "02-01",
+      "02-28"
+     ],
+     "transplant": [
+      "05-01",
+      "05-20"
+     ]
+    }
+   ],
+   "weeks_indoor": 12,
+   "days_to_harvest": 180,
+   "harvest_weeks": 6,
+   "frost_tender": false,
+   "pot_up": true,
+   "perennial": true
+  },
+  {
+   "key": "arugula",
+   "name": "Arugula",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "direct": [
+      "03-01",
+      "09-30"
+     ]
+    }
+   ],
+   "weeks_indoor": null,
+   "days_to_harvest": 35,
+   "harvest_weeks": 3,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "asparagus",
+   "name": "Asparagus",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "02-15",
+      "05-01"
+     ],
+     "transplant": [
+      "05-15",
+      "06-01"
+     ]
+    }
+   ],
+   "weeks_indoor": 12,
+   "days_to_harvest": 730,
+   "harvest_weeks": 6,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": true,
+   "notes": "First real harvest in the third spring."
+  },
+  {
+   "key": "bean_asparagus",
+   "name": "Bean, asparagus",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "04-01",
+      "05-15"
+     ],
+     "transplant": [
+      "05-15",
+      "06-15"
+     ]
+    }
+   ],
+   "weeks_indoor": 4,
+   "days_to_harvest": 80,
+   "harvest_weeks": 6,
+   "frost_tender": true,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "bean_broad",
+   "name": "Bean, broad",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "direct": [
+      "02-01",
+      "04-15"
+     ]
+    },
+    {
+     "season": "fall",
+     "direct": [
+      "09-15",
+      "11-15"
+     ]
+    }
+   ],
+   "weeks_indoor": null,
+   "days_to_harvest": 90,
+   "harvest_weeks": 4,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "bean_bush_pole",
+   "name": "Bean, bush & pole",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "direct": [
+      "05-01",
+      "07-15"
+     ]
+    }
+   ],
+   "weeks_indoor": null,
+   "days_to_harvest": 60,
+   "harvest_weeks": 6,
+   "frost_tender": true,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "bean_soya",
+   "name": "Bean, soya",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "direct": [
+      "05-01",
+      "06-01"
+     ]
+    }
+   ],
+   "weeks_indoor": null,
+   "days_to_harvest": 90,
+   "harvest_weeks": 3,
+   "frost_tender": true,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "beet",
+   "name": "Beet",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "direct": [
+      "04-15",
+      "08-15"
+     ]
+    }
+   ],
+   "weeks_indoor": null,
+   "days_to_harvest": 60,
+   "harvest_weeks": 4,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "broccoli",
+   "name": "Broccoli",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "03-01",
+      "04-15"
+     ],
+     "direct": [
+      "04-15",
+      "04-30"
+     ],
+     "transplant": [
+      "05-01",
+      "06-01"
+     ]
+    }
+   ],
+   "weeks_indoor": 5,
+   "days_to_harvest": 95,
+   "harvest_weeks": 3,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "broccoli_sprouting",
+   "name": "Broccoli, sprouting",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "03-01",
+      "04-01"
+     ],
+     "transplant": [
+      "04-10",
+      "05-01"
+     ],
+     "direct": [
+      "05-01",
+      "06-30"
+     ]
+    },
+    {
+     "season": "summer",
+     "indoor": [
+      "07-01",
+      "07-20"
+     ],
+     "transplant": [
+      "08-01",
+      "08-20"
+     ]
+    }
+   ],
+   "weeks_indoor": 5,
+   "days_to_harvest": 120,
+   "harvest_weeks": 6,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "brussels_sprouts",
+   "name": "Brussels sprouts",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "05-15",
+      "06-15"
+     ],
+     "transplant": [
+      "06-20",
+      "07-15"
+     ]
+    }
+   ],
+   "weeks_indoor": 5,
+   "days_to_harvest": 130,
+   "harvest_weeks": 8,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "cabbage",
+   "name": "Cabbage",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "03-01",
+      "04-01"
+     ],
+     "transplant": [
+      "04-01",
+      "05-15"
+     ],
+     "direct": [
+      "05-15",
+      "06-30"
+     ]
+    }
+   ],
+   "weeks_indoor": 5,
+   "days_to_harvest": 100,
+   "harvest_weeks": 4,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "cabbage_overwinter",
+   "name": "Cabbage, overwinter",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "summer",
+     "indoor": [
+      "07-01",
+      "07-15"
+     ],
+     "direct": [
+      "07-15",
+      "08-01"
+     ],
+     "transplant": [
+      "08-01",
+      "08-20"
+     ]
+    }
+   ],
+   "weeks_indoor": 5,
+   "days_to_harvest": 210,
+   "harvest_weeks": 6,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "carrot",
+   "name": "Carrot",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "direct": [
+      "04-01",
+      "07-15"
+     ]
+    }
+   ],
+   "weeks_indoor": null,
+   "days_to_harvest": 75,
+   "harvest_weeks": 6,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "cauliflower",
+   "name": "Cauliflower",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "03-01",
+      "04-20"
+     ],
+     "transplant": [
+      "04-20",
+      "05-01"
+     ]
+    },
+    {
+     "season": "summer",
+     "indoor": [
+      "05-01",
+      "06-15"
+     ],
+     "transplant": [
+      "06-20",
+      "07-31"
+     ]
+    }
+   ],
+   "weeks_indoor": 5,
+   "days_to_harvest": 100,
+   "harvest_weeks": 3,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "celery",
+   "name": "Celery/Celeriac",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "03-01",
+      "04-15"
+     ],
+     "transplant": [
+      "05-15",
+      "06-01"
+     ]
+    }
+   ],
+   "weeks_indoor": 10,
+   "days_to_harvest": 140,
+   "harvest_weeks": 6,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "corn",
+   "name": "Corn",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "direct": [
+      "05-15",
+      "06-30"
+     ]
+    }
+   ],
+   "weeks_indoor": null,
+   "days_to_harvest": 85,
+   "harvest_weeks": 3,
+   "frost_tender": true,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "corn_salad",
+   "name": "Corn salad",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "direct": [
+      "02-01",
+      "04-15"
+     ]
+    },
+    {
+     "season": "fall",
+     "direct": [
+      "09-01",
+      "10-15"
+     ],
+     "cover": [
+      "10-01",
+      "10-31"
+     ]
+    }
+   ],
+   "weeks_indoor": null,
+   "days_to_harvest": 50,
+   "harvest_weeks": 8,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "cress",
+   "name": "Cress",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "direct": [
+      "03-01",
+      "09-30"
+     ]
+    }
+   ],
+   "weeks_indoor": null,
+   "days_to_harvest": 20,
+   "harvest_weeks": 2,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "cucumber",
+   "name": "Cucumber",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "04-25",
+      "05-10"
+     ],
+     "direct": [
+      "05-10",
+      "06-30"
+     ],
+     "transplant": [
+      "05-25",
+      "06-15"
+     ]
+    }
+   ],
+   "weeks_indoor": 3,
+   "days_to_harvest": 60,
+   "harvest_weeks": 8,
+   "frost_tender": true,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "eggplant",
+   "name": "Eggplant",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "04-01",
+      "04-20"
+     ],
+     "transplant": [
+      "06-01",
+      "06-30"
+     ]
+    }
+   ],
+   "weeks_indoor": 9,
+   "days_to_harvest": 130,
+   "harvest_weeks": 8,
+   "frost_tender": true,
+   "pot_up": true,
+   "perennial": false
+  },
+  {
+   "key": "endive",
+   "name": "Endive/Escarole",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "direct": [
+      "04-01",
+      "04-30"
+     ]
+    },
+    {
+     "season": "fall",
+     "direct": [
+      "08-15",
+      "09-30"
+     ],
+     "cover": [
+      "09-15",
+      "10-31"
+     ]
+    }
+   ],
+   "weeks_indoor": null,
+   "days_to_harvest": 85,
+   "harvest_weeks": 4,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "fennel",
+   "name": "Fennel",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "direct": [
+      "04-01",
+      "06-30"
+     ]
+    }
+   ],
+   "weeks_indoor": null,
+   "days_to_harvest": 80,
+   "harvest_weeks": 4,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "garlic",
+   "name": "Garlic",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "direct": [
+      "03-01",
+      "03-15"
+     ]
+    },
+    {
+     "season": "fall",
+     "direct": [
+      "09-20",
+      "11-15"
+     ]
+    }
+   ],
+   "weeks_indoor": null,
+   "days_to_harvest": 270,
+   "harvest_weeks": 3,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false,
+   "notes": "Plant cloves. Fall planting is harvested the next July."
+  },
+  {
+   "key": "kale",
+   "name": "Kale & Collard",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "direct": [
+      "03-01",
+      "07-31"
+     ]
+    }
+   ],
+   "weeks_indoor": null,
+   "days_to_harvest": 60,
+   "harvest_weeks": 16,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "kohlrabi",
+   "name": "Kohlrabi",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "direct": [
+      "04-01",
+      "05-15"
+     ]
+    },
+    {
+     "season": "summer",
+     "direct": [
+      "07-15",
+      "07-31"
+     ]
+    }
+   ],
+   "weeks_indoor": null,
+   "days_to_harvest": 55,
+   "harvest_weeks": 3,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "leek",
+   "name": "Leek",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "02-01",
+      "04-01"
+     ],
+     "transplant": [
+      "04-01",
+      "04-15"
+     ],
+     "direct": [
+      "04-15",
+      "05-15"
+     ]
+    },
+    {
+     "season": "summer",
+     "indoor": [
+      "06-01",
+      "06-15"
+     ],
+     "transplant": [
+      "08-01",
+      "08-15"
+     ]
+    }
+   ],
+   "weeks_indoor": 10,
+   "days_to_harvest": 150,
+   "harvest_weeks": 12,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "lettuce",
+   "name": "Lettuce",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "03-01",
+      "04-01"
+     ],
+     "transplant": [
+      "04-01",
+      "04-30"
+     ],
+     "direct": [
+      "05-01",
+      "09-15"
+     ],
+     "cover": [
+      "09-01",
+      "09-30"
+     ]
+    }
+   ],
+   "weeks_indoor": 4,
+   "days_to_harvest": 50,
+   "harvest_weeks": 4,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "melon",
+   "name": "Melon",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "04-15",
+      "05-01"
+     ],
+     "transplant": [
+      "06-01",
+      "06-30"
+     ]
+    }
+   ],
+   "weeks_indoor": 4,
+   "days_to_harvest": 90,
+   "harvest_weeks": 4,
+   "frost_tender": true,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "mustard",
+   "name": "Mustard",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "direct": [
+      "03-01",
+      "06-30"
+     ]
+    },
+    {
+     "season": "fall",
+     "direct": [
+      "08-01",
+      "09-30"
+     ],
+     "cover": [
+      "09-15",
+      "10-15"
+     ]
+    }
+   ],
+   "weeks_indoor": null,
+   "days_to_harvest": 40,
+   "harvest_weeks": 4,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "okra",
+   "name": "Okra",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "04-15",
+      "05-01"
+     ],
+     "transplant": [
+      "05-20",
+      "06-01"
+     ]
+    }
+   ],
+   "weeks_indoor": 5,
+   "days_to_harvest": 90,
+   "harvest_weeks": 6,
+   "frost_tender": true,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "onion",
+   "name": "Onion",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "01-01",
+      "03-31"
+     ],
+     "direct": [
+      "04-01",
+      "04-30"
+     ],
+     "transplant": [
+      "04-30",
+      "05-31"
+     ]
+    }
+   ],
+   "weeks_indoor": 10,
+   "days_to_harvest": 150,
+   "harvest_weeks": 3,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "onion_overwinter",
+   "name": "Onion, overwinter",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "summer",
+     "indoor": [
+      "06-01",
+      "07-15"
+     ],
+     "transplant": [
+      "08-15",
+      "08-31"
+     ]
+    }
+   ],
+   "weeks_indoor": 8,
+   "days_to_harvest": 330,
+   "harvest_weeks": 3,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "scallion",
+   "name": "Onion, scallion",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "03-15",
+      "04-01"
+     ],
+     "direct": [
+      "04-01",
+      "08-31"
+     ]
+    }
+   ],
+   "weeks_indoor": 4,
+   "days_to_harvest": 60,
+   "harvest_weeks": 6,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "pac_choi",
+   "name": "Pac choi & choi sum",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "direct": [
+      "03-01",
+      "09-30"
+     ],
+     "cover": [
+      "03-01",
+      "03-31"
+     ]
+    }
+   ],
+   "weeks_indoor": null,
+   "days_to_harvest": 45,
+   "harvest_weeks": 3,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "parsnip",
+   "name": "Parsnip",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "direct": [
+      "04-01",
+      "06-15"
+     ]
+    }
+   ],
+   "weeks_indoor": null,
+   "days_to_harvest": 120,
+   "harvest_weeks": 12,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "pea",
+   "name": "Pea",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "direct": [
+      "02-15",
+      "05-31"
+     ]
+    },
+    {
+     "season": "summer",
+     "direct": [
+      "07-01",
+      "08-15"
+     ]
+    }
+   ],
+   "weeks_indoor": null,
+   "days_to_harvest": 65,
+   "harvest_weeks": 4,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "pepper",
+   "name": "Pepper",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "03-01",
+      "04-15"
+     ],
+     "transplant": [
+      "06-01",
+      "06-30"
+     ]
+    }
+   ],
+   "weeks_indoor": 10,
+   "days_to_harvest": 140,
+   "harvest_weeks": 10,
+   "frost_tender": true,
+   "pot_up": true,
+   "perennial": false
+  },
+  {
+   "key": "radicchio",
+   "name": "Radicchio",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "03-15",
+      "04-01"
+     ],
+     "transplant": [
+      "04-01",
+      "04-30"
+     ]
+    },
+    {
+     "season": "summer",
+     "indoor": [
+      "06-15",
+      "07-31"
+     ],
+     "transplant": [
+      "08-01",
+      "08-20"
+     ]
+    }
+   ],
+   "weeks_indoor": 4,
+   "days_to_harvest": 90,
+   "harvest_weeks": 4,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "radish",
+   "name": "Radish",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "direct": [
+      "03-01",
+      "04-30"
+     ]
+    },
+    {
+     "season": "fall",
+     "direct": [
+      "08-01",
+      "10-31"
+     ],
+     "cover": [
+      "10-01",
+      "10-31"
+     ]
+    }
+   ],
+   "weeks_indoor": null,
+   "days_to_harvest": 28,
+   "harvest_weeks": 2,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "rhubarb",
+   "name": "Rhubarb",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "03-15",
+      "04-15"
+     ],
+     "transplant": [
+      "05-01",
+      "06-01"
+     ]
+    }
+   ],
+   "weeks_indoor": 8,
+   "days_to_harvest": 730,
+   "harvest_weeks": 8,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": true,
+   "notes": "First harvest in the second or third spring."
+  },
+  {
+   "key": "rutabaga",
+   "name": "Rutabaga",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "direct": [
+      "06-15",
+      "07-15"
+     ]
+    }
+   ],
+   "weeks_indoor": null,
+   "days_to_harvest": 100,
+   "harvest_weeks": 8,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "spinach",
+   "name": "Spinach",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "direct": [
+      "03-01",
+      "06-15"
+     ]
+    },
+    {
+     "season": "fall",
+     "direct": [
+      "08-01",
+      "10-01"
+     ],
+     "cover": [
+      "09-15",
+      "10-15"
+     ]
+    }
+   ],
+   "weeks_indoor": null,
+   "days_to_harvest": 45,
+   "harvest_weeks": 4,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "squash",
+   "name": "Squash/pumpkin",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "04-15",
+      "05-15"
+     ],
+     "transplant": [
+      "05-15",
+      "06-01"
+     ],
+     "direct": [
+      "06-01",
+      "06-10"
+     ]
+    }
+   ],
+   "weeks_indoor": 3,
+   "days_to_harvest": 100,
+   "harvest_weeks": 8,
+   "frost_tender": true,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "strawberry",
+   "name": "Strawberry",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "01-01",
+      "02-28"
+     ],
+     "transplant": [
+      "05-01",
+      "05-20"
+     ]
+    }
+   ],
+   "weeks_indoor": 12,
+   "days_to_harvest": 365,
+   "harvest_weeks": 4,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": true
+  },
+  {
+   "key": "swiss_chard",
+   "name": "Swiss chard",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "direct": [
+      "04-15",
+      "07-15"
+     ]
+    }
+   ],
+   "weeks_indoor": null,
+   "days_to_harvest": 55,
+   "harvest_weeks": 16,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "tomato",
+   "name": "Tomato",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "03-01",
+      "04-15"
+     ],
+     "transplant": [
+      "05-01",
+      "06-15"
+     ]
+    }
+   ],
+   "weeks_indoor": 7,
+   "days_to_harvest": 120,
+   "harvest_weeks": 10,
+   "frost_tender": true,
+   "pot_up": true,
+   "perennial": false
+  },
+  {
+   "key": "turnip",
+   "name": "Turnip",
+   "source": "pdf",
+   "windows": [
+    {
+     "season": "spring",
+     "direct": [
+      "03-01",
+      "08-31"
+     ]
+    }
+   ],
+   "weeks_indoor": null,
+   "days_to_harvest": 50,
+   "harvest_weeks": 4,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "potato",
+   "name": "Potato",
+   "source": "added",
+   "windows": [
+    {
+     "season": "spring",
+     "direct": [
+      "03-15",
+      "06-15"
+     ]
+    }
+   ],
+   "weeks_indoor": null,
+   "days_to_harvest": 100,
+   "harvest_weeks": 6,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false,
+   "notes": "Plant seed potatoes. Early varieties about 70 days, main crop about 110."
+  },
+  {
+   "key": "tomatillo",
+   "name": "Tomatillo",
+   "source": "added",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "03-15",
+      "04-15"
+     ],
+     "transplant": [
+      "05-15",
+      "06-15"
+     ]
+    }
+   ],
+   "weeks_indoor": 7,
+   "days_to_harvest": 120,
+   "harvest_weeks": 8,
+   "frost_tender": true,
+   "pot_up": true,
+   "perennial": false
+  },
+  {
+   "key": "cilantro",
+   "name": "Cilantro",
+   "source": "added",
+   "windows": [
+    {
+     "season": "spring",
+     "direct": [
+      "03-15",
+      "05-31"
+     ]
+    },
+    {
+     "season": "summer",
+     "direct": [
+      "08-01",
+      "09-15"
+     ]
+    }
+   ],
+   "weeks_indoor": null,
+   "days_to_harvest": 45,
+   "harvest_weeks": 3,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false,
+   "notes": "Bolts in summer heat, so sow small batches every 2 to 3 weeks."
+  },
+  {
+   "key": "dill",
+   "name": "Dill",
+   "source": "added",
+   "windows": [
+    {
+     "season": "spring",
+     "direct": [
+      "04-01",
+      "07-31"
+     ]
+    }
+   ],
+   "weeks_indoor": null,
+   "days_to_harvest": 50,
+   "harvest_weeks": 4,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "parsley_italian",
+   "name": "Parsley, Italian",
+   "source": "added",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "02-15",
+      "04-01"
+     ],
+     "transplant": [
+      "04-15",
+      "05-15"
+     ],
+     "direct": [
+      "04-01",
+      "06-30"
+     ]
+    }
+   ],
+   "weeks_indoor": 8,
+   "days_to_harvest": 80,
+   "harvest_weeks": 20,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false
+  }
+ ]
+}

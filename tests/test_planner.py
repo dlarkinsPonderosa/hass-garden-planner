@@ -1,0 +1,109 @@
+"""Tests for the date engine (no Home Assistant needed)."""
+
+from datetime import date
+
+import pytest
+
+from custom_components.garden_planner.planner import (
+    TASK_HARDEN_OFF,
+    TASK_HARVEST,
+    TASK_POT_UP,
+    TASK_SOW,
+    TASK_SOW_INDOORS,
+    TASK_TRANSPLANT,
+    Planting,
+    PlannerError,
+    Settings,
+    apply_actuals,
+    generate_tasks,
+    load_catalog,
+)
+
+CATALOG = load_catalog()
+VICTORIA = Settings()
+AS_PRINTED = Settings(shift_windows=False)
+
+
+def tasks_for(**kwargs):
+    planting = Planting(id="p1", year=2027, **kwargs)
+    return generate_tasks(planting, CATALOG[planting.crop], kwargs.pop("settings", VICTORIA))
+
+
+def by_kind(tasks):
+    return {t.kind: t.due for t in tasks}
+
+
+def test_catalog_has_pdf_and_added_crops():
+    assert len([c for c in CATALOG.values() if c.source == "pdf"]) == 49
+    for key in ("potato", "tomatillo", "cilantro", "dill", "parsley_italian"):
+        assert CATALOG[key].source == "added"
+    for crop in CATALOG.values():
+        assert crop.methods(), crop.key
+
+
+def test_tomato_indoor_to_beds_is_not_shifted():
+    # Frost-tender crops keep the chart's bed dates by default.
+    dates = by_kind(tasks_for(crop="tomato", method="indoor_bed"))
+    assert dates[TASK_TRANSPLANT] == date(2027, 5, 1)
+    assert dates[TASK_SOW_INDOORS] == date(2027, 3, 13)  # 7 weeks before
+    assert dates[TASK_HARDEN_OFF] == date(2027, 4, 24)
+    assert TASK_POT_UP in dates
+
+
+def test_tomato_greenhouse_is_four_weeks_earlier():
+    dates = by_kind(tasks_for(crop="tomato", method="indoor_greenhouse"))
+    assert dates[TASK_TRANSPLANT] == date(2027, 4, 3)
+    assert dates[TASK_HARDEN_OFF] == date(2027, 3, 31)  # 3 day greenhouse step
+
+
+def test_hardy_crop_shifted_for_victoria():
+    # Carrot window starts Apr 1 on the chart; Victoria's last frost is 26 days
+    # earlier than the Apr 1 baseline.
+    shifted = by_kind(tasks_for(crop="carrot", method="direct_bed"))
+    assert shifted[TASK_SOW] == date(2027, 3, 6)
+    planting = Planting(id="p1", year=2027, crop="carrot", method="direct_bed")
+    printed = by_kind(generate_tasks(planting, CATALOG["carrot"], AS_PRINTED))
+    assert printed[TASK_SOW] == date(2027, 4, 1)
+
+
+def test_weekly_carrot_successions_stop_at_window_end():
+    tasks = tasks_for(crop="carrot", method="direct_bed", succession_days=7)
+    sows = sorted(t.due for t in tasks if t.kind == TASK_SOW)
+    assert sows[0] == date(2027, 3, 6)
+    assert all((b - a).days == 7 for a, b in zip(sows, sows[1:]))
+    assert sows[-1] <= date(2027, 7, 15)
+    assert "sowing 1 of" in next(t for t in tasks if t.kind == TASK_SOW).summary
+
+
+def test_succession_count_and_start_date():
+    tasks = tasks_for(
+        crop="lettuce", method="direct_bed", start_date="2027-05-10",
+        succession_days=14, succession_count=3,
+    )
+    sows = sorted(t.due for t in tasks if t.kind == TASK_SOW)
+    assert sows == [date(2027, 5, 10), date(2027, 5, 24), date(2027, 6, 7)]
+
+
+def test_fall_garlic_harvest_next_year():
+    dates = by_kind(tasks_for(crop="garlic", method="direct_bed", season="fall"))
+    assert dates[TASK_SOW] == date(2027, 9, 20)
+    assert dates[TASK_HARVEST].year == 2028
+
+
+def test_unsupported_method_raises():
+    with pytest.raises(PlannerError):
+        tasks_for(crop="carrot", method="indoor_bed")
+    with pytest.raises(PlannerError):
+        tasks_for(crop="garlic", method="direct_bed", season="winter")
+
+
+def test_late_task_shifts_rest_of_chain():
+    tasks = tasks_for(crop="pepper", method="indoor_bed")
+    sow = next(t for t in tasks if t.kind == TASK_SOW_INDOORS)
+    transplant = next(t for t in tasks if t.kind == TASK_TRANSPLANT).due
+    late = date.fromordinal(sow.due.toordinal() + 5)
+    apply_actuals(tasks, {sow.uid: late.isoformat()})
+    assert sow.done_on == late
+    moved = next(t for t in tasks if t.kind == TASK_TRANSPLANT)
+    assert (moved.due - transplant).days == 5
+    assert moved.planned == transplant

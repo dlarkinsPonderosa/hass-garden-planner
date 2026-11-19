@@ -1,0 +1,271 @@
+{
+  "config": {
+    "abort": {
+      "already_configured": "Garden Planner is already set up."
+    },
+    "error": {
+      "invalid_month_day": "Use month-day, for example 03-06."
+    },
+    "step": {
+      "user": {
+        "title": "Garden Planner",
+        "description": "Frost dates are month-day. The defaults are Victoria's dates from the South Coastal BC Vegetable Planting Guide.",
+        "data": {
+          "todo_entity": "Task list",
+          "last_frost": "Last spring frost (MM-DD)",
+          "first_frost": "First fall frost (MM-DD)",
+          "shift_windows": "Shift the chart's dates to these frost dates",
+          "shift_frost_tender": "Also shift frost-tender crops in beds",
+          "greenhouse_spring_weeks": "Greenhouse: weeks earlier in spring",
+          "greenhouse_fall_weeks": "Greenhouse: weeks later in fall",
+          "harden_off_days": "Days to harden off before planting in beds",
+          "greenhouse_harden_off_days": "Days to harden off before planting in the greenhouse",
+          "lookahead_days": "Add tasks to the list this many days ahead"
+        },
+        "data_description": {
+          "todo_entity": "Pick an existing to-do list, or let the planner create its own.",
+          "shift_windows": "The chart covers all of South Coastal BC. When on, spring dates move by how much earlier your last frost is than April 1.",
+          "shift_frost_tender": "Tomatoes, peppers, squash and other warm crops need warm soil and nights, so they keep the chart's bed dates unless this is on.",
+          "lookahead_days": "Tasks further out stay in the planner until they come into view, so long succession sowings don't flood the list."
+        }
+      }
+    }
+  },
+  "options": {
+    "error": {
+      "invalid_month_day": "Use month-day, for example 03-06."
+    },
+    "step": {
+      "init": {
+        "title": "Garden Planner settings",
+        "data": {
+          "todo_entity": "Task list",
+          "last_frost": "Last spring frost (MM-DD)",
+          "first_frost": "First fall frost (MM-DD)",
+          "shift_windows": "Shift the chart's dates to these frost dates",
+          "shift_frost_tender": "Also shift frost-tender crops in beds",
+          "greenhouse_spring_weeks": "Greenhouse: weeks earlier in spring",
+          "greenhouse_fall_weeks": "Greenhouse: weeks later in fall",
+          "harden_off_days": "Days to harden off before planting in beds",
+          "greenhouse_harden_off_days": "Days to harden off before planting in the greenhouse",
+          "lookahead_days": "Add tasks to the list this many days ahead"
+        },
+        "data_description": {
+          "todo_entity": "Pick an existing to-do list, or let the planner create its own.",
+          "shift_windows": "The chart covers all of South Coastal BC. When on, spring dates move by how much earlier your last frost is than April 1.",
+          "shift_frost_tender": "Tomatoes, peppers, squash and other warm crops need warm soil and nights, so they keep the chart's bed dates unless this is on.",
+          "lookahead_days": "Tasks further out stay in the planner until they come into view, so long succession sowings don't flood the list."
+        }
+      }
+    }
+  },
+  "entity": {
+    "todo": {
+      "garden_tasks": {
+        "name": "Garden Tasks"
+      }
+    },
+    "sensor": {
+      "next_task": {
+        "name": "Next task"
+      },
+      "due_this_week": {
+        "name": "Tasks due this week"
+      },
+      "overdue": {
+        "name": "Overdue tasks"
+      },
+      "plantings": {
+        "name": "Plantings"
+      }
+    }
+  },
+  "services": {
+    "add_planting": {
+      "name": "Add planting",
+      "description": "Plan a crop and add its tasks.",
+      "fields": {
+        "crop": {
+          "name": "Crop",
+          "description": "Crop from the catalog, or the key of a crop you added."
+        },
+        "method": {
+          "name": "Method",
+          "description": "How it is grown."
+        },
+        "year": {
+          "name": "Year",
+          "description": "Growing year. Defaults to this year, or next year from September on."
+        },
+        "season": {
+          "name": "Season",
+          "description": "Which window to use when a crop has more than one, such as spring, summer or fall. Defaults to the first."
+        },
+        "start_date": {
+          "name": "Start date",
+          "description": "Transplant date for indoor starts, or first sowing date for direct sowing. Defaults to the start of the crop's window."
+        },
+        "succession_days": {
+          "name": "Repeat every",
+          "description": "Sow again every this many days. 0 means a single sowing."
+        },
+        "succession_count": {
+          "name": "Number of sowings",
+          "description": "Stop after this many sowings."
+        },
+        "succession_until": {
+          "name": "Repeat until",
+          "description": "Last date for a repeat sowing. Defaults to the end of the crop's window."
+        },
+        "variety": {
+          "name": "Variety",
+          "description": "Shown in task names, for example Sungold."
+        },
+        "quantity": {
+          "name": "Quantity",
+          "description": "For example 6 cells or 2 rows."
+        },
+        "location": {
+          "name": "Location",
+          "description": "For example Bed 3."
+        },
+        "notes": {
+          "name": "Notes",
+          "description": "Added to each task's description."
+        }
+      }
+    },
+    "preview_planting": {
+      "name": "Preview planting",
+      "description": "Show the tasks a planting would create, without saving it.",
+      "fields": {
+        "crop": {
+          "name": "Crop",
+          "description": "Crop from the catalog, or the key of a crop you added."
+        },
+        "method": {
+          "name": "Method",
+          "description": "How it is grown."
+        },
+        "year": {
+          "name": "Year",
+          "description": "Growing year. Defaults to this year, or next year from September on."
+        },
+        "season": {
+          "name": "Season",
+          "description": "Which window to use when a crop has more than one, such as spring, summer or fall. Defaults to the first."
+        },
+        "start_date": {
+          "name": "Start date",
+          "description": "Transplant date for indoor starts, or first sowing date for direct sowing. Defaults to the start of the crop's window."
+        },
+        "succession_days": {
+          "name": "Repeat every",
+          "description": "Sow again every this many days. 0 means a single sowing."
+        },
+        "succession_count": {
+          "name": "Number of sowings",
+          "description": "Stop after this many sowings."
+        },
+        "succession_until": {
+          "name": "Repeat until",
+          "description": "Last date for a repeat sowing. Defaults to the end of the crop's window."
+        },
+        "variety": {
+          "name": "Variety",
+          "description": "Shown in task names, for example Sungold."
+        },
+        "quantity": {
+          "name": "Quantity",
+          "description": "For example 6 cells or 2 rows."
+        },
+        "location": {
+          "name": "Location",
+          "description": "For example Bed 3."
+        },
+        "notes": {
+          "name": "Notes",
+          "description": "Added to each task's description."
+        }
+      }
+    },
+    "remove_planting": {
+      "name": "Remove planting",
+      "description": "Remove a planting and its open tasks.",
+      "fields": {
+        "planting_id": {
+          "name": "Planting ID",
+          "description": "From the Plantings sensor or the add planting response."
+        }
+      }
+    },
+    "add_crop": {
+      "name": "Add crop",
+      "description": "Add a crop or variety, or override a built-in one.",
+      "fields": {
+        "key": {
+          "name": "Key",
+          "description": "Lowercase id, for example tomato_sungold. Using a built-in key overrides that crop."
+        },
+        "name": {
+          "name": "Name",
+          "description": "Display name."
+        },
+        "based_on": {
+          "name": "Based on",
+          "description": "Copy windows and defaults from this crop, then apply the other fields."
+        },
+        "windows": {
+          "name": "Windows",
+          "description": "List of windows with season and MM-DD ranges for indoor, direct, transplant and cover."
+        },
+        "weeks_indoor": {
+          "name": "Weeks indoors",
+          "description": "From indoor sowing to transplant."
+        },
+        "days_to_harvest": {
+          "name": "Days to harvest",
+          "description": "From sowing, or planting for garlic and potatoes."
+        },
+        "harvest_weeks": {
+          "name": "Harvest weeks",
+          "description": "How long the harvest lasts."
+        },
+        "frost_tender": {
+          "name": "Frost tender",
+          "description": "Warm-season crop."
+        },
+        "pot_up": {
+          "name": "Pot up",
+          "description": "Add a pot-up task for indoor starts."
+        },
+        "perennial": {
+          "name": "Perennial",
+          "description": "Comes back each year."
+        },
+        "notes": {
+          "name": "Notes",
+          "description": "Added to harvest tasks."
+        }
+      }
+    },
+    "remove_crop": {
+      "name": "Remove crop",
+      "description": "Remove a crop you added.",
+      "fields": {
+        "key": {
+          "name": "Key",
+          "description": "The crop's key."
+        }
+      }
+    },
+    "list_crops": {
+      "name": "List crops",
+      "description": "Return the crop catalog."
+    },
+    "sync": {
+      "name": "Sync",
+      "description": "Sync tasks with the task list now."
+    }
+  }
+}
