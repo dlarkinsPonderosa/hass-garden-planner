@@ -524,13 +524,13 @@ async def test_add_crop_from_configure(hass: HomeAssistant) -> None:
     result = await hass.config_entries.options.async_configure(flow["flow_id"], {"next_step_id": "add_crop"})
     assert result["step_id"] == "add_crop"
     result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"name": "Tulsi", "category": "herb", "spring_direct_from": "2026-04-15"}
+        result["flow_id"], {"name": "Tulsi", "category": "herb", "spring_direct_from": "04-15"}
     )
     assert result["errors"] == {"base": "crop_error"}
     result = await hass.config_entries.options.async_configure(
         result["flow_id"],
         {"name": "Tulsi", "category": "herb", "icon": "mdi:leaf",
-         "spring_direct_from": "2026-04-15", "spring_direct_to": "2026-05-31", "days_to_harvest": 60},
+         "spring_direct_from": "04-15", "spring_direct_to": "05-31", "days_to_harvest": 60},
     )
     assert result["type"] == "create_entry"
     crop = entry.runtime_data.crop("tulsi")
@@ -576,3 +576,12 @@ async def test_builtin_crops_edit_remove_reset(hass: HomeAssistant) -> None:
     await _call(hass, "add_planting", {"crop": "pea", "method": "direct_bed", "year": 2027}, True)
     with pytest.raises(ServiceValidationError):
         await _call(hass, "remove_crop", {"key": "pea"})
+
+
+async def test_bad_crop_date_is_a_clear_error(hass: HomeAssistant) -> None:
+    from homeassistant.exceptions import ServiceValidationError
+
+    await _setup(hass)
+    with pytest.raises(ServiceValidationError, match="month-day"):
+        await _call(hass, "add_crop", {"key": "x", "name": "X", "windows": [{"direct": ["02-30", "03-15"]}]})
+    await _call(hass, "add_crop", {"key": "y", "name": "Y", "windows": [{"direct": ["02-29", "03-15"]}]})

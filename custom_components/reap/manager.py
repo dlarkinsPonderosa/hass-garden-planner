@@ -749,11 +749,15 @@ def _find_new_item(
 
 
 def _mmdd(value: str) -> str:
+    """ "03-15" or "2026-03-15" as "03-15"; the year is ignored."""
     try:
-        month, day = (int(p) for p in value.split("-")[-2:])
-        return f"{month:02d}-{day:02d}"
+        month, day = (int(p) for p in str(value).strip().split("-")[-2:])
+        if (month, day) == (2, 29):
+            day = 28  # dates repeat every year, so skip the leap day
+        date(2001, month, day)
     except ValueError as err:
-        raise PlannerError(f"Bad date {value!r}; use MM-DD") from err
+        raise PlannerError(f"Bad date {value!r}; use month-day, such as 03-15") from err
+    return f"{month:02d}-{day:02d}"
 
 
 def default_year(today: date | None = None) -> int:

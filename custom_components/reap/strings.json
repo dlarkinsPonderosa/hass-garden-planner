@@ -134,7 +134,7 @@
       },
       "add_crop": {
         "title": "Add a crop or variety",
-        "description": "Enter the dates you'd usually do each step in your garden, using the ones that apply. The year doesn't matter. To add a variety, copy timing from the crop it's a variety of and leave the dates empty.",
+        "description": "Enter the dates you'd usually do each step in your garden as month-day, such as 03-15, using the ones that apply. They repeat every year. To add a variety, copy timing from the crop it's a variety of and leave the dates empty.",
         "data": {
           "name": "Name",
           "category": "Category",
