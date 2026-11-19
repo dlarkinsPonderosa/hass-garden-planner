@@ -690,6 +690,18 @@ add_crop:
     notes:
       selector:
         text:
+    icon:
+      example: mdi:chili-mild
+      selector:
+        icon:
+    category:
+      selector:
+        select:
+          options:
+            - vegetable
+            - herb
+            - fruit
+            - flower
 remove_crop:
   fields:
     key:
@@ -735,3 +747,48 @@ set_crop_defaults:
     clear:
       selector:
         boolean:
+add_location:
+  fields:
+    name:
+      required: true
+      example: Bed 3
+      selector:
+        text:
+    soil_sensor:
+      selector:
+        entity:
+          domain: sensor
+    light:
+      selector:
+        entity:
+          domain:
+            - light
+            - switch
+            - input_boolean
+update_location:
+  fields:
+    location_id:
+      required: true
+      selector:
+        text:
+    name:
+      selector:
+        text:
+    soil_sensor:
+      selector:
+        entity:
+          domain: sensor
+    light:
+      selector:
+        entity:
+          domain:
+            - light
+            - switch
+            - input_boolean
+remove_location:
+  fields:
+    location_id:
+      required: true
+      selector:
+        text:
+list_locations:

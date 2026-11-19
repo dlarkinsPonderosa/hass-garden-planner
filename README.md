@@ -16,10 +16,8 @@ own frost dates turn it into a calendar for your garden. A climate profile
 handles how fast spring warms up after the last frost, which hardiness zones
 don't capture.
 
-The built-in crop catalog is transcribed from West Coast Seeds' *South Coastal
-BC Vegetable Planting Guide* (49 crops) and the herbs from its *Flower & Herb
-Planting Guide* (22 herbs), plus potato and tomatillo. You can add your own
-crops and varieties.
+The built-in catalog has 51 vegetables and 22 herbs. You can add your own crops
+and varieties from the card, the Configure menu or an action.
 
 ## Install
 
@@ -41,54 +39,67 @@ Assistant treats it as a new integration:
 4. Delete any leftover Garden Planner tasks from your task list, and change
    dashboard cards from `custom:garden-planner-card` to `custom:reap-card`.
 
+If a dashboard says `Custom element doesn't exist: reap-card` (for example when
+dashboard resources are managed in YAML), add `/reap/reap-card.js` as a
+**JavaScript module** under **Settings > Dashboards > Resources**.
+
 ### Setup options
 
-Setup starts with the task list and a starting point for frost dates: Victoria
-(the planting guide's dates), a USDA hardiness zone, or your own. Zones only
+Setup starts with the task list and a starting point for frost dates: a USDA
+hardiness zone or your own dates. Zones only
 roughly predict frost dates, since they measure winter cold rather than season
 length, so check the suggested dates against your local averages.
 
-| Option | Victoria default | What it does |
+| Option | Default | What it does |
 | --- | --- | --- |
 | Task list | Create a new Garden Tasks list | Pick an existing to-do list (any list that supports due dates works best) or let the planner create its own |
-| Last spring frost | 03-06 | Average last frost |
-| First fall frost | 11-16 | Average first frost |
-| Last frost for warm crops | 04-01 | Tomatoes, peppers, squash and other frost-tender crops are timed from this instead. Useful where spring stays cool after the last frost, like coastal BC. Leave empty to use the last frost |
+| Last spring frost | 04-20, or your zone's | Average last frost |
+| First fall frost | 10-20, or your zone's | Average first frost |
+| Last frost for warm crops | empty | Tomatoes, peppers, squash and other frost-tender crops are timed from this instead. Useful where spring stays cool for weeks after the last frost. Leave empty to use the last frost |
 | Move all dates by | 0 days | Fine-tune for a warm (negative) or cold (positive) garden |
-| Climate profile | Cool, slow spring | See below. Zone starting points suggest the fast-spring profile |
+| Climate profile | Spring warms fast | See below |
 | Greenhouse weeks earlier in spring / later in fall | 4 / 4 | Widens every window for greenhouse plantings |
 | Harden off days (beds / greenhouse) | 7 / 3 | Set to 0 to skip the task |
 | Look-ahead days | 30 | Tasks are added to the list this many days before they're due, with their real due date, so long succession sowings don't flood it |
 
 ### Climate profiles
 
-Planting charts from different regions show that frost dates alone don't
-transfer: on the coast, spring is long and cool, so warm crops wait about a
-month after the last frost; inland, spring warms fast and tomatoes go out one
-to two weeks after it.
+Frost dates alone don't transfer between climates. Where spring is long and
+cool, warm crops wait about a month after the last frost; where spring warms
+fast, tomatoes go out one to two weeks after it. Pick the profile that sounds
+most like your garden.
 
-| Profile | Built from | Fits |
-| --- | --- | --- |
-| Cool, slow spring | South Coastal BC chart | Coastal BC, Pacific Northwest, UK, New Zealand |
-| Spring warms fast | South Central BC and South Central Prairies charts, averaged | BC interior, Prairies, northern BC, most of the US and eastern Canada |
-| Atlantic | Maritimes chart | Maritimes, Newfoundland |
+| Profile | Fits |
+| --- | --- |
+| Cool, slow spring | Mild maritime climates, such as the Pacific Northwest, the UK and New Zealand |
+| Spring warms fast | Inland and continental climates |
+| Cool, late spring with a long fall | Cold-water coasts, such as Atlantic Canada |
 
-Herbs, potato, tomatillo and a few crops missing from a regional chart are
-estimated from their coastal timing, shifted by the typical difference for
-crops that appear on both charts (`estimated_profiles` in `crops.json`).
+Some crops have no published timing for every profile. Those are estimated
+from the cool-spring timing, shifted by the typical difference for crops that
+have both (`estimated_profiles` in `crops.json`).
 
 All of these can be changed later under **Configure**.
 
 ## Dashboard card
 
 The integration includes a card, loaded automatically (no separate install).
-Edit a dashboard, add a card and pick **Reap**, or use YAML:
+Reap adds its card to your dashboard resources when it starts. Edit a dashboard,
+add a card and pick **Reap**, or use YAML:
 
 ```yaml
 type: custom:reap-card
-title: Garden              # optional
-show_done: false           # optional: also list plantings with no open tasks
+title: Garden          # optional
+show_info: true        # details row: method, year, location, quantity
+show_next: true        # next task row
+show_sensors: true     # soil moisture and light of each planting's location
+icon_size: 40          # crop icon size in pixels
+editable: true         # show Add, Locations, edit and remove buttons
+show_done: false       # also list plantings with no open tasks
 ```
+
+Every option is also in the card's visual editor. When a row is turned off the
+rest centre vertically.
 
 It lists your plantings with the crop's icon, how they're grown, and the next
 task with its icon and date. The pencil edits a planting, the bin removes it,
@@ -96,6 +107,25 @@ and **Add planting** opens a form. The form fills in the crop's defaults,
 **Preview dates** shows every task before you save, and **Save as the default
 for this crop** remembers the method, repeat interval, number of sowings,
 quantity and location for next time.
+
+The card uses your theme's colours.
+
+## Locations
+
+Plantings pick their location from a list. A new install starts with
+**Seedling Tray**, **Garden** and **Greenhouse**, and any locations your
+plantings already used are added on upgrade. Open **Locations** on the card to
+add, rename or remove them. Renaming moves the plantings with it, and a
+location in use can't be removed.
+
+Each location can have an optional soil moisture sensor and light (a light,
+switch or input boolean, such as grow lights). The card shows them next to
+each planting in that location: moisture in % in green above 30%, yellow from
+15 to 30% and red below 15%, and a bulb icon for the light's state. Tap either
+for its details.
+
+Actions: `reap.add_location`, `reap.update_location`, `reap.remove_location`
+and `reap.list_locations`.
 
 ## Crop defaults
 
@@ -160,22 +190,38 @@ and its open tasks (completed ones stay on your list).
 ## How dates are worked out
 
 - **Frost offsets**: each crop window is stored as offsets such as `L-31`
-  (31 days before last frost) or `F-57` (57 days before first frost). Dates
-  before July on the chart are measured from the last frost (April 1 on the
-  chart), later ones from the first frost (November 16). Your frost dates and
-  offset turn them back into calendar dates.
+  (31 days before last frost) or `F-57` (57 days before first frost). Spring
+  steps are measured from the last frost and late-season steps from the first
+  frost. Your frost dates and offset turn them back into calendar dates.
 
 - **Indoor starts**: sow indoors = transplant date minus the crop's weeks
   indoors (tomato 7, pepper 10, onion and leek 10). Tomatoes, peppers,
   eggplant, tomatillos and artichokes get a pot-up task halfway.
 - **Greenhouse**: every window opens 4 weeks earlier and closes 4 weeks later.
 - **Harvest**: sowing date plus days to harvest, for the crop's harvest weeks.
-  Fall garlic is harvested the next summer.
+  Crops that overwinter (fall garlic and fava, overwintering onion and
+  cabbage) are harvested the next spring or summer, whenever they went in.
 - **Ticking a task off**: the date you tick it is recorded. If it was 5 days
   late, the rest of that planting's tasks move 5 days later. Un-ticking undoes
   it. Deleting a task from the list means it won't be added back.
 
 ## Custom crops and varieties
+
+To add a crop or variety that isn't built in, open **Crops** on the card and
+choose **Add crop**, or go to **Settings > Devices & services > Reap >
+Configure > Add a crop or variety**. Give it a name, a category and an icon,
+then either:
+
+- **copy timing from** an existing crop (best for a variety, such as a
+  particular tomato), changing only what differs, like days to harvest, or
+- enter the dates you'd usually start it indoors, transplant it, or sow it
+  directly in spring or fall in your garden.
+
+Dates you enter are saved relative to your frost dates, so they follow any
+later change to your settings. Crops you add can be edited from the card, and
+removed once no planting uses them.
+
+The same is available as an action:
 
 ```yaml
 action: reap.add_crop
@@ -184,11 +230,11 @@ data:
   name: Tomato, Sungold
   based_on: tomato
   days_to_harvest: 105
+  icon: mdi:fruit-cherries
 ```
 
-A new crop without `based_on` needs `windows`. Ranges can be your garden's
-calendar dates (MM-DD), which are saved as offsets from your frost dates, or
-offsets directly (`L-14`, `F+7`):
+A crop without `based_on` needs `windows`. Ranges can be calendar dates
+(MM-DD) or offsets from your frost dates (`L-14`, `F+7`):
 
 ```yaml
   windows:
@@ -197,8 +243,8 @@ offsets directly (`L-14`, `F+7`):
       transplant: ["05-01", "06-15"]
 ```
 
-Using a built-in key overrides that crop. `reap.list_crops` returns
-every crop with its icon, methods, seasons and defaults.
+Using a built-in key overrides that crop. `reap.list_crops` returns every crop
+with its icon, category, methods, seasons and defaults.
 
 ## Entities
 

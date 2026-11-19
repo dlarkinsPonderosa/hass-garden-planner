@@ -38,7 +38,7 @@
           "lookahead_days": "Tasks further out stay in the planner until they come into view, so long succession sowings don't flood the list.",
           "last_frost": "Average date of the last frost in spring.",
           "first_frost": "Average date of the first frost in fall.",
-          "warm_last_frost": "Tomatoes, peppers, squash and other frost-tender crops are timed from this date instead. Set it later than your last frost where spring stays cool, like coastal BC. Leave empty to use the last frost.",
+          "warm_last_frost": "Tomatoes, peppers, squash and other frost-tender crops are timed from this date instead. Set it later than your last frost where spring stays cool for weeks afterwards. Leave empty to use the last frost.",
           "offset_days": "Negative for earlier, positive for later. Use this to fine-tune for a warm or cold garden.",
           "profile": "How quickly spring warms up after your last frost. This changes how early hardy crops go in and how long warm crops wait."
         }
@@ -48,7 +48,8 @@
   "options": {
     "error": {
       "invalid_month_day": "Use month-day, for example 03-06.",
-      "cannot_schedule": "That crop can't be planned that way. Check the method, season and dates."
+      "cannot_schedule": "That crop can't be planned that way. Check the method, season and dates.",
+      "crop_error": "{error}"
     },
     "step": {
       "init": {
@@ -56,6 +57,7 @@
         "menu_options": {
           "add_planting": "Add a planting",
           "remove_planting": "Remove plantings",
+          "add_crop": "Add a crop or variety",
           "settings": "Settings"
         }
       },
@@ -124,10 +126,39 @@
           "lookahead_days": "Tasks further out stay in the planner until they come into view, so long succession sowings don't flood the list.",
           "last_frost": "Average date of the last frost in spring.",
           "first_frost": "Average date of the first frost in fall.",
-          "warm_last_frost": "Tomatoes, peppers, squash and other frost-tender crops are timed from this date instead. Set it later than your last frost where spring stays cool, like coastal BC. Leave empty to use the last frost.",
+          "warm_last_frost": "Tomatoes, peppers, squash and other frost-tender crops are timed from this date instead. Set it later than your last frost where spring stays cool for weeks afterwards. Leave empty to use the last frost.",
           "offset_days": "Negative for earlier, positive for later. Use this to fine-tune for a warm or cold garden.",
           "todo_entity": "Pick an existing to-do list, or let the planner create its own.",
           "profile": "How quickly spring warms up after your last frost. This changes how early hardy crops go in and how long warm crops wait."
+        }
+      },
+      "add_crop": {
+        "title": "Add a crop or variety",
+        "description": "Enter the dates you'd usually do each step in your garden, using the ones that apply. The year doesn't matter. To add a variety, copy timing from the crop it's a variety of and leave the dates empty.",
+        "data": {
+          "name": "Name",
+          "category": "Category",
+          "icon": "Icon",
+          "based_on": "Copy timing from",
+          "spring_indoor_from": "Start indoors from",
+          "spring_indoor_to": "Start indoors until",
+          "spring_transplant_from": "Transplant out from",
+          "spring_transplant_to": "Transplant out until",
+          "spring_direct_from": "Direct sow in spring from",
+          "spring_direct_to": "Direct sow in spring until",
+          "fall_direct_from": "Direct sow or plant in fall from",
+          "fall_direct_to": "Direct sow or plant in fall until",
+          "days_to_harvest": "Days to harvest",
+          "harvest_weeks": "Harvest lasts",
+          "weeks_indoor": "Weeks indoors",
+          "frost_tender": "Frost tender",
+          "perennial": "Perennial",
+          "notes": "Notes"
+        },
+        "data_description": {
+          "based_on": "Optional. Starts from that crop's timing, icon and harvest.",
+          "frost_tender": "Timed from the warm-crop frost date, like tomatoes and squash.",
+          "notes": "Added to harvest tasks."
         }
       }
     }
@@ -319,6 +350,14 @@
         "notes": {
           "name": "Notes",
           "description": "Added to harvest tasks."
+        },
+        "icon": {
+          "name": "Icon",
+          "description": "A Material Design icon, such as mdi:chili-mild."
+        },
+        "category": {
+          "name": "Category",
+          "description": "Vegetable, herb, fruit or flower."
         }
       }
     },
@@ -431,14 +470,76 @@
           "description": "Added to each task's description."
         }
       }
+    },
+    "add_location": {
+      "name": "Add location",
+      "description": "Add a place plantings can go, such as a bed or seedling tray.",
+      "fields": {
+        "name": {
+          "name": "Name",
+          "description": "The location's name."
+        },
+        "soil_sensor": {
+          "name": "Soil moisture sensor",
+          "description": "A sensor reporting soil moisture in %."
+        },
+        "light": {
+          "name": "Light",
+          "description": "A light or switch, such as grow lights."
+        }
+      }
+    },
+    "update_location": {
+      "name": "Update location",
+      "description": "Rename a location or change its sensor and light. Plantings follow a rename. An empty value clears a sensor or light.",
+      "fields": {
+        "location_id": {
+          "name": "Location ID",
+          "description": "The id from list_locations."
+        },
+        "name": {
+          "name": "Name",
+          "description": "New name."
+        },
+        "soil_sensor": {
+          "name": "Soil moisture sensor",
+          "description": "A sensor reporting soil moisture in %."
+        },
+        "light": {
+          "name": "Light",
+          "description": "A light or switch, such as grow lights."
+        }
+      }
+    },
+    "remove_location": {
+      "name": "Remove location",
+      "description": "Remove a location that no planting uses.",
+      "fields": {
+        "location_id": {
+          "name": "Location ID",
+          "description": "The id from list_locations."
+        }
+      }
+    },
+    "list_locations": {
+      "name": "List locations",
+      "description": "Return every location with its sensor, light and how many plantings use it."
     }
   },
   "selector": {
     "profile": {
       "options": {
-        "cool_spring": "Cool, slow spring (coastal BC, Pacific Northwest, UK, New Zealand)",
-        "continental": "Spring warms fast (BC interior, Prairies, most of the US and eastern Canada)",
-        "atlantic": "Atlantic (Maritimes, Newfoundland)"
+        "cool_spring": "Cool, slow spring (mild maritime climates, such as the Pacific Northwest, UK and New Zealand)",
+        "continental": "Spring warms fast (inland and continental climates)",
+        "atlantic": "Cool, late spring with a long fall (cold-water coasts, such as Atlantic Canada)"
+      }
+    },
+    "category": {
+      "options": {
+        "vegetable": "Vegetable",
+        "herb": "Herb",
+        "fruit": "Fruit",
+        "flower": "Flower"
       }
     }
   }

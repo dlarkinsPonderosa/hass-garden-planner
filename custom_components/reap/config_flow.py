@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import date
+import re
 from typing import Any
 
 import voluptuous as vol
@@ -36,7 +37,6 @@ from .const import (
     PROFILES,
     ZONE_CUSTOM,
     ZONE_FROST_DATES,
-    ZONE_VICTORIA,
 )
 from .manager import default_year
 from .planner import PlannerError
@@ -59,7 +59,6 @@ def _list_selector(hass: HomeAssistant) -> selector.SelectSelector:
 
 def _zone_selector() -> selector.SelectSelector:
     options = [
-        selector.SelectOptionDict(value=ZONE_VICTORIA, label="Victoria, BC (planting guide dates)"),
         selector.SelectOptionDict(value=ZONE_CUSTOM, label="I'll enter my own frost dates"),
     ]
     for zone, (last, first) in ZONE_FROST_DATES.items():
@@ -170,6 +169,53 @@ def _clean(user_input: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
+CROP_DATE_FIELDS = (
+    ("spring_indoor", "spring", "indoor"),
+    ("spring_transplant", "spring", "transplant"),
+    ("spring_direct", "spring", "direct"),
+    ("fall_direct", "fall", "direct"),
+)
+
+
+def _crop_key(manager: Any, name: str) -> str:
+    base = re.sub(r"[^a-z0-9]+", "_", name.lower()).strip("_") or "crop"
+    key, n = base, 2
+    while key in manager.crops:
+        key, n = f"{base}_{n}", n + 1
+    return key
+
+
+def _crop_from_form(manager: Any, user_input: dict[str, Any]) -> dict[str, Any]:
+    """The add_crop fields for what was entered in the Configure form."""
+    name = (user_input.get("name") or "").strip()
+    data: dict[str, Any] = {
+        "key": _crop_key(manager, name),
+        "name": name,
+        "category": user_input.get("category") or "vegetable",
+        "frost_tender": bool(user_input.get("frost_tender")),
+        "perennial": bool(user_input.get("perennial")),
+    }
+    for key in ("icon", "based_on", "notes"):
+        if user_input.get(key):
+            data[key] = user_input[key]
+    for key in ("days_to_harvest", "harvest_weeks", "weeks_indoor"):
+        if user_input.get(key) not in (None, ""):
+            data[key] = int(user_input[key])
+    windows: dict[str, dict[str, Any]] = {}
+    for field, season, kind in CROP_DATE_FIELDS:
+        start, end = user_input.get(f"{field}_from"), user_input.get(f"{field}_to")
+        if not start and not end:
+            continue
+        if not start or not end:
+            raise PlannerError("Give both a from and a to date for each range you use")
+        windows.setdefault(season, {"season": season})[kind] = [str(start), str(end)]
+    if windows:
+        data["windows"] = list(windows.values())
+    elif not data.get("based_on"):
+        raise PlannerError("Give at least one date range, or copy timing from a crop")
+    return data
+
+
 class ReapConfigFlow(ConfigFlow, domain=DOMAIN):
     """Set up Reap."""
 
@@ -195,7 +241,7 @@ class ReapConfigFlow(ConfigFlow, domain=DOMAIN):
             data_schema=vol.Schema(
                 {
                     vol.Required(CONF_TODO_ENTITY, default=NEW_LIST): _list_selector(self.hass),
-                    vol.Required(CONF_ZONE, default=ZONE_VICTORIA): _zone_selector(),
+                    vol.Required(CONF_ZONE, default=ZONE_CUSTOM): _zone_selector(),
                 }
             ),
         )
@@ -265,10 +311,73 @@ class ReapOptionsFlow(OptionsFlow):
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        options = ["add_planting", "settings"]
+        options = ["add_planting", "add_crop", "settings"]
         if self._manager.plantings():
             options.insert(1, "remove_planting")
         return self.async_show_menu(step_id="init", menu_options=options)
+
+    # ----- add a crop -----
+
+    async def async_step_add_crop(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Add a crop or variety with this garden's dates."""
+        manager = self._manager
+        errors: dict[str, str] = {}
+        placeholders = {"error": ""}
+        if user_input is not None:
+            try:
+                await manager.async_save_crop(_crop_from_form(manager, user_input))
+            except PlannerError as err:
+                errors["base"] = "crop_error"
+                placeholders["error"] = str(err)
+            else:
+                return self._done()
+        crops = sorted(manager.crops.values(), key=lambda c: c.name)
+        date = selector.DateSelector()
+        fields: dict[Any, Any] = {
+            vol.Required("name"): str,
+            vol.Required("category", default="vegetable"): selector.SelectSelector(
+                selector.SelectSelectorConfig(
+                    options=["vegetable", "herb", "fruit", "flower"],
+                    translation_key="category",
+                    mode=selector.SelectSelectorMode.DROPDOWN,
+                )
+            ),
+            vol.Optional("icon"): selector.IconSelector(),
+            vol.Optional("based_on"): selector.SelectSelector(
+                selector.SelectSelectorConfig(
+                    options=[
+                        selector.SelectOptionDict(value=c.key, label=c.name)
+                        for c in crops
+                    ],
+                    mode=selector.SelectSelectorMode.DROPDOWN,
+                    sort=False,
+                )
+            ),
+        }
+        for field, _season, _kind in CROP_DATE_FIELDS:
+            fields[vol.Optional(f"{field}_from")] = date
+            fields[vol.Optional(f"{field}_to")] = date
+        fields.update(
+            {
+                vol.Optional("days_to_harvest"): _box(1, 1100, "days"),
+                vol.Optional("harvest_weeks"): _box(1, 52, "weeks"),
+                vol.Optional("weeks_indoor"): _box(1, 30, "weeks"),
+                vol.Optional("frost_tender", default=False): bool,
+                vol.Optional("perennial", default=False): bool,
+                vol.Optional("notes"): str,
+            }
+        )
+        schema = vol.Schema(fields)
+        if user_input:
+            schema = self.add_suggested_values_to_schema(schema, user_input)
+        return self.async_show_form(
+            step_id="add_crop",
+            data_schema=schema,
+            errors=errors,
+            description_placeholders=placeholders,
+        )
 
     # ----- add a planting -----
 
@@ -355,7 +464,13 @@ class ReapOptionsFlow(OptionsFlow):
                 vol.Optional("succession_until"): selector.DateSelector(),
                 vol.Optional("variety"): str,
                 vol.Optional("quantity"): str,
-                vol.Optional("location"): str,
+                vol.Optional("location"): selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=[loc["name"] for loc in manager.locations()],
+                        custom_value=True,
+                        mode=selector.SelectSelectorMode.DROPDOWN,
+                    )
+                ),
                 vol.Optional("notes"): str,
                 vol.Optional("save_defaults", default=False): bool,
             }

@@ -40,6 +40,7 @@ from .const import (
     SYNC_INTERVAL_MINUTES,
 )
 from .planner import (
+    OFFSET_RE,
     Crop,
     Planting,
     PlannerError,
@@ -48,6 +49,8 @@ from .planner import (
     apply_actuals,
     generate_tasks,
     load_catalog,
+    mmdd_to_offset,
+    offset_to_mmdd,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -72,7 +75,13 @@ def _empty_data() -> dict[str, Any]:
         "own_items": [],
         # crop key -> the user's planting defaults for that crop
         "crop_defaults": {},
+        # location id -> {id, name, soil_sensor, light}
+        "locations": {},
     }
+
+
+DEFAULT_LOCATIONS = ("Seedling Tray", "Garden", "Greenhouse")
+LOCATION_ENTITY_KEYS = ("soil_sensor", "light")
 
 
 class GardenManager:
@@ -137,6 +146,9 @@ class GardenManager:
         stored = await self._store.async_load()
         if stored:
             self.data = {**_empty_data(), **stored}
+        if not stored or "locations" not in stored:
+            self._seed_locations()
+            await self._async_save()
         self.rebuild()
 
         self._unsubs.append(
@@ -208,10 +220,125 @@ class GardenManager:
             self.data["crop_defaults"].pop(key, None)
         else:
             self.data["crop_defaults"][key] = {
-                k: v for k, v in values.items() if k in CROP_DEFAULT_KEYS
+                k: (self._location_name(v) if k == "location" else v)
+                for k, v in values.items()
+                if k in CROP_DEFAULT_KEYS
             }
         await self._async_save()
         self._notify()
+
+    # ----- locations -----
+
+    def _seed_locations(self) -> None:
+        """Default locations, plus any free-text ones existing plantings use."""
+        names = list(DEFAULT_LOCATIONS)
+        for raw in self.data["plantings"].values():
+            name = (raw.get("location") or "").strip()
+            if name and name.casefold() not in {n.casefold() for n in names}:
+                names.append(name)
+        for name in names:
+            self._new_location(name)
+
+    def _new_location(self, name: str, **entities: str | None) -> dict[str, Any]:
+        location_id = uuid.uuid4().hex[:8]
+        location = {"id": location_id, "name": name}
+        for key in LOCATION_ENTITY_KEYS:
+            location[key] = entities.get(key) or None
+        self.data["locations"][location_id] = location
+        return location
+
+    def locations(self) -> list[dict[str, Any]]:
+        """Locations in the order they were added, with how many plantings use each."""
+        counts: dict[str, int] = {}
+        for raw in self.data["plantings"].values():
+            name = (raw.get("location") or "").casefold()
+            counts[name] = counts.get(name, 0) + 1
+        return [
+            {**loc, "plantings": counts.get(loc["name"].casefold(), 0)}
+            for loc in self.data["locations"].values()
+        ]
+
+    def _location_named(self, name: str) -> dict[str, Any] | None:
+        folded = name.strip().casefold()
+        for loc in self.data["locations"].values():
+            if loc["name"].casefold() == folded:
+                return loc
+        return None
+
+    def _location_name(self, value: Any) -> Any:
+        """A planting's location as a known location name, added if new."""
+        if not isinstance(value, str) or not value.strip():
+            return value
+        loc = self._location_named(value) or self._new_location(value.strip())
+        return loc["name"]
+
+    async def async_add_location(
+        self, name: str, soil_sensor: str | None = None, light: str | None = None
+    ) -> dict[str, Any]:
+        name = name.strip()
+        if not name:
+            raise PlannerError("A location needs a name")
+        if self._location_named(name):
+            raise PlannerError(f"There is already a location called {name}")
+        location = self._new_location(name, soil_sensor=soil_sensor, light=light)
+        await self._async_save()
+        self.rebuild()
+        return location
+
+    async def async_update_location(
+        self, location_id: str, changes: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Rename a location or change its entities. Empty values clear an entity."""
+        location = self.data["locations"].get(location_id)
+        if location is None:
+            raise PlannerError(f"Unknown location: {location_id}")
+        old_name = location["name"]
+        if "name" in changes:
+            new_name = (changes["name"] or "").strip()
+            if not new_name:
+                raise PlannerError("A location needs a name")
+            other = self._location_named(new_name)
+            if other and other["id"] != location_id:
+                raise PlannerError(f"There is already a location called {new_name}")
+            location["name"] = new_name
+        for key in LOCATION_ENTITY_KEYS:
+            if key in changes:
+                location[key] = changes[key] or None
+        if location["name"] != old_name:
+            folded = old_name.casefold()
+            for raw in self.data["plantings"].values():
+                if (raw.get("location") or "").casefold() == folded:
+                    raw["location"] = location["name"]
+            for defaults in self.data["crop_defaults"].values():
+                if (defaults.get("location") or "").casefold() == folded:
+                    defaults["location"] = location["name"]
+        await self._async_save()
+        self.rebuild()
+        await self.async_sync()
+        return location
+
+    async def async_remove_location(self, location_id: str) -> None:
+        location = self.data["locations"].get(location_id)
+        if location is None:
+            raise PlannerError(f"Unknown location: {location_id}")
+        folded = location["name"].casefold()
+        in_use = [
+            raw for raw in self.data["plantings"].values()
+            if (raw.get("location") or "").casefold() == folded
+        ]
+        if in_use:
+            raise PlannerError(
+                f"{location['name']} is used by {len(in_use)} planting(s); "
+                "move or remove them first"
+            )
+        del self.data["locations"][location_id]
+        for defaults in self.data["crop_defaults"].values():
+            if (defaults.get("location") or "").casefold() == folded:
+                defaults.pop("location", None)
+        await self._async_save()
+        self.rebuild()
+
+    # ----- plantings -----
 
     def plantings(self) -> list[Planting]:
         return [Planting.from_dict(p) for p in self.data["plantings"].values()]
@@ -232,6 +359,8 @@ class GardenManager:
     ) -> tuple[Planting, list[Task]]:
         planting_id = uuid.uuid4().hex[:8]
         fields = self._with_method(fields)
+        if fields.get("location"):
+            fields = {**fields, "location": self._location_name(fields["location"])}
         planting = Planting.from_dict({**fields, "id": planting_id})
         # Validates the planting before it is saved.
         generate_tasks(planting, self.crop(planting.crop), self.settings)
@@ -252,6 +381,8 @@ class GardenManager:
             if key == "id":
                 continue
             merged[key] = None if value == "" else value
+        if merged.get("location"):
+            merged["location"] = self._location_name(merged["location"])
         planting = Planting.from_dict(merged)
         generate_tasks(planting, self.crop(planting.crop), self.settings)
         self.data["plantings"][planting_id] = planting.to_dict()
@@ -275,6 +406,92 @@ class GardenManager:
         self.rebuild()
         await self._async_save()
         await self.async_sync()
+
+    async def async_save_crop(self, data: dict[str, Any]) -> Crop:
+        """Add or replace a custom crop.
+
+        based_on copies another crop first. Window ranges can be calendar
+        dates (MM-DD) for this garden, stored as offsets from its frost dates
+        so they follow later changes, or offsets (L-14, F+7) directly.
+        """
+        data = dict(data)
+        base: dict[str, Any] = {}
+        if based_on := data.pop("based_on", None):
+            base = self.crop(based_on).to_dict()
+        merged = {**base, **data, "source": "custom"}
+        if not merged.get("name"):
+            raise PlannerError("A new crop needs a name")
+        if "windows" in data:
+            # Its own dates replace every climate profile of the base crop.
+            merged["profiles"] = {}
+            merged["estimated_profiles"] = []
+            settings = self.settings
+            last_frost = settings.last_frost
+            if merged.get("frost_tender") and settings.warm_last_frost:
+                last_frost = settings.warm_last_frost
+            windows = []
+            for window in data["windows"]:
+                converted = {"season": window.get("season") or "spring"}
+                for key in ("indoor", "direct", "transplant", "cover"):
+                    if window.get(key):
+                        converted[key] = [
+                            value if OFFSET_RE.match(value) else mmdd_to_offset(
+                                _mmdd(value), last_frost, settings.first_frost
+                            )
+                            for value in window[key]
+                        ]
+                windows.append(converted)
+            merged["windows"] = windows
+        if not any(
+            w.get("indoor") or w.get("direct") or w.get("transplant")
+            for w in merged.get("windows") or []
+        ):
+            raise PlannerError("A new crop needs sowing dates or a crop to copy")
+        crop = Crop.from_dict(merged)
+        if not crop.methods(self.settings.profile):
+            raise PlannerError(
+                "Give a direct sowing range, or both an indoor start and a transplant range"
+            )
+        await self.async_add_crop(crop)
+        return crop
+
+    def crop_info(self, crop: Crop) -> dict[str, Any]:
+        """What the card needs to list, add with and edit a crop."""
+        profile = self.settings.profile
+        info: dict[str, Any] = {
+            "key": crop.key,
+            "name": crop.name,
+            "icon": crop.icon,
+            "category": crop.category,
+            "frost_tender": crop.frost_tender,
+            "perennial": crop.perennial,
+            "source": crop.source,
+            "custom": crop.key in self.data["custom_crops"],
+            "notes": crop.notes,
+            "methods": crop.methods(profile),
+            "seasons": sorted({w.season for w in crop.windows_for(profile)}),
+            "defaults": self.crop_defaults(crop.key),
+        }
+        if info["custom"]:
+            settings = self.settings
+            info.update(
+                days_to_harvest=crop.days_to_harvest,
+                harvest_weeks=crop.harvest_weeks,
+                weeks_indoor=crop.weeks_indoor,
+                in_use=any(p.crop == crop.key for p in self.plantings()),
+                windows=[
+                    {
+                        "season": w.season,
+                        **{
+                            key: [offset_to_mmdd(v, crop, settings) for v in rng]
+                            for key in ("indoor", "direct", "transplant")
+                            if (rng := getattr(w, key))
+                        },
+                    }
+                    for w in crop.windows
+                ],
+            )
+        return info
 
     async def async_add_crop(self, crop: Crop) -> None:
         self.data["custom_crops"][crop.key] = crop.to_dict()
@@ -490,6 +707,14 @@ def _find_new_item(
         if item.get("uid") not in claimed and item.get("summary") == summary:
             return item["uid"]
     return None
+
+
+def _mmdd(value: str) -> str:
+    try:
+        month, day = (int(p) for p in value.split("-")[-2:])
+        return f"{month:02d}-{day:02d}"
+    except ValueError as err:
+        raise PlannerError(f"Bad date {value!r}; use MM-DD") from err
 
 
 def default_year(today: date | None = None) -> int:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -24,7 +25,7 @@ from homeassistant.loader import async_get_integration
 
 from .const import DOMAIN
 from .manager import GardenManager, default_year
-from .planner import METHODS, OFFSET_RE, Crop, PlannerError, mmdd_to_offset
+from .planner import METHODS, OFFSET_RE, PlannerError
 
 PLATFORMS = [Platform.SENSOR, Platform.TODO]
 
@@ -68,7 +69,7 @@ UPDATE_FIELDS = {
 
 RANGE = vol.All(
     cv.ensure_list,
-    [cv.matches_regex(r"^(\d{1,2}-\d{1,2}|[LF][+-]\d+)$")],
+    [cv.matches_regex(r"^((\d{4}-)?\d{1,2}-\d{1,2}|[LF][+-]\d+)$")],
     vol.Length(2, 2),
 )
 WINDOW_SCHEMA = vol.Schema(
@@ -92,6 +93,8 @@ CROP_FIELDS = {
     vol.Optional("pot_up"): cv.boolean,
     vol.Optional("perennial"): cv.boolean,
     vol.Optional("notes"): cv.string,
+    vol.Optional("icon"): cv.icon,
+    vol.Optional("category"): vol.In(["vegetable", "herb", "fruit", "flower"]),
 }
 
 
@@ -102,11 +105,6 @@ def _manager(hass: HomeAssistant) -> GardenManager:
     return entries[0].runtime_data
 
 
-def _mmdd(value: str) -> str:
-    month, day = (int(p) for p in value.split("-"))
-    return f"{month:02d}-{day:02d}"
-
-
 def _planting_fields(call: ServiceCall) -> dict[str, Any]:
     fields = dict(call.data)
     fields.setdefault("year", default_year())
@@ -115,6 +113,8 @@ def _planting_fields(call: ServiceCall) -> dict[str, Any]:
             fields[key] = fields[key].isoformat()
     return fields
 
+
+_LOGGER = logging.getLogger(__name__)
 
 CARD_URL = "/reap/reap-card.js"
 CARD_PATH = Path(__file__).parent / "frontend" / "reap-card.js"
@@ -128,7 +128,38 @@ async def _async_register_card(hass: HomeAssistant) -> None:
     await hass.http.async_register_static_paths(
         [StaticPathConfig(CARD_URL, str(CARD_PATH), cache_headers=False)]
     )
-    add_extra_js_url(hass, f"{CARD_URL}?v={version}")
+    url = f"{CARD_URL}?v={version}"
+    add_extra_js_url(hass, url)
+    try:
+        await _async_ensure_resource(hass, url)
+    except Exception:  # noqa: BLE001 - never block setup over the card
+        _LOGGER.warning(
+            "Could not add the Reap card to dashboard resources; add %s as a "
+            "JavaScript module under Settings > Dashboards > Resources",
+            CARD_URL,
+            exc_info=True,
+        )
+
+
+async def _async_ensure_resource(hass: HomeAssistant, url: str) -> None:
+    """Add (or update) the card as a dashboard resource in storage mode.
+
+    Some frontends do not load extra module URLs reliably, while dashboard
+    resources always load. Only storage-mode resources can be edited.
+    """
+    lovelace = hass.data.get("lovelace")
+    resources = getattr(lovelace, "resources", None)
+    if resources is None or getattr(lovelace, "resource_mode", "storage") != "storage":
+        return
+    if not getattr(resources, "loaded", True):
+        await resources.async_load()
+        resources.loaded = True
+    for item in resources.async_items():
+        if str(item.get("url", "")).split("?")[0] == CARD_URL:
+            if item["url"] != url:
+                await resources.async_update_item(item["id"], {"url": url})
+            return
+    await resources.async_create_item({"res_type": "module", "url": url})
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
@@ -171,41 +202,10 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             raise ServiceValidationError(str(err)) from err
 
     async def add_crop(call: ServiceCall) -> None:
-        manager = _manager(hass)
-        data = dict(call.data)
-        base: dict[str, Any] = {}
-        if based_on := data.pop("based_on", None):
-            try:
-                base = manager.crop(based_on).to_dict()
-            except PlannerError as err:
-                raise ServiceValidationError(str(err)) from err
-        merged = {**base, **data, "source": "custom"}
-        if "name" not in merged:
-            raise ServiceValidationError("A new crop needs a name")
-        if not merged.get("windows"):
-            raise ServiceValidationError("A new crop needs windows or based_on")
-        if "windows" in data:
-            # Calendar dates (MM-DD) are this garden's dates; store them as
-            # offsets from its frost dates so they follow later changes.
-            settings = manager.settings
-            last_frost = settings.last_frost
-            if merged.get("frost_tender") and settings.warm_last_frost:
-                last_frost = settings.warm_last_frost
-            windows = []
-            for window in data["windows"]:
-                converted = dict(window)
-                for key in ("indoor", "direct", "transplant", "cover"):
-                    if key in window:
-                        converted[key] = [
-                            value if OFFSET_RE.match(value) else mmdd_to_offset(
-                                _mmdd(value), last_frost, settings.first_frost
-                            )
-                            for value in window[key]
-                        ]
-                windows.append(converted)
-            merged["windows"] = windows
-        crop = Crop.from_dict(merged)
-        await manager.async_add_crop(crop)
+        try:
+            await _manager(hass).async_save_crop(dict(call.data))
+        except PlannerError as err:
+            raise ServiceValidationError(str(err)) from err
 
     async def remove_crop(call: ServiceCall) -> None:
         try:
@@ -217,20 +217,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         manager = _manager(hass)
         return {
             "crops": [
-                {
-                    "key": crop.key,
-                    "name": crop.name,
-                    "icon": crop.icon,
-                    "frost_tender": crop.frost_tender,
-                    "perennial": crop.perennial,
-                    "source": crop.source,
-                    "notes": crop.notes,
-                    "methods": crop.methods(manager.settings.profile),
-                    "seasons": sorted(
-                        {w.season for w in crop.windows_for(manager.settings.profile)}
-                    ),
-                    "defaults": manager.crop_defaults(crop.key),
-                }
+                manager.crop_info(crop)
                 for crop in sorted(manager.crops.values(), key=lambda c: c.name)
             ]
         }
@@ -244,6 +231,33 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             await manager.async_set_crop_defaults(key, None if clear else data)
         except PlannerError as err:
             raise ServiceValidationError(str(err)) from err
+
+    async def add_location(call: ServiceCall) -> ServiceResponse:
+        try:
+            location = await _manager(hass).async_add_location(
+                call.data["name"], call.data.get("soil_sensor"), call.data.get("light")
+            )
+        except PlannerError as err:
+            raise ServiceValidationError(str(err)) from err
+        return {"location": location}
+
+    async def update_location(call: ServiceCall) -> ServiceResponse:
+        changes = dict(call.data)
+        location_id = changes.pop("location_id")
+        try:
+            location = await _manager(hass).async_update_location(location_id, changes)
+        except PlannerError as err:
+            raise ServiceValidationError(str(err)) from err
+        return {"location": location}
+
+    async def remove_location(call: ServiceCall) -> None:
+        try:
+            await _manager(hass).async_remove_location(call.data["location_id"])
+        except PlannerError as err:
+            raise ServiceValidationError(str(err)) from err
+
+    async def list_locations(call: ServiceCall) -> ServiceResponse:
+        return {"locations": _manager(hass).locations()}
 
     async def sync(call: ServiceCall) -> None:
         await _manager(hass).async_sync()
@@ -288,6 +302,38 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                 vol.Optional("clear", default=False): cv.boolean,
             }
         ),
+    )
+    entity_or_empty = vol.Any(cv.entity_id, "", None)
+    hass.services.async_register(
+        DOMAIN, "add_location", add_location,
+        vol.Schema(
+            {
+                vol.Required("name"): cv.string,
+                vol.Optional("soil_sensor"): entity_or_empty,
+                vol.Optional("light"): entity_or_empty,
+            }
+        ),
+        supports_response=SupportsResponse.OPTIONAL,
+    )
+    hass.services.async_register(
+        DOMAIN, "update_location", update_location,
+        vol.Schema(
+            {
+                vol.Required("location_id"): cv.string,
+                vol.Optional("name"): cv.string,
+                vol.Optional("soil_sensor"): entity_or_empty,
+                vol.Optional("light"): entity_or_empty,
+            }
+        ),
+        supports_response=SupportsResponse.OPTIONAL,
+    )
+    hass.services.async_register(
+        DOMAIN, "remove_location", remove_location,
+        vol.Schema({vol.Required("location_id"): cv.string}),
+    )
+    hass.services.async_register(
+        DOMAIN, "list_locations", list_locations, vol.Schema({}),
+        supports_response=SupportsResponse.ONLY,
     )
     hass.services.async_register(DOMAIN, "sync", sync, vol.Schema({}))
     return True

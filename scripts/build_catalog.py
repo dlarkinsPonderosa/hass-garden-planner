@@ -1,6 +1,6 @@
 """Build custom_components/reap/data/crops.json.
 
-The windows below are calendar dates read off West Coast Seeds' regional
+The windows below are calendar dates read off published regional
 planting charts (to roughly half-month accuracy). The crop list and the
 "cool_spring" profile come from the South Coastal BC charts; "continental"
 averages South Central BC and the South Central Prairies; "atlantic" is the
@@ -95,7 +95,7 @@ crop("strawberry","Strawberry",[(S,{"indoor":("01-01","02-28"),"transplant":("05
 crop("swiss_chard","Swiss chard",[(S,{"direct":("04-15","07-15")})],dth=55,harvest_weeks=16)
 crop("tomato","Tomato",[(S,{"indoor":("03-01","04-15"),"transplant":("05-01","06-15")})],weeks_indoor=7,dth=120,harvest_weeks=10,tender=True,pot_up=True)
 crop("turnip","Turnip",[(S,{"direct":("03-01","08-31")})],dth=50,harvest_weeks=4)
-# Added crops (not in the PDF)
+# Added crops (not on the charts)
 A = "added"
 crop("potato","Potato",[(S,{"direct":("03-15","06-15")})],dth=100,harvest_weeks=6,source=A,notes="Plant seed potatoes. Early varieties about 70 days, main crop about 110.")
 crop("tomatillo","Tomatillo",[(S,{"indoor":("03-15","04-15"),"transplant":("05-15","06-15")})],weeks_indoor=7,dth=120,harvest_weeks=8,tender=True,pot_up=True,source=A)
@@ -433,6 +433,17 @@ for c in C:
 # Planting defaults: what a new planting of the crop starts with. People can
 # override these per crop in Home Assistant, and per planting.
 # ---------------------------------------------------------------------------
+# Crops sown in summer or fall that overwinter: harvest starts this many days
+# after the next spring's warm last frost (04-01 on the cool-spring chart), whatever the
+# planting date. Coastal timings: fava mid-May, cabbage April, onion and
+# garlic June to July.
+OVERWINTER_HARVEST = {
+    "bean_broad": 45,
+    "cabbage_overwinter": 15,
+    "garlic": 90,
+    "onion_overwinter": 75,
+}
+
 SUCCESSION = {
     # key: (repeat every N days, number of sowings or None for the whole window)
     "arugula": (14, None), "cress": (14, None), "radish": (14, None), "spinach": (14, None),
@@ -456,14 +467,21 @@ for c in C:
         if count:
             defaults["succession_count"] = count
     c["defaults"] = defaults
+    if c["key"] in OVERWINTER_HARVEST:
+        c["overwinter_harvest"] = OVERWINTER_HARVEST[c["key"]]
+
+# Published values: every built-in crop is "builtin", with a category.
+for c in C:
+    c["category"] = "herb" if c["source"] == "pdf_herbs" else "vegetable"
+    c["source"] = "builtin"
 
 out = {
-    "source": "South Coastal BC Vegetable and Flower & Herb Planting Guides (West Coast Seeds), plus added crops",
+    "source": "Built-in catalog: regional planting charts for cool-spring, continental and Atlantic climates, plus added crops",
     "format": "Ranges are days from the last spring frost (L) or first fall frost (F).",
     "profiles": {
-        "cool_spring": "South Coastal BC chart (long, cool spring)",
-        "continental": "South Central BC and South Central Prairies charts, averaged (spring warms fast)",
-        "atlantic": "Maritimes chart",
+        "cool_spring": "Long, cool spring",
+        "continental": "Spring warms fast",
+        "atlantic": "Cool, late spring with a long fall",
     },
     "crops": C,
 }

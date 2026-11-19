@@ -149,7 +149,7 @@ class PlantingsSensor(GardenSensor):
 
     _attr_icon = "mdi:flower"
     _attr_native_unit_of_measurement = "plantings"
-    _unrecorded_attributes = frozenset({"plantings"})
+    _unrecorded_attributes = frozenset({"plantings", "locations"})
 
     def __init__(self, manager: GardenManager) -> None:
         super().__init__(manager, "plantings")
@@ -169,4 +169,7 @@ class PlantingsSensor(GardenSensor):
                 }
             )
         self._attr_native_value = len(plantings)
-        self._attr_extra_state_attributes = {"plantings": plantings}
+        self._attr_extra_state_attributes = {
+            "plantings": plantings,
+            "locations": self.manager.locations(),
+        }

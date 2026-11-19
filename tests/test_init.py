@@ -28,8 +28,15 @@ async def _items(hass: HomeAssistant, entity_id: str) -> list[dict[str, Any]]:
     return resp[entity_id]["items"]
 
 
+# Test garden: early last frost, with warm crops timed from Apr 1, cool spring.
+GARDEN = {
+    "last_frost": "03-06", "first_frost": "11-16",
+    "warm_last_frost": "04-01", "profile": "cool_spring",
+}
+
+
 async def _setup(hass: HomeAssistant, **data: Any) -> MockConfigEntry:
-    entry = MockConfigEntry(domain=DOMAIN, data={**DEFAULTS, **data}, unique_id=DOMAIN)
+    entry = MockConfigEntry(domain=DOMAIN, data={**DEFAULTS, **GARDEN, **data}, unique_id=DOMAIN)
     entry.add_to_hass(hass)
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
@@ -49,11 +56,11 @@ async def _start_flow(hass: HomeAssistant, zone: str) -> dict[str, Any]:
     )
 
 
-async def test_config_flow_victoria(hass: HomeAssistant) -> None:
-    result = await _start_flow(hass, "victoria")
+async def test_config_flow_own_dates(hass: HomeAssistant) -> None:
+    result = await _start_flow(hass, "custom")
     assert result["step_id"] == "location"
     result = await hass.config_entries.flow.async_configure(
-        result["flow_id"], {**LOCATION, "last_frost": "3-6"}
+        result["flow_id"], {**LOCATION, **GARDEN, "last_frost": "3-6"}
     )
     assert result["type"] == "create_entry"
     assert result["data"]["last_frost"] == "03-06"
@@ -166,17 +173,17 @@ async def test_deleted_task_is_not_re_added(hass: HomeAssistant) -> None:
 
 @pytest.mark.freeze_time("2027-03-01 12:00:00")
 async def test_existing_list(hass: HomeAssistant, tmp_path) -> None:
-    """Tasks go onto an existing Local To-do list, like Darren's List."""
+    """Tasks go onto an existing Local To-do list."""
     local = MockConfigEntry(
         domain="local_todo",
-        data={"todo_list_name": "Darren's List", "storage_key": "darrens_list"},
+        data={"todo_list_name": "Family List", "storage_key": "family_list"},
     )
     local.add_to_hass(hass)
     hass.config.config_dir = str(tmp_path)
     (tmp_path / ".storage").mkdir()
     assert await hass.config_entries.async_setup(local.entry_id)
     await hass.async_block_till_done()
-    target = "todo.darren_s_list"
+    target = "todo.family_list"
     assert hass.states.get(target) is not None
     await hass.services.async_call(
         "todo", "add_item", {"entity_id": target, "item": "Buy milk"}, blocking=True
@@ -218,7 +225,7 @@ async def test_options_flow(hass: HomeAssistant) -> None:
     entry = await _setup(hass)
     result = await hass.config_entries.options.async_init(entry.entry_id)
     assert result["type"] == "menu"
-    assert result["menu_options"] == ["add_planting", "settings"]
+    assert result["menu_options"] == ["add_planting", "add_crop", "settings"]
     result = await hass.config_entries.options.async_configure(
         result["flow_id"], {"next_step_id": "settings"}
     )
@@ -383,3 +390,156 @@ async def test_configure_prefills_crop_defaults(hass: HomeAssistant) -> None:
     assert entry.runtime_data.crop_defaults("radish") == {
         "method": "direct_bed", "succession_days": 10, "quantity": "1 row",
     }
+
+
+async def test_card_resource_added_and_updated(hass) -> None:
+    """The card is added once as a dashboard resource and kept on the current version."""
+    from types import SimpleNamespace
+
+    from custom_components.reap import CARD_URL, _async_ensure_resource
+
+    class FakeResources:
+        loaded = True
+
+        def __init__(self, items):
+            self.items = items
+
+        def async_items(self):
+            return self.items
+
+        async def async_create_item(self, data):
+            self.items.append({"id": "new", "type": data["res_type"], "url": data["url"]})
+
+        async def async_update_item(self, item_id, updates):
+            for item in self.items:
+                if item["id"] == item_id:
+                    item.update(updates)
+
+    res = FakeResources([{"id": "a", "type": "module", "url": "/other/card.js"}])
+    hass.data["lovelace"] = SimpleNamespace(resource_mode="storage", resources=res)
+    await _async_ensure_resource(hass, f"{CARD_URL}?v=1")
+    await _async_ensure_resource(hass, f"{CARD_URL}?v=1")
+    assert [i["url"] for i in res.items] == ["/other/card.js", f"{CARD_URL}?v=1"]
+
+    # A manually added resource without a version is reused and updated.
+    res.items = [{"id": "m", "type": "module", "url": CARD_URL}]
+    await _async_ensure_resource(hass, f"{CARD_URL}?v=2")
+    assert res.items == [{"id": "m", "type": "module", "url": f"{CARD_URL}?v=2"}]
+
+    # YAML-mode resources are left alone.
+    yaml_res = FakeResources([])
+    hass.data["lovelace"] = SimpleNamespace(resource_mode="yaml", resources=yaml_res)
+    await _async_ensure_resource(hass, f"{CARD_URL}?v=2")
+    assert yaml_res.items == []
+
+
+async def _call(hass: HomeAssistant, service: str, data: dict[str, Any], response: bool = False):
+    return await hass.services.async_call(
+        DOMAIN, service, data, blocking=True, return_response=response
+    )
+
+
+async def test_locations(hass: HomeAssistant) -> None:
+    """Default locations, add/rename/remove, and plantings following a rename."""
+    from homeassistant.exceptions import ServiceValidationError
+
+    entry = await _setup(hass)
+    manager = entry.runtime_data
+    resp = await _call(hass, "list_locations", {}, True)
+    assert [loc["name"] for loc in resp["locations"]] == ["Seedling Tray", "Garden", "Greenhouse"]
+
+    resp = await _call(hass, "add_location", {"name": "Bed 3", "soil_sensor": "sensor.bed_3_moisture"}, True)
+    bed = resp["location"]
+    assert bed["soil_sensor"] == "sensor.bed_3_moisture" and bed["light"] is None
+    with pytest.raises(ServiceValidationError):
+        await _call(hass, "add_location", {"name": "bed 3"})
+
+    # Plantings use a location by name, matched without case.
+    await _call(hass, "add_planting", {"crop": "carrot", "method": "direct_bed", "year": 2027, "location": "BED 3"}, True)
+    assert manager.plantings()[0].location == "Bed 3"
+    with pytest.raises(ServiceValidationError):
+        await _call(hass, "remove_location", {"location_id": bed["id"]})
+
+    await _call(hass, "update_location", {"location_id": bed["id"], "name": "North bed", "light": "switch.grow_lights", "soil_sensor": ""})
+    assert manager.plantings()[0].location == "North bed"
+    loc = next(l for l in manager.locations() if l["id"] == bed["id"])
+    assert loc == {**loc, "name": "North bed", "light": "switch.grow_lights", "soil_sensor": None, "plantings": 1}
+    attrs = hass.states.get("sensor.reap_plantings").attributes
+    assert any(l["name"] == "North bed" for l in attrs["locations"])
+
+    # A new name on a planting creates the location.
+    await _call(hass, "add_planting", {"crop": "pea", "method": "direct_bed", "year": 2027, "location": "Trellis"}, True)
+    assert "Trellis" in [l["name"] for l in manager.locations()]
+
+    garden = next(l for l in manager.locations() if l["name"] == "Garden")
+    await _call(hass, "remove_location", {"location_id": garden["id"]})
+    assert "Garden" not in [l["name"] for l in manager.locations()]
+
+
+async def test_existing_free_text_locations_are_migrated(hass: HomeAssistant, hass_storage) -> None:
+    entry = MockConfigEntry(domain=DOMAIN, data=dict(DEFAULTS), unique_id=DOMAIN)
+    hass_storage[f"{DOMAIN}.{entry.entry_id}"] = {
+        "version": 1, "key": f"{DOMAIN}.{entry.entry_id}",
+        "data": {"plantings": {"a1": {"id": "a1", "crop": "onion", "method": "indoor_bed", "year": 2027, "location": "Seed tray 1"}}},
+    }
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    names = [l["name"] for l in entry.runtime_data.locations()]
+    assert names == ["Seedling Tray", "Garden", "Greenhouse", "Seed tray 1"]
+
+
+async def test_custom_crop_round_trip(hass: HomeAssistant) -> None:
+    """A crop added with garden dates lists those dates back for editing."""
+    from homeassistant.exceptions import ServiceValidationError
+
+    entry = await _setup(hass, profile="continental")
+    await _call(hass, "add_crop", {
+        "key": "okra", "name": "Okra", "based_on": "tomato", "icon": "mdi:chili-mild",
+        "category": "vegetable", "days_to_harvest": 60,
+        "windows": [{"season": "spring", "indoor": ["2027-03-01", "03-20"], "transplant": ["05-15", "06-01"]}],
+    })
+    crop = entry.runtime_data.crop("okra")
+    # Its own dates win over the base crop's climate profiles.
+    assert crop.profiles == {}
+    resp = await _call(hass, "list_crops", {}, True)
+    okra = next(c for c in resp["crops"] if c["key"] == "okra")
+    assert okra["custom"] and not okra["in_use"]
+    assert okra["icon"] == "mdi:chili-mild"
+    assert okra["windows"] == [{"season": "spring", "indoor": ["03-01", "03-20"], "transplant": ["05-15", "06-01"]}]
+    tomato = next(c for c in resp["crops"] if c["key"] == "tomato")
+    assert not tomato["custom"] and "windows" not in tomato
+
+    with pytest.raises(ServiceValidationError):
+        await _call(hass, "add_crop", {"key": "nothing", "name": "Nothing"})
+    with pytest.raises(ServiceValidationError):
+        await _call(hass, "add_crop", {"key": "bad", "name": "Bad", "windows": [{"indoor": ["03-01", "03-20"]}]})
+
+
+async def test_add_crop_from_configure(hass: HomeAssistant) -> None:
+    entry = await _setup(hass)
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    assert "add_crop" in flow["menu_options"]
+    result = await hass.config_entries.options.async_configure(flow["flow_id"], {"next_step_id": "add_crop"})
+    assert result["step_id"] == "add_crop"
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"name": "Tulsi", "category": "herb", "spring_direct_from": "2026-04-15"}
+    )
+    assert result["errors"] == {"base": "crop_error"}
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {"name": "Tulsi", "category": "herb", "icon": "mdi:leaf",
+         "spring_direct_from": "2026-04-15", "spring_direct_to": "2026-05-31", "days_to_harvest": 60},
+    )
+    assert result["type"] == "create_entry"
+    crop = entry.runtime_data.crop("tulsi")
+    assert crop.category == "herb" and crop.icon == "mdi:leaf"
+    assert crop.windows[0].direct == ("L+40", "L+86")
+    # Adding the same name again makes a second key instead of overwriting.
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(flow["flow_id"], {"next_step_id": "add_crop"})
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"name": "Tomato", "category": "vegetable", "based_on": "tomato"}
+    )
+    assert result["type"] == "create_entry"
+    assert entry.runtime_data.crop("tomato_2").name == "Tomato"
