@@ -24,7 +24,7 @@ from homeassistant.helpers.typing import ConfigType
 from homeassistant.loader import async_get_integration
 
 from .const import DOMAIN
-from .manager import GardenManager, default_year
+from .manager import GardenManager
 from .planner import METHODS, OFFSET_RE, PlannerError
 
 PLATFORMS = [Platform.SENSOR, Platform.TODO]
@@ -90,6 +90,7 @@ CROP_FIELDS = {
     vol.Optional("days_to_harvest"): vol.All(vol.Coerce(int), vol.Range(min=1, max=1100)),
     vol.Optional("harvest_weeks"): vol.All(vol.Coerce(int), vol.Range(min=1, max=52)),
     vol.Optional("frost_tender"): cv.boolean,
+    vol.Optional("planted"): cv.boolean,
     vol.Optional("pot_up"): cv.boolean,
     vol.Optional("perennial"): cv.boolean,
     vol.Optional("notes"): cv.string,
@@ -101,13 +102,26 @@ CROP_FIELDS = {
 def _manager(hass: HomeAssistant) -> GardenManager:
     entries = hass.config_entries.async_loaded_entries(DOMAIN)
     if not entries:
-        raise ServiceValidationError("Reap is not set up")
+        raise ServiceValidationError(
+            "Reap is not set up",
+            translation_domain=DOMAIN,
+            translation_key="not_set_up",
+        )
     return entries[0].runtime_data
+
+
+def _service_error(err: Exception) -> ServiceValidationError:
+    """A translatable error carrying the planner's message."""
+    return ServiceValidationError(
+        str(err),
+        translation_domain=DOMAIN,
+        translation_key="planner_error",
+        translation_placeholders={"error": str(err)},
+    )
 
 
 def _planting_fields(call: ServiceCall) -> dict[str, Any]:
     fields = dict(call.data)
-    fields.setdefault("year", default_year())
     for key in ("start_date", "succession_until"):
         if key in fields and fields[key] is not None:
             fields[key] = fields[key].isoformat()
@@ -151,7 +165,14 @@ async def _async_ensure_resource(hass: HomeAssistant, url: str) -> None:
     resources = getattr(lovelace, "resources", None)
     if resources is None or getattr(lovelace, "resource_mode", "storage") != "storage":
         return
+    # Lovelace has no public API for this; check for what we use so a core
+    # change only skips this step (and logs why) instead of failing.
+    needed = ("async_items", "async_create_item", "async_update_item")
+    if not all(callable(getattr(resources, name, None)) for name in needed):
+        _LOGGER.debug("Dashboard resources can't be edited on this version")
+        return
     if not getattr(resources, "loaded", True):
+        # The same steps core's resource websocket commands take.
         await resources.async_load()
         resources.loaded = True
     for item in resources.async_items():
@@ -171,7 +192,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         try:
             planting, tasks = await manager.async_add_planting(_planting_fields(call))
         except PlannerError as err:
-            raise ServiceValidationError(str(err)) from err
+            raise _service_error(err) from err
         return {"planting_id": planting.id, "tasks": [t.to_dict() for t in tasks]}
 
     async def preview_planting(call: ServiceCall) -> ServiceResponse:
@@ -179,7 +200,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         try:
             _, tasks = manager.preview(_planting_fields(call))
         except PlannerError as err:
-            raise ServiceValidationError(str(err)) from err
+            raise _service_error(err) from err
         return {"tasks": [t.to_dict() for t in tasks]}
 
     async def update_planting(call: ServiceCall) -> ServiceResponse:
@@ -192,32 +213,32 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         try:
             planting, tasks = await manager.async_update_planting(planting_id, changes)
         except PlannerError as err:
-            raise ServiceValidationError(str(err)) from err
+            raise _service_error(err) from err
         return {"planting_id": planting.id, "tasks": [t.to_dict() for t in tasks]}
 
     async def remove_planting(call: ServiceCall) -> None:
         try:
             await _manager(hass).async_remove_planting(call.data["planting_id"])
         except PlannerError as err:
-            raise ServiceValidationError(str(err)) from err
+            raise _service_error(err) from err
 
     async def add_crop(call: ServiceCall) -> None:
         try:
             await _manager(hass).async_save_crop(dict(call.data))
         except PlannerError as err:
-            raise ServiceValidationError(str(err)) from err
+            raise _service_error(err) from err
 
     async def remove_crop(call: ServiceCall) -> None:
         try:
             await _manager(hass).async_remove_crop(call.data["key"])
         except PlannerError as err:
-            raise ServiceValidationError(str(err)) from err
+            raise _service_error(err) from err
 
     async def reset_crop(call: ServiceCall) -> None:
         try:
             await _manager(hass).async_reset_crop(call.data["key"])
         except PlannerError as err:
-            raise ServiceValidationError(str(err)) from err
+            raise _service_error(err) from err
 
     async def list_crops(call: ServiceCall) -> ServiceResponse:
         manager = _manager(hass)
@@ -240,7 +261,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         try:
             await manager.async_set_crop_defaults(key, None if clear else data)
         except PlannerError as err:
-            raise ServiceValidationError(str(err)) from err
+            raise _service_error(err) from err
 
     async def add_location(call: ServiceCall) -> ServiceResponse:
         try:
@@ -248,7 +269,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                 call.data["name"], call.data.get("soil_sensor"), call.data.get("light")
             )
         except PlannerError as err:
-            raise ServiceValidationError(str(err)) from err
+            raise _service_error(err) from err
         return {"location": location}
 
     async def update_location(call: ServiceCall) -> ServiceResponse:
@@ -257,14 +278,14 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         try:
             location = await _manager(hass).async_update_location(location_id, changes)
         except PlannerError as err:
-            raise ServiceValidationError(str(err)) from err
+            raise _service_error(err) from err
         return {"location": location}
 
     async def remove_location(call: ServiceCall) -> None:
         try:
             await _manager(hass).async_remove_location(call.data["location_id"])
         except PlannerError as err:
-            raise ServiceValidationError(str(err)) from err
+            raise _service_error(err) from err
 
     async def list_locations(call: ServiceCall) -> ServiceResponse:
         return {"locations": _manager(hass).locations()}

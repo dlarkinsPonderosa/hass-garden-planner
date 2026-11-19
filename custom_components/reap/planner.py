@@ -156,6 +156,8 @@ class Crop:
     # For crops that overwinter (summer or fall plantings): days after the
     # next spring's warm last frost when harvest starts. Not tied to sowing.
     overwinter_harvest: int | None = None
+    # Grown from cloves, sets, tubers or slips: tasks say "Plant", not "Sow".
+    planted: bool = False
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Crop:
@@ -179,6 +181,7 @@ class Crop:
             source=data.get("source", "custom"),
             category=data.get("category") or "vegetable",
             notes=data.get("notes"),
+            planted=bool(data.get("planted", data["key"] in ("garlic", "potato"))),
             overwinter_harvest=(
                 int(data["overwinter_harvest"])
                 if data.get("overwinter_harvest") is not None
@@ -303,40 +306,86 @@ def format_offset(anchor: str, days: int) -> str:
     return f"{anchor}{days:+d}"
 
 
+def is_southern(settings_or_last: Settings | str, first_frost: str | None = None) -> bool:
+    """True when the first frost comes earlier in the calendar than the last
+    frost, as in the southern hemisphere. The growing season then crosses the
+    new year: a planting's year is the one its spring falls in, and its first
+    frost is in the next calendar year."""
+    if isinstance(settings_or_last, Settings):
+        last, first = settings_or_last.last_frost, settings_or_last.first_frost
+    else:
+        last, first = settings_or_last, first_frost or ""
+    return month_day(2001, first) < month_day(2001, last)
+
+
+def _season_order(mmdd: str, southern: bool) -> tuple[int, int]:
+    """Sort key of a date within the growing year (January or July first)."""
+    month, day = (int(part) for part in mmdd.split("-"))
+    return ((month - 7) % 12 if southern else month - 1, day)
+
+
 def mmdd_to_offset(mmdd: str, last_frost: str, first_frost: str) -> str:
     """Turn a calendar date into an offset from that location's frost dates.
 
-    Dates before July are measured from the last frost, later ones from the
-    first frost.
+    Dates in the first half of the growing year (January to June, or July to
+    December in the southern hemisphere) are measured from the last frost,
+    later ones from the first frost.
     """
     day = month_day(2001, mmdd)
-    if day.month < 7:
+    southern = is_southern(last_frost, first_frost)
+    if (day.month >= 7) == southern:
         return format_offset("L", (day - month_day(2001, last_frost)).days)
     return format_offset("F", (day - month_day(2001, first_frost)).days)
+
+
+MAX_RANGE_DAYS = 240
+
+
+def range_to_offsets(
+    start: str, end: str, last_frost: str, first_frost: str
+) -> tuple[str, str]:
+    """A calendar range (MM-DD to MM-DD) as frost offsets.
+
+    A range whose end comes before its start, such as Nov 1 to Jan 15, runs
+    into the next year; its end is then measured from the same frost date as
+    its start so it stays after it.
+    """
+    first = mmdd_to_offset(start, last_frost, first_frost)
+    southern = is_southern(last_frost, first_frost)
+    if _season_order(end, southern) >= _season_order(start, southern):
+        return first, mmdd_to_offset(end, last_frost, first_frost)
+    span = (month_day(2001, end) - month_day(2001, start)).days % 365
+    if span > MAX_RANGE_DAYS:
+        raise PlannerError(
+            f"The range {start} to {end} ends before it starts; "
+            "check the from and to dates"
+        )
+    anchor, days = parse_offset(first)
+    return first, format_offset(anchor, days + span)
+
+
+def _anchor_date(anchor: str, year: int, crop: Crop, settings: Settings) -> date:
+    if anchor == "L":
+        mmdd = settings.last_frost
+        if crop.frost_tender and settings.warm_last_frost:
+            mmdd = settings.warm_last_frost
+        return month_day(year, mmdd)
+    # The first frost follows the last one, in the next year down south.
+    return month_day(year + (1 if is_southern(settings) else 0), settings.first_frost)
 
 
 def offset_to_mmdd(token: str, crop: Crop, settings: Settings) -> str:
     """The calendar date (MM-DD) of a frost offset, ignoring the date shift."""
     anchor, days = parse_offset(token)
-    if anchor == "L":
-        mmdd = settings.last_frost
-        if crop.frost_tender and settings.warm_last_frost:
-            mmdd = settings.warm_last_frost
-    else:
-        mmdd = settings.first_frost
-    return f"{month_day(2001, mmdd) + timedelta(days=days):%m-%d}"
+    return f"{_anchor_date(anchor, 2001, crop, settings) + timedelta(days=days):%m-%d}"
 
 
 def resolve(token: str, year: int, crop: Crop, settings: Settings) -> date:
     """The calendar date of a frost offset for this location."""
     anchor, days = parse_offset(token)
-    if anchor == "L":
-        mmdd = settings.last_frost
-        if crop.frost_tender and settings.warm_last_frost:
-            mmdd = settings.warm_last_frost
-    else:
-        mmdd = settings.first_frost
-    return month_day(year, mmdd) + timedelta(days=days + settings.offset_days)
+    return _anchor_date(anchor, year, crop, settings) + timedelta(
+        days=days + settings.offset_days
+    )
 
 
 def effective_range(
@@ -348,7 +397,9 @@ def effective_range(
 ) -> tuple[date, date]:
     """A crop range as calendar dates for this location and growing place."""
     start = resolve(rng[0], year, crop, settings)
-    end = resolve(rng[1], year, crop, settings)
+    # A range that mixes frost dates (L+75 to F-124) can end before it starts
+    # where the season is short; it then shrinks to its start.
+    end = max(start, resolve(rng[1], year, crop, settings))
     if greenhouse:
         start -= timedelta(weeks=settings.greenhouse_spring_weeks)
         end += timedelta(weeks=settings.greenhouse_fall_weeks)
@@ -476,7 +527,7 @@ def generate_tasks(
             add(idx, TASK_TRANSPLANT, anchor, f"Transplant {label} to {place}")
             seeded = sow
         else:
-            verb = "Plant" if crop.key in ("garlic", "potato") else "Sow"
+            verb = "Plant" if crop.planted else "Sow"
             add(idx, TASK_SOW, anchor, f"{verb} {label} in {place}")
             seeded = anchor
 

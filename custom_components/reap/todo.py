@@ -14,6 +14,7 @@ from homeassistant.components.todo import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
@@ -26,6 +27,15 @@ async def async_setup_entry(
     manager: GardenManager = entry.runtime_data
     if manager.uses_own_list:
         async_add_entities([GardenTasksList(manager)])
+        return
+    # Another list was chosen: don't leave the old Garden Tasks list behind.
+    registry = er.async_get(hass)
+    if entity_id := registry.async_get_entity_id("todo", DOMAIN, _unique_id(entry)):
+        registry.async_remove(entity_id)
+
+
+def _unique_id(entry: ConfigEntry) -> str:
+    return f"{entry.entry_id}_tasks"
 
 
 def _to_item(raw: dict[str, Any]) -> TodoItem:
@@ -69,7 +79,7 @@ class GardenTasksList(TodoListEntity):
 
     def __init__(self, manager: GardenManager) -> None:
         self._manager = manager
-        self._attr_unique_id = f"{manager.entry.entry_id}_tasks"
+        self._attr_unique_id = _unique_id(manager.entry)
         self._attr_device_info = {
             "identifiers": {(DOMAIN, manager.entry.entry_id)},
             "name": "Reap",
