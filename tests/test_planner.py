@@ -137,7 +137,6 @@ def test_every_crop_has_every_profile_and_an_icon():
     for crop in CATALOG.values():
         assert set(crop.profiles) == {"continental", "atlantic"}, crop.key
         assert crop.icon.startswith("mdi:")
-        assert crop.emoji
         for profile in ("cool_spring", "continental", "atlantic"):
             assert crop.methods(profile), (crop.key, profile)
 
@@ -158,11 +157,10 @@ def test_continental_profile_saskatoon():
     assert late > transplant
 
 
-def test_task_emoji_and_icons():
-    settings = Settings(task_emoji=True)
+def test_task_icons():
     planting = Planting(id="p1", year=2027, crop="carrot", method="direct_bed")
-    tasks = generate_tasks(planting, CATALOG["carrot"], settings)
+    tasks = generate_tasks(planting, CATALOG["carrot"], VICTORIA)
     sow = next(t for t in tasks if t.kind == TASK_SOW)
-    assert sow.summary == "🥕 Sow Carrot in beds"
+    assert sow.summary == "Sow Carrot in beds"
     assert sow.icon == "mdi:seed"
     assert sow.crop_icon == "mdi:carrot"

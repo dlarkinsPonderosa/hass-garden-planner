@@ -32,8 +32,7 @@
           "lookahead_days": "Add tasks to the list this many days ahead",
           "warm_last_frost": "Last frost for warm crops (MM-DD, optional)",
           "offset_days": "Move all dates by",
-          "profile": "Climate profile",
-          "task_emoji": "Start task names with the crop's emoji"
+          "profile": "Climate profile"
         },
         "data_description": {
           "lookahead_days": "Tasks further out stay in the planner until they come into view, so long succession sowings don't flood the list.",
@@ -41,8 +40,7 @@
           "first_frost": "Average date of the first frost in fall.",
           "warm_last_frost": "Tomatoes, peppers, squash and other frost-tender crops are timed from this date instead. Set it later than your last frost where spring stays cool, like coastal BC. Leave empty to use the last frost.",
           "offset_days": "Negative for earlier, positive for later. Use this to fine-tune for a warm or cold garden.",
-          "profile": "How quickly spring warms up after your last frost. This changes how early hardy crops go in and how long warm crops wait.",
-          "task_emoji": "For example \"🥕 Sow Carrot in beds\", so garden tasks stand out on a shared list."
+          "profile": "How quickly spring warms up after your last frost. This changes how early hardy crops go in and how long warm crops wait."
         }
       }
     }
@@ -65,8 +63,7 @@
           "warm_last_frost": "Last frost for warm crops (MM-DD, optional)",
           "offset_days": "Move all dates by",
           "todo_entity": "Task list",
-          "profile": "Climate profile",
-          "task_emoji": "Start task names with the crop's emoji"
+          "profile": "Climate profile"
         },
         "data_description": {
           "lookahead_days": "Tasks further out stay in the planner until they come into view, so long succession sowings don't flood the list.",
@@ -75,8 +72,7 @@
           "warm_last_frost": "Tomatoes, peppers, squash and other frost-tender crops are timed from this date instead. Set it later than your last frost where spring stays cool, like coastal BC. Leave empty to use the last frost.",
           "offset_days": "Negative for earlier, positive for later. Use this to fine-tune for a warm or cold garden.",
           "todo_entity": "Pick an existing to-do list, or let the planner create its own.",
-          "profile": "How quickly spring warms up after your last frost. This changes how early hardy crops go in and how long warm crops wait.",
-          "task_emoji": "For example \"🥕 Sow Carrot in beds\", so garden tasks stand out on a shared list."
+          "profile": "How quickly spring warms up after your last frost. This changes how early hardy crops go in and how long warm crops wait."
         }
       }
     }

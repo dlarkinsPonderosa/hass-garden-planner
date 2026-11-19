@@ -43,7 +43,6 @@ length, so check the suggested dates against your local averages.
 | Greenhouse weeks earlier in spring / later in fall | 4 / 4 | Widens every window for greenhouse plantings |
 | Harden off days (beds / greenhouse) | 7 / 3 | Set to 0 to skip the task |
 | Look-ahead days | 30 | Tasks are added to the list this many days before they're due, with their real due date, so long succession sowings don't flood it |
-| Start task names with the crop's emoji | Off | "🥕 Sow Carrot in beds", so garden tasks stand out on a shared list |
 
 ### Climate profiles
 

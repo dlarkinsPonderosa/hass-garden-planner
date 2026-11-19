@@ -46,8 +46,7 @@
      }
     ]
    },
-   "icon": "mdi:grain",
-   "emoji": "\ud83c\udf3e"
+   "icon": "mdi:grain"
   },
   {
    "key": "artichoke",
@@ -100,8 +99,7 @@
      }
     ]
    },
-   "icon": "mdi:flower",
-   "emoji": "\ud83c\udf3c"
+   "icon": "mdi:flower"
   },
   {
    "key": "arugula",
@@ -149,8 +147,7 @@
      }
     ]
    },
-   "icon": "mdi:leaf",
-   "emoji": "\ud83e\udd6c"
+   "icon": "mdi:leaf"
   },
   {
    "key": "asparagus",
@@ -204,8 +201,7 @@
      }
     ]
    },
-   "icon": "mdi:sprout",
-   "emoji": "\ud83c\udf31"
+   "icon": "mdi:sprout"
   },
   {
    "key": "bean_asparagus",
@@ -258,8 +254,7 @@
      }
     ]
    },
-   "icon": "mdi:seed",
-   "emoji": "\ud83e\uded8"
+   "icon": "mdi:seed"
   },
   {
    "key": "bean_broad",
@@ -321,8 +316,7 @@
      }
     ]
    },
-   "icon": "mdi:seed",
-   "emoji": "\ud83e\uded8"
+   "icon": "mdi:seed"
   },
   {
    "key": "bean_bush_pole",
@@ -363,8 +357,7 @@
      }
     ]
    },
-   "icon": "mdi:seed",
-   "emoji": "\ud83e\uded8"
+   "icon": "mdi:seed"
   },
   {
    "key": "bean_soya",
@@ -405,8 +398,7 @@
      }
     ]
    },
-   "icon": "mdi:seed",
-   "emoji": "\ud83e\uded8"
+   "icon": "mdi:seed"
   },
   {
    "key": "beet",
@@ -447,8 +439,7 @@
      }
     ]
    },
-   "icon": "mdi:sprout",
-   "emoji": "\ud83d\udfe3"
+   "icon": "mdi:sprout"
   },
   {
    "key": "broccoli",
@@ -509,8 +500,7 @@
      }
     ]
    },
-   "icon": "mdi:tree",
-   "emoji": "\ud83e\udd66"
+   "icon": "mdi:tree"
   },
   {
    "key": "broccoli_sprouting",
@@ -578,8 +568,7 @@
      }
     ]
    },
-   "icon": "mdi:tree",
-   "emoji": "\ud83e\udd66"
+   "icon": "mdi:tree"
   },
   {
    "key": "brussels_sprouts",
@@ -632,8 +621,7 @@
      }
     ]
    },
-   "icon": "mdi:leaf-circle",
-   "emoji": "\ud83e\udd6c"
+   "icon": "mdi:leaf-circle"
   },
   {
    "key": "cabbage",
@@ -698,8 +686,7 @@
      }
     ]
    },
-   "icon": "mdi:leaf-circle",
-   "emoji": "\ud83e\udd6c"
+   "icon": "mdi:leaf-circle"
   },
   {
    "key": "cabbage_overwinter",
@@ -760,8 +747,7 @@
      }
     ]
    },
-   "icon": "mdi:leaf-circle",
-   "emoji": "\ud83e\udd6c"
+   "icon": "mdi:leaf-circle"
   },
   {
    "key": "carrot",
@@ -802,8 +788,7 @@
      }
     ]
    },
-   "icon": "mdi:carrot",
-   "emoji": "\ud83e\udd55"
+   "icon": "mdi:carrot"
   },
   {
    "key": "cauliflower",
@@ -867,8 +852,7 @@
      }
     ]
    },
-   "icon": "mdi:tree",
-   "emoji": "\ud83e\udd66"
+   "icon": "mdi:tree"
   },
   {
    "key": "celery",
@@ -921,8 +905,7 @@
      }
     ]
    },
-   "icon": "mdi:leaf",
-   "emoji": "\ud83e\udd6c"
+   "icon": "mdi:leaf"
   },
   {
    "key": "corn",
@@ -963,8 +946,7 @@
      }
     ]
    },
-   "icon": "mdi:corn",
-   "emoji": "\ud83c\udf3d"
+   "icon": "mdi:corn"
   },
   {
    "key": "corn_salad",
@@ -1038,8 +1020,7 @@
      }
     ]
    },
-   "icon": "mdi:leaf",
-   "emoji": "\ud83e\udd6c"
+   "icon": "mdi:leaf"
   },
   {
    "key": "cress",
@@ -1087,8 +1068,7 @@
      }
     ]
    },
-   "icon": "mdi:leaf",
-   "emoji": "\ud83e\udd6c"
+   "icon": "mdi:leaf"
   },
   {
    "key": "cucumber",
@@ -1149,8 +1129,7 @@
      }
     ]
    },
-   "icon": "mdi:food-variant",
-   "emoji": "\ud83e\udd52"
+   "icon": "mdi:food-variant"
   },
   {
    "key": "eggplant",
@@ -1203,8 +1182,7 @@
      }
     ]
    },
-   "icon": "mdi:food-variant",
-   "emoji": "\ud83c\udf46"
+   "icon": "mdi:food-variant"
   },
   {
    "key": "endive",
@@ -1267,8 +1245,7 @@
      }
     ]
    },
-   "icon": "mdi:leaf",
-   "emoji": "\ud83e\udd6c"
+   "icon": "mdi:leaf"
   },
   {
    "key": "fennel",
@@ -1309,8 +1286,7 @@
      }
     ]
    },
-   "icon": "mdi:leaf",
-   "emoji": "\ud83e\udd6c"
+   "icon": "mdi:leaf"
   },
   {
    "key": "garlic",
@@ -1359,8 +1335,7 @@
      }
     ]
    },
-   "icon": "mdi:sprout",
-   "emoji": "\ud83e\uddc4"
+   "icon": "mdi:sprout"
   },
   {
    "key": "kale",
@@ -1401,8 +1376,7 @@
      }
     ]
    },
-   "icon": "mdi:leaf",
-   "emoji": "\ud83e\udd6c"
+   "icon": "mdi:leaf"
   },
   {
    "key": "kohlrabi",
@@ -1465,8 +1439,7 @@
      }
     ]
    },
-   "icon": "mdi:leaf-circle",
-   "emoji": "\ud83e\udd6c"
+   "icon": "mdi:leaf-circle"
   },
   {
    "key": "leek",
@@ -1538,8 +1511,7 @@
      }
     ]
    },
-   "icon": "mdi:sprout",
-   "emoji": "\ud83e\uddc5"
+   "icon": "mdi:sprout"
   },
   {
    "key": "lettuce",
@@ -1608,8 +1580,7 @@
      }
     ]
    },
-   "icon": "mdi:leaf",
-   "emoji": "\ud83e\udd6c"
+   "icon": "mdi:leaf"
   },
   {
    "key": "melon",
@@ -1662,8 +1633,7 @@
      }
     ]
    },
-   "icon": "mdi:fruit-watermelon",
-   "emoji": "\ud83c\udf48"
+   "icon": "mdi:fruit-watermelon"
   },
   {
    "key": "mustard",
@@ -1729,8 +1699,7 @@
      }
     ]
    },
-   "icon": "mdi:leaf",
-   "emoji": "\ud83e\udd6c"
+   "icon": "mdi:leaf"
   },
   {
    "key": "okra",
@@ -1783,8 +1752,7 @@
      }
     ]
    },
-   "icon": "mdi:leaf",
-   "emoji": "\ud83e\udd6c"
+   "icon": "mdi:leaf"
   },
   {
    "key": "onion",
@@ -1841,8 +1809,7 @@
      }
     ]
    },
-   "icon": "mdi:sprout",
-   "emoji": "\ud83e\uddc5"
+   "icon": "mdi:sprout"
   },
   {
    "key": "onion_overwinter",
@@ -1895,8 +1862,7 @@
      }
     ]
    },
-   "icon": "mdi:sprout",
-   "emoji": "\ud83e\uddc5"
+   "icon": "mdi:sprout"
   },
   {
    "key": "scallion",
@@ -1945,8 +1911,7 @@
      }
     ]
    },
-   "icon": "mdi:sprout",
-   "emoji": "\ud83e\uddc5"
+   "icon": "mdi:sprout"
   },
   {
    "key": "pac_choi",
@@ -2013,8 +1978,7 @@
      }
     ]
    },
-   "icon": "mdi:leaf",
-   "emoji": "\ud83e\udd6c"
+   "icon": "mdi:leaf"
   },
   {
    "key": "parsnip",
@@ -2055,8 +2019,7 @@
      }
     ]
    },
-   "icon": "mdi:carrot",
-   "emoji": "\ud83e\udd55"
+   "icon": "mdi:carrot"
   },
   {
    "key": "pea",
@@ -2118,8 +2081,7 @@
      }
     ]
    },
-   "icon": "mdi:seed",
-   "emoji": "\ud83e\udedb"
+   "icon": "mdi:seed"
   },
   {
    "key": "pepper",
@@ -2172,8 +2134,7 @@
      }
     ]
    },
-   "icon": "mdi:chili-mild",
-   "emoji": "\ud83e\uded1"
+   "icon": "mdi:chili-mild"
   },
   {
    "key": "radicchio",
@@ -2240,8 +2201,7 @@
      }
     ]
    },
-   "icon": "mdi:leaf",
-   "emoji": "\ud83e\udd6c"
+   "icon": "mdi:leaf"
   },
   {
    "key": "radish",
@@ -2315,8 +2275,7 @@
      }
     ]
    },
-   "icon": "mdi:sprout",
-   "emoji": "\ud83d\udd34"
+   "icon": "mdi:sprout"
   },
   {
    "key": "rhubarb",
@@ -2370,8 +2329,7 @@
      }
     ]
    },
-   "icon": "mdi:leaf",
-   "emoji": "\ud83c\udf3f"
+   "icon": "mdi:leaf"
   },
   {
    "key": "rutabaga",
@@ -2420,8 +2378,7 @@
      }
     ]
    },
-   "icon": "mdi:sprout",
-   "emoji": "\ud83d\udfe1"
+   "icon": "mdi:sprout"
   },
   {
    "key": "spinach",
@@ -2503,8 +2460,7 @@
      }
     ]
    },
-   "icon": "mdi:leaf",
-   "emoji": "\ud83e\udd6c"
+   "icon": "mdi:leaf"
   },
   {
    "key": "squash",
@@ -2569,8 +2525,7 @@
      }
     ]
    },
-   "icon": "mdi:pumpkin",
-   "emoji": "\ud83c\udf83"
+   "icon": "mdi:pumpkin"
   },
   {
    "key": "strawberry",
@@ -2623,8 +2578,7 @@
      }
     ]
    },
-   "icon": "mdi:fruit-cherries",
-   "emoji": "\ud83c\udf53"
+   "icon": "mdi:fruit-cherries"
   },
   {
    "key": "swiss_chard",
@@ -2665,8 +2619,7 @@
      }
     ]
    },
-   "icon": "mdi:leaf",
-   "emoji": "\ud83e\udd6c"
+   "icon": "mdi:leaf"
   },
   {
    "key": "tomato",
@@ -2719,8 +2672,7 @@
      }
     ]
    },
-   "icon": "mdi:fruit-cherries",
-   "emoji": "\ud83c\udf45"
+   "icon": "mdi:fruit-cherries"
   },
   {
    "key": "turnip",
@@ -2761,8 +2713,7 @@
      }
     ]
    },
-   "icon": "mdi:sprout",
-   "emoji": "\u26aa"
+   "icon": "mdi:sprout"
   },
   {
    "key": "potato",
@@ -2808,8 +2759,7 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:sprout",
-   "emoji": "\ud83e\udd54"
+   "icon": "mdi:sprout"
   },
   {
    "key": "tomatillo",
@@ -2866,8 +2816,7 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:fruit-cherries",
-   "emoji": "\ud83d\udfe2"
+   "icon": "mdi:fruit-cherries"
   },
   {
    "key": "basil",
@@ -2924,8 +2873,7 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa",
-   "emoji": "\ud83c\udf3f"
+   "icon": "mdi:spa"
   },
   {
    "key": "bergamot",
@@ -3015,8 +2963,7 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa",
-   "emoji": "\ud83c\udf3f"
+   "icon": "mdi:spa"
   },
   {
    "key": "borage",
@@ -3061,8 +3008,7 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa",
-   "emoji": "\ud83c\udf3f"
+   "icon": "mdi:spa"
   },
   {
    "key": "chamomile",
@@ -3128,8 +3074,7 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa",
-   "emoji": "\ud83c\udf3f"
+   "icon": "mdi:spa"
   },
   {
    "key": "chervil",
@@ -3186,8 +3131,7 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa",
-   "emoji": "\ud83c\udf3f"
+   "icon": "mdi:spa"
   },
   {
    "key": "chives",
@@ -3277,8 +3221,7 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa",
-   "emoji": "\ud83c\udf3f"
+   "icon": "mdi:spa"
   },
   {
    "key": "cilantro",
@@ -3324,8 +3267,7 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa",
-   "emoji": "\ud83c\udf3f"
+   "icon": "mdi:spa"
   },
   {
    "key": "dill",
@@ -3370,8 +3312,7 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa",
-   "emoji": "\ud83c\udf3f"
+   "icon": "mdi:spa"
   },
   {
    "key": "lavender",
@@ -3428,8 +3369,7 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa",
-   "emoji": "\ud83c\udf3f"
+   "icon": "mdi:spa"
   },
   {
    "key": "lemon_balm",
@@ -3498,8 +3438,7 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa",
-   "emoji": "\ud83c\udf3f"
+   "icon": "mdi:spa"
   },
   {
    "key": "lemongrass",
@@ -3556,8 +3495,7 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa",
-   "emoji": "\ud83c\udf3f"
+   "icon": "mdi:spa"
   },
   {
    "key": "lovage",
@@ -3647,8 +3585,7 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa",
-   "emoji": "\ud83c\udf3f"
+   "icon": "mdi:spa"
   },
   {
    "key": "mint",
@@ -3705,8 +3642,7 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa",
-   "emoji": "\ud83c\udf3f"
+   "icon": "mdi:spa"
   },
   {
    "key": "oregano",
@@ -3763,8 +3699,7 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa",
-   "emoji": "\ud83c\udf3f"
+   "icon": "mdi:spa"
   },
   {
    "key": "parsley",
@@ -3810,8 +3745,7 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa",
-   "emoji": "\ud83c\udf3f"
+   "icon": "mdi:spa"
   },
   {
    "key": "rosemary",
@@ -3868,8 +3802,7 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa",
-   "emoji": "\ud83c\udf3f"
+   "icon": "mdi:spa"
   },
   {
    "key": "sage",
@@ -3926,8 +3859,7 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa",
-   "emoji": "\ud83c\udf3f"
+   "icon": "mdi:spa"
   },
   {
    "key": "savory",
@@ -3984,8 +3916,7 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa",
-   "emoji": "\ud83c\udf3f"
+   "icon": "mdi:spa"
   },
   {
    "key": "shiso",
@@ -4054,8 +3985,7 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa",
-   "emoji": "\ud83c\udf3f"
+   "icon": "mdi:spa"
   },
   {
    "key": "stevia",
@@ -4112,8 +4042,7 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa",
-   "emoji": "\ud83c\udf3f"
+   "icon": "mdi:spa"
   },
   {
    "key": "marjoram",
@@ -4170,8 +4099,7 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa",
-   "emoji": "\ud83c\udf3f"
+   "icon": "mdi:spa"
   },
   {
    "key": "thyme",
@@ -4228,8 +4156,7 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa",
-   "emoji": "\ud83c\udf3f"
+   "icon": "mdi:spa"
   }
  ]
 }

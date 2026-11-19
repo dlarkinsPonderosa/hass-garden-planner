@@ -11,7 +11,6 @@ CONF_WARM_LAST_FROST = "warm_last_frost"
 CONF_OFFSET_DAYS = "offset_days"
 CONF_ZONE = "zone"
 CONF_PROFILE = "profile"
-CONF_TASK_EMOJI = "task_emoji"
 CONF_GREENHOUSE_SPRING_WEEKS = "greenhouse_spring_weeks"
 CONF_GREENHOUSE_FALL_WEEKS = "greenhouse_fall_weeks"
 CONF_HARDEN_OFF_DAYS = "harden_off_days"
@@ -30,7 +29,6 @@ DEFAULTS = {
     CONF_WARM_LAST_FROST: "04-01",
     CONF_OFFSET_DAYS: 0,
     CONF_PROFILE: "cool_spring",
-    CONF_TASK_EMOJI: False,
     CONF_GREENHOUSE_SPRING_WEEKS: 4,
     CONF_GREENHOUSE_FALL_WEEKS: 4,
     CONF_HARDEN_OFF_DAYS: 7,

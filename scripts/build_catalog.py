@@ -396,36 +396,36 @@ for profile, charts in PROFILES.items():
     print(profile, "estimated shift from coastal:", shifts)
 
 # ---------------------------------------------------------------------------
-# Icons (Material Design Icons) and emoji for task names.
+# Icons (Material Design Icons).
 # ---------------------------------------------------------------------------
 ICONS = {
-    "carrot": ("mdi:carrot", "🥕"), "parsnip": ("mdi:carrot", "🥕"),
-    "beet": ("mdi:sprout", "🟣"), "radish": ("mdi:sprout", "🔴"), "turnip": ("mdi:sprout", "⚪"),
-    "rutabaga": ("mdi:sprout", "🟡"), "potato": ("mdi:sprout", "🥔"),
-    "corn": ("mdi:corn", "🌽"), "pepper": ("mdi:chili-mild", "🫑"), "tomato": ("mdi:fruit-cherries", "🍅"),
-    "tomatillo": ("mdi:fruit-cherries", "🟢"), "eggplant": ("mdi:food-variant", "🍆"),
-    "cucumber": ("mdi:food-variant", "🥒"), "melon": ("mdi:fruit-watermelon", "🍈"),
-    "squash": ("mdi:pumpkin", "🎃"), "strawberry": ("mdi:fruit-cherries", "🍓"),
-    "rhubarb": ("mdi:leaf", "🌿"), "asparagus": ("mdi:sprout", "🌱"), "artichoke": ("mdi:flower", "🌼"),
-    "pea": ("mdi:seed", "🫛"), "bean_broad": ("mdi:seed", "🫘"), "bean_bush_pole": ("mdi:seed", "🫘"),
-    "bean_soya": ("mdi:seed", "🫘"), "bean_asparagus": ("mdi:seed", "🫘"),
-    "onion": ("mdi:sprout", "🧅"), "onion_overwinter": ("mdi:sprout", "🧅"), "scallion": ("mdi:sprout", "🧅"),
-    "leek": ("mdi:sprout", "🧅"), "garlic": ("mdi:sprout", "🧄"),
-    "broccoli": ("mdi:tree", "🥦"), "broccoli_sprouting": ("mdi:tree", "🥦"), "cauliflower": ("mdi:tree", "🥦"),
-    "cabbage": ("mdi:leaf-circle", "🥬"), "cabbage_overwinter": ("mdi:leaf-circle", "🥬"),
-    "brussels_sprouts": ("mdi:leaf-circle", "🥬"), "kohlrabi": ("mdi:leaf-circle", "🥬"),
-    "amaranth": ("mdi:grain", "🌾"), "corn_salad": ("mdi:leaf", "🥬"),
+    "carrot": "mdi:carrot", "parsnip": "mdi:carrot",
+    "beet": "mdi:sprout", "radish": "mdi:sprout", "turnip": "mdi:sprout",
+    "rutabaga": "mdi:sprout", "potato": "mdi:sprout",
+    "corn": "mdi:corn", "pepper": "mdi:chili-mild", "tomato": "mdi:fruit-cherries",
+    "tomatillo": "mdi:fruit-cherries", "eggplant": "mdi:food-variant",
+    "cucumber": "mdi:food-variant", "melon": "mdi:fruit-watermelon",
+    "squash": "mdi:pumpkin", "strawberry": "mdi:fruit-cherries",
+    "rhubarb": "mdi:leaf", "asparagus": "mdi:sprout", "artichoke": "mdi:flower",
+    "pea": "mdi:seed", "bean_broad": "mdi:seed", "bean_bush_pole": "mdi:seed",
+    "bean_soya": "mdi:seed", "bean_asparagus": "mdi:seed",
+    "onion": "mdi:sprout", "onion_overwinter": "mdi:sprout", "scallion": "mdi:sprout",
+    "leek": "mdi:sprout", "garlic": "mdi:sprout",
+    "broccoli": "mdi:tree", "broccoli_sprouting": "mdi:tree", "cauliflower": "mdi:tree",
+    "cabbage": "mdi:leaf-circle", "cabbage_overwinter": "mdi:leaf-circle",
+    "brussels_sprouts": "mdi:leaf-circle", "kohlrabi": "mdi:leaf-circle",
+    "amaranth": "mdi:grain", "corn_salad": "mdi:leaf",
 }
-HERB = ("mdi:spa", "🌿")
-LEAFY = ("mdi:leaf", "🥬")
+HERB = "mdi:spa"
+LEAFY = "mdi:leaf"
 for c in C:
     if c["key"] in ICONS:
-        icon, emoji = ICONS[c["key"]]
+        icon = ICONS[c["key"]]
     elif c["source"] == "pdf_herbs":
-        icon, emoji = HERB
+        icon = HERB
     else:
-        icon, emoji = LEAFY
-    c["icon"], c["emoji"] = icon, emoji
+        icon = LEAFY
+    c["icon"] = icon
 
 out = {
     "source": "South Coastal BC Vegetable and Flower & Herb Planting Guides (West Coast Seeds), plus added crops",

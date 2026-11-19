@@ -26,7 +26,6 @@ from .const import (
     CONF_LOOKAHEAD_DAYS,
     CONF_OFFSET_DAYS,
     CONF_PROFILE,
-    CONF_TASK_EMOJI,
     CONF_TODO_ENTITY,
     CONF_WARM_LAST_FROST,
     CONF_ZONE,
@@ -132,7 +131,6 @@ def _schema(
             vol.Required(CONF_HARDEN_OFF_DAYS, default=default(CONF_HARDEN_OFF_DAYS)): _number(0, 21, "days"),
             vol.Required(CONF_GREENHOUSE_HARDEN_OFF_DAYS, default=default(CONF_GREENHOUSE_HARDEN_OFF_DAYS)): _number(0, 21, "days"),
             vol.Required(CONF_LOOKAHEAD_DAYS, default=default(CONF_LOOKAHEAD_DAYS)): _number(1, 400, "days"),
-            vol.Required(CONF_TASK_EMOJI, default=default(CONF_TASK_EMOJI)): bool,
         }
     )
 

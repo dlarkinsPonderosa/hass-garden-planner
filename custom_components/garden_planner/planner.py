@@ -81,8 +81,6 @@ class Settings:
     offset_days: int = 0
     # Climate profile: cool_spring (coastal), continental or atlantic.
     profile: str = "cool_spring"
-    # Start task names with the crop's emoji, like "🥕 Sow Carrot in beds".
-    task_emoji: bool = False
     greenhouse_spring_weeks: int = 4
     greenhouse_fall_weeks: int = 4
     harden_off_days: int = 7
@@ -147,7 +145,6 @@ class Crop:
     source: str = "custom"
     notes: str | None = None
     icon: str = "mdi:sprout"
-    emoji: str = "🌱"
     # Windows for other climate profiles. "windows" is the cool_spring set and
     # the fallback for any profile not listed (custom crops have only that).
     profiles: dict[str, list[Window]] = field(default_factory=dict)
@@ -161,7 +158,6 @@ class Crop:
             name=data["name"],
             windows=[Window.from_dict(w) for w in data.get("windows", [])],
             icon=data.get("icon") or "mdi:sprout",
-            emoji=data.get("emoji") or "🌱",
             profiles={
                 name: [Window.from_dict(w) for w in windows]
                 for name, windows in (data.get("profiles") or {}).items()
@@ -410,7 +406,6 @@ def generate_tasks(
 
     def add(idx: int, kind: str, due: date, summary: str, extra: str = "") -> None:
         suffix = f" (sowing {idx + 1} of {total})" if total > 1 else ""
-        prefix = f"{crop.emoji} " if settings.task_emoji and crop.emoji else ""
         parts = [p for p in (extra, planting.quantity and f"Quantity: {planting.quantity}",
                              planting.location and f"Location: {planting.location}",
                              planting.notes) if p]
@@ -422,7 +417,7 @@ def generate_tasks(
                 kind=kind,
                 due=due,
                 planned=due,
-                summary=prefix + summary + suffix,
+                summary=summary + suffix,
                 description="\n".join(parts),
                 icon=TASK_ICONS.get(kind, "mdi:sprout"),
                 crop_icon=crop.icon,
