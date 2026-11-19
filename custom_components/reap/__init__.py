@@ -279,6 +279,33 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         except PlannerError as err:
             raise ServiceValidationError(str(err)) from err
 
+    async def add_location(call: ServiceCall) -> ServiceResponse:
+        try:
+            location = await _manager(hass).async_add_location(
+                call.data["name"], call.data.get("soil_sensor"), call.data.get("light")
+            )
+        except PlannerError as err:
+            raise ServiceValidationError(str(err)) from err
+        return {"location": location}
+
+    async def update_location(call: ServiceCall) -> ServiceResponse:
+        changes = dict(call.data)
+        location_id = changes.pop("location_id")
+        try:
+            location = await _manager(hass).async_update_location(location_id, changes)
+        except PlannerError as err:
+            raise ServiceValidationError(str(err)) from err
+        return {"location": location}
+
+    async def remove_location(call: ServiceCall) -> None:
+        try:
+            await _manager(hass).async_remove_location(call.data["location_id"])
+        except PlannerError as err:
+            raise ServiceValidationError(str(err)) from err
+
+    async def list_locations(call: ServiceCall) -> ServiceResponse:
+        return {"locations": _manager(hass).locations()}
+
     async def sync(call: ServiceCall) -> None:
         await _manager(hass).async_sync()
 
@@ -322,6 +349,38 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                 vol.Optional("clear", default=False): cv.boolean,
             }
         ),
+    )
+    entity_or_empty = vol.Any(cv.entity_id, "", None)
+    hass.services.async_register(
+        DOMAIN, "add_location", add_location,
+        vol.Schema(
+            {
+                vol.Required("name"): cv.string,
+                vol.Optional("soil_sensor"): entity_or_empty,
+                vol.Optional("light"): entity_or_empty,
+            }
+        ),
+        supports_response=SupportsResponse.OPTIONAL,
+    )
+    hass.services.async_register(
+        DOMAIN, "update_location", update_location,
+        vol.Schema(
+            {
+                vol.Required("location_id"): cv.string,
+                vol.Optional("name"): cv.string,
+                vol.Optional("soil_sensor"): entity_or_empty,
+                vol.Optional("light"): entity_or_empty,
+            }
+        ),
+        supports_response=SupportsResponse.OPTIONAL,
+    )
+    hass.services.async_register(
+        DOMAIN, "remove_location", remove_location,
+        vol.Schema({vol.Required("location_id"): cv.string}),
+    )
+    hass.services.async_register(
+        DOMAIN, "list_locations", list_locations, vol.Schema({}),
+        supports_response=SupportsResponse.ONLY,
     )
     hass.services.async_register(DOMAIN, "sync", sync, vol.Schema({}))
     return True

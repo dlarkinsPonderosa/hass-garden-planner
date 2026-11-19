@@ -424,3 +424,59 @@ async def test_card_resource_added_and_updated(hass) -> None:
     hass.data["lovelace"] = SimpleNamespace(resource_mode="yaml", resources=yaml_res)
     await _async_ensure_resource(hass, f"{CARD_URL}?v=2")
     assert yaml_res.items == []
+
+
+async def _call(hass: HomeAssistant, service: str, data: dict[str, Any], response: bool = False):
+    return await hass.services.async_call(
+        DOMAIN, service, data, blocking=True, return_response=response
+    )
+
+
+async def test_locations(hass: HomeAssistant) -> None:
+    """Default locations, add/rename/remove, and plantings following a rename."""
+    from homeassistant.exceptions import ServiceValidationError
+
+    entry = await _setup(hass)
+    manager = entry.runtime_data
+    resp = await _call(hass, "list_locations", {}, True)
+    assert [loc["name"] for loc in resp["locations"]] == ["Seedling Tray", "Garden", "Greenhouse"]
+
+    resp = await _call(hass, "add_location", {"name": "Bed 3", "soil_sensor": "sensor.bed_3_moisture"}, True)
+    bed = resp["location"]
+    assert bed["soil_sensor"] == "sensor.bed_3_moisture" and bed["light"] is None
+    with pytest.raises(ServiceValidationError):
+        await _call(hass, "add_location", {"name": "bed 3"})
+
+    # Plantings use a location by name, matched without case.
+    await _call(hass, "add_planting", {"crop": "carrot", "method": "direct_bed", "year": 2027, "location": "BED 3"}, True)
+    assert manager.plantings()[0].location == "Bed 3"
+    with pytest.raises(ServiceValidationError):
+        await _call(hass, "remove_location", {"location_id": bed["id"]})
+
+    await _call(hass, "update_location", {"location_id": bed["id"], "name": "North bed", "light": "switch.grow_lights", "soil_sensor": ""})
+    assert manager.plantings()[0].location == "North bed"
+    loc = next(l for l in manager.locations() if l["id"] == bed["id"])
+    assert loc == {**loc, "name": "North bed", "light": "switch.grow_lights", "soil_sensor": None, "plantings": 1}
+    attrs = hass.states.get("sensor.reap_plantings").attributes
+    assert any(l["name"] == "North bed" for l in attrs["locations"])
+
+    # A new name on a planting creates the location.
+    await _call(hass, "add_planting", {"crop": "pea", "method": "direct_bed", "year": 2027, "location": "Trellis"}, True)
+    assert "Trellis" in [l["name"] for l in manager.locations()]
+
+    garden = next(l for l in manager.locations() if l["name"] == "Garden")
+    await _call(hass, "remove_location", {"location_id": garden["id"]})
+    assert "Garden" not in [l["name"] for l in manager.locations()]
+
+
+async def test_existing_free_text_locations_are_migrated(hass: HomeAssistant, hass_storage) -> None:
+    entry = MockConfigEntry(domain=DOMAIN, data=dict(DEFAULTS), unique_id=DOMAIN)
+    hass_storage[f"{DOMAIN}.{entry.entry_id}"] = {
+        "version": 1, "key": f"{DOMAIN}.{entry.entry_id}",
+        "data": {"plantings": {"a1": {"id": "a1", "crop": "onion", "method": "indoor_bed", "year": 2027, "location": "Seed tray 1"}}},
+    }
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    names = [l["name"] for l in entry.runtime_data.locations()]
+    assert names == ["Seedling Tray", "Garden", "Greenhouse", "Seed tray 1"]

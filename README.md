@@ -91,9 +91,17 @@ add a card and pick **Reap**, or use YAML:
 
 ```yaml
 type: custom:reap-card
-title: Garden              # optional
-show_done: false           # optional: also list plantings with no open tasks
+title: Garden          # optional
+show_info: true        # details row: method, year, location, quantity
+show_next: true        # next task row
+show_sensors: true     # soil moisture and light of each planting's location
+icon_size: 40          # crop icon size in pixels
+editable: true         # show Add, Locations, edit and remove buttons
+show_done: false       # also list plantings with no open tasks
 ```
+
+Every option is also in the card's visual editor. When a row is turned off the
+rest centre vertically.
 
 It lists your plantings with the crop's icon, how they're grown, and the next
 task with its icon and date. The pencil edits a planting, the bin removes it,
@@ -101,6 +109,25 @@ and **Add planting** opens a form. The form fills in the crop's defaults,
 **Preview dates** shows every task before you save, and **Save as the default
 for this crop** remembers the method, repeat interval, number of sowings,
 quantity and location for next time.
+
+The card uses your theme's colours.
+
+## Locations
+
+Plantings pick their location from a list. A new install starts with
+**Seedling Tray**, **Garden** and **Greenhouse**, and any locations your
+plantings already used are added on upgrade. Open **Locations** on the card to
+add, rename or remove them. Renaming moves the plantings with it, and a
+location in use can't be removed.
+
+Each location can have an optional soil moisture sensor and light (a light,
+switch or input boolean, such as grow lights). The card shows them next to
+each planting in that location: moisture in % in green above 30%, yellow from
+15 to 30% and red below 15%, and a bulb icon for the light's state. Tap either
+for its details.
+
+Actions: `reap.add_location`, `reap.update_location`, `reap.remove_location`
+and `reap.list_locations`.
 
 ## Crop defaults
 

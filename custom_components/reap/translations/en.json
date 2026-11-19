@@ -431,6 +431,60 @@
           "description": "Added to each task's description."
         }
       }
+    },
+    "add_location": {
+      "name": "Add location",
+      "description": "Add a place plantings can go, such as a bed or seedling tray.",
+      "fields": {
+        "name": {
+          "name": "Name",
+          "description": "The location's name."
+        },
+        "soil_sensor": {
+          "name": "Soil moisture sensor",
+          "description": "A sensor reporting soil moisture in %."
+        },
+        "light": {
+          "name": "Light",
+          "description": "A light or switch, such as grow lights."
+        }
+      }
+    },
+    "update_location": {
+      "name": "Update location",
+      "description": "Rename a location or change its sensor and light. Plantings follow a rename. An empty value clears a sensor or light.",
+      "fields": {
+        "location_id": {
+          "name": "Location ID",
+          "description": "The id from list_locations."
+        },
+        "name": {
+          "name": "Name",
+          "description": "New name."
+        },
+        "soil_sensor": {
+          "name": "Soil moisture sensor",
+          "description": "A sensor reporting soil moisture in %."
+        },
+        "light": {
+          "name": "Light",
+          "description": "A light or switch, such as grow lights."
+        }
+      }
+    },
+    "remove_location": {
+      "name": "Remove location",
+      "description": "Remove a location that no planting uses.",
+      "fields": {
+        "location_id": {
+          "name": "Location ID",
+          "description": "The id from list_locations."
+        }
+      }
+    },
+    "list_locations": {
+      "name": "List locations",
+      "description": "Return every location with its sensor, light and how many plantings use it."
     }
   },
   "selector": {

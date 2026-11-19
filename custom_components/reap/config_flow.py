@@ -355,7 +355,13 @@ class ReapOptionsFlow(OptionsFlow):
                 vol.Optional("succession_until"): selector.DateSelector(),
                 vol.Optional("variety"): str,
                 vol.Optional("quantity"): str,
-                vol.Optional("location"): str,
+                vol.Optional("location"): selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=[loc["name"] for loc in manager.locations()],
+                        custom_value=True,
+                        mode=selector.SelectSelectorMode.DROPDOWN,
+                    )
+                ),
                 vol.Optional("notes"): str,
                 vol.Optional("save_defaults", default=False): bool,
             }
