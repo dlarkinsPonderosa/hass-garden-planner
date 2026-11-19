@@ -195,6 +195,34 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             raise _service_error(err) from err
         return {"planting_id": planting.id, "tasks": [t.to_dict() for t in tasks]}
 
+    async def add_plantings(call: ServiceCall) -> ServiceResponse:
+        manager = _manager(hass)
+        many = []
+        for fields in call.data["plantings"]:
+            fields = dict(fields)
+            for key in ("start_date", "succession_until"):
+                if fields.get(key) is not None:
+                    fields[key] = fields[key].isoformat()
+            many.append(fields)
+        try:
+            plantings = await manager.async_add_plantings(
+                many, call.data.get("use_defaults", True)
+            )
+        except PlannerError as err:
+            raise _service_error(err) from err
+        return {"planting_ids": [p.id for p in plantings]}
+
+    async def copy_plantings(call: ServiceCall) -> ServiceResponse:
+        manager = _manager(hass)
+        try:
+            plantings, skipped = await manager.async_copy_plantings(
+                call.data["from_year"], call.data.get("to_year"),
+                call.data.get("planting_ids"),
+            )
+        except PlannerError as err:
+            raise _service_error(err) from err
+        return {"planting_ids": [p.id for p in plantings], "skipped": skipped}
+
     async def preview_planting(call: ServiceCall) -> ServiceResponse:
         manager = _manager(hass)
         try:
@@ -295,6 +323,25 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
     hass.services.async_register(
         DOMAIN, "add_planting", add_planting, vol.Schema(PLANTING_FIELDS),
+        supports_response=SupportsResponse.OPTIONAL,
+    )
+    hass.services.async_register(
+        DOMAIN, "add_plantings", add_plantings,
+        vol.Schema({
+            vol.Required("plantings"): vol.All(
+                cv.ensure_list, vol.Length(min=1, max=100), [vol.Schema(PLANTING_FIELDS)]
+            ),
+            vol.Optional("use_defaults", default=True): cv.boolean,
+        }),
+        supports_response=SupportsResponse.OPTIONAL,
+    )
+    hass.services.async_register(
+        DOMAIN, "copy_plantings", copy_plantings,
+        vol.Schema({
+            vol.Required("from_year"): vol.All(vol.Coerce(int), vol.Range(min=2000, max=2100)),
+            vol.Optional("to_year"): vol.All(vol.Coerce(int), vol.Range(min=2000, max=2100)),
+            vol.Optional("planting_ids"): vol.All(cv.ensure_list, [cv.string]),
+        }),
         supports_response=SupportsResponse.OPTIONAL,
     )
     hass.services.async_register(

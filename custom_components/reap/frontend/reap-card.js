@@ -205,7 +205,7 @@ class ReapCard extends HTMLElement {
     this._mode = "add";
     this._editing = null;
     // No year: Reap picks the next season the crop can still be sown in.
-    this._form = { year: "" };
+    this._form = { year: "", bulk: false, picked: [], varieties: [{ variety: "", quantity: "" }] };
     if (first) this._pickCrop(first.key, false);
     this._preview = null;
     this._error = null;
@@ -231,6 +231,9 @@ class ReapCard extends HTMLElement {
       // Start from this crop's defaults.
       for (const k of DEFAULT_KEYS) delete this._form[k];
       Object.assign(this._form, crop.defaults || {});
+      if (this._form.varieties) {
+        for (const row of this._form.varieties) row.quantity = this._form.quantity || "";
+      }
     }
     if (crop) {
       if (!crop.methods.includes(this._form.method)) this._form.method = crop.methods[0];
@@ -262,6 +265,8 @@ class ReapCard extends HTMLElement {
     this._render();
     try {
       const data = this._payload();
+      const row = (this._form.varieties || [])[0];
+      if (row) Object.assign(data, { variety: row.variety.trim(), quantity: row.quantity.trim() });
       for (const key of Object.keys(data)) if (data[key] === "") delete data[key];
       if (data.succession_days === 0) delete data.succession_days;
       const res = await this._call("preview_planting", data, true);
@@ -281,7 +286,24 @@ class ReapCard extends HTMLElement {
       const payload = this._payload();
       const saveDefaults = this._form.save_defaults;
       if (this._mode === "add") {
-        await this._call("add_planting", payload);
+        // One planting per variety row, all with the same settings.
+        const rows = (this._form.varieties || []).map((r) => ({ variety: r.variety.trim(), quantity: r.quantity.trim() }));
+        const used = rows.filter((r) => r.variety || r.quantity);
+        if (used.length <= 1) {
+          const row = used[0] || {};
+          if (row.variety) payload.variety = row.variety;
+          if (row.quantity) payload.quantity = row.quantity;
+          await this._call("add_planting", payload);
+        } else {
+          if (used.some((r) => !r.variety)) throw new Error("Give each variety a name, or remove the empty row.");
+          const plantings = used.map((r) => {
+            const one = { ...payload, variety: r.variety };
+            if (r.quantity) one.quantity = r.quantity;
+            return one;
+          });
+          await this._call("add_plantings", { plantings, use_defaults: false });
+        }
+        if (used[0] && used[0].quantity) payload.quantity = used[0].quantity;
       } else {
         await this._call("update_planting", { planting_id: this._editing, ...payload });
       }
@@ -307,6 +329,220 @@ class ReapCard extends HTMLElement {
     }
     this._busy = false;
     this._render();
+  }
+
+  // ----- several crops at once -----
+
+  async _saveBulk() {
+    const f = this._form;
+    const picked = f.picked || [];
+    if (!picked.length) {
+      this._error = "Tick the crops to add.";
+      this._render();
+      return;
+    }
+    this._busy = true;
+    this._error = null;
+    this._render();
+    try {
+      const plantings = picked.map((key) => {
+        const crop = this._crop(key);
+        const one = { crop: key };
+        if (f.year !== "" && f.year !== undefined) one.year = Number(f.year);
+        if (f.bulk_method && crop && crop.methods.includes(f.bulk_method)) one.method = f.bulk_method;
+        if (f.location) one.location = f.location;
+        if ((f.notes || "").trim()) one.notes = f.notes.trim();
+        return one;
+      });
+      await this._call("add_plantings", { plantings, use_defaults: true });
+      this._mode = null;
+      this._form = {};
+    } catch (err) {
+      this._error = err.message || String(err);
+    }
+    this._busy = false;
+    this._render();
+  }
+
+  // ----- copy a year -----
+
+  _years() {
+    return [...new Set(this._plantings().map((p) => p.year))].sort((a, b) => b - a);
+  }
+
+  _startCopy() {
+    const years = this._years();
+    const thisYear = new Date().getFullYear();
+    const from = years.find((y) => y <= thisYear) || years[years.length - 1];
+    this._mode = "copy";
+    this._form = { from_year: from, to_year: from + 1 };
+    this._pickCopy();
+    this._error = null;
+    this._notice = null;
+    this._render();
+  }
+
+  // Tick every planting of the year, except ones already planned for the
+  // target year.
+  _pickCopy() {
+    const f = this._form;
+    const same = (p) => [p.crop, p.method, p.season || "", p.variety || "", (p.location || "").toLowerCase()].join("|");
+    const planned = new Set(this._plantings().filter((p) => p.year === Number(f.to_year)).map(same));
+    f.copy = {};
+    for (const p of this._plantings().filter((p) => p.year === Number(f.from_year))) {
+      f.copy[p.id] = !planned.has(same(p));
+    }
+    f.planned = planned;
+  }
+
+  async _saveCopy() {
+    const f = this._form;
+    const ids = Object.keys(f.copy || {}).filter((id) => f.copy[id]);
+    if (!ids.length) {
+      this._error = "Tick the plantings to copy.";
+      this._render();
+      return;
+    }
+    this._busy = true;
+    this._error = null;
+    this._render();
+    try {
+      const res = await this._call("copy_plantings", {
+        from_year: Number(f.from_year), to_year: Number(f.to_year), planting_ids: ids,
+      }, true);
+      const skipped = res.skipped || [];
+      this._mode = null;
+      this._form = {};
+      if (skipped.length) {
+        this._notice = `Copied ${res.planting_ids.length}. Not copied: ${skipped.map((s) => `${s.name} (${s.reason})`).join("; ")}`;
+      }
+    } catch (err) {
+      this._error = err.message || String(err);
+    }
+    this._busy = false;
+    this._render();
+  }
+
+  _renderCopy() {
+    const f = this._form;
+    const wrap = h("div", { class: "form" });
+    wrap.append(h("div", { class: "form-title" }, icon("mdi:calendar-sync"), "Plan a year again"));
+    wrap.append(h("p", { class: "muted small" },
+      "Copies plantings with the same settings to another year. Dates move with them. Ones already planned for that year start unticked."));
+    const years = this._years();
+    const yearSelect = (key, label, options) => h("label", { class: "field" }, h("span", {}, label),
+      h("select", {
+        onchange: (e) => {
+          f[key] = Number(e.target.value);
+          if (key === "from_year") f.to_year = f.from_year + 1;
+          this._pickCopy();
+          this._render();
+        },
+      }, options.map((y) => h("option", { value: y, selected: Number(f[key]) === y }, String(y)))));
+    const toYears = [];
+    for (let y = Math.min(...years, Number(f.from_year)); y <= Math.max(...years, Number(f.from_year)) + 2; y++) {
+      if (y !== Number(f.from_year)) toYears.push(y);
+    }
+    wrap.append(h("div", { class: "grid" },
+      yearSelect("from_year", "Copy from", years),
+      yearSelect("to_year", "To", toYears)));
+    const same = (p) => [p.crop, p.method, p.season || "", p.variety || "", (p.location || "").toLowerCase()].join("|");
+    const list = h("div", { class: "list picks" });
+    const source = this._plantings().filter((p) => p.year === Number(f.from_year));
+    if (!source.length) list.append(h("p", { class: "muted" }, "No plantings in that year."));
+    for (const p of source) {
+      const name = p.variety ? `${p.crop_name} (${p.variety})` : p.crop_name;
+      const extra = [METHOD_LABELS[p.method] || p.method, p.season && p.season !== "spring" ? p.season : null,
+        p.location, f.planned && f.planned.has(same(p)) ? `already planned for ${f.to_year}` : null].filter(Boolean).join(" · ");
+      list.append(h("label", { class: "pick" },
+        h("input", { type: "checkbox", checked: !!f.copy[p.id], onchange: (e) => { f.copy[p.id] = e.target.checked; this._renderCount(); } }),
+        icon(p.icon || "mdi:sprout"),
+        h("span", { class: "info" }, h("span", { class: "name" }, name), h("span", { class: "muted small" }, extra))));
+    }
+    wrap.append(list);
+    this._countBtn = h("button", { class: "primary", disabled: this._busy, onclick: () => this._saveCopy() });
+    this._countLabel = (n) => [icon("mdi:content-copy"), `Copy ${n} planting${n === 1 ? "" : "s"}`];
+    this._countOf = () => Object.values(f.copy || {}).filter(Boolean).length;
+    this._renderCount();
+    wrap.append(h("div", { class: "actions" },
+      h("button", { onclick: () => this._cancel() }, "Cancel"), this._countBtn));
+    return wrap;
+  }
+
+  _renderCount() {
+    if (!this._countBtn) return;
+    this._countBtn.replaceChildren(...this._countLabel(this._countOf()));
+  }
+
+  _renderBulk(form) {
+    const f = this._form;
+    const all = this._crops || [];
+    f.picked = f.picked || [];
+    form.append(h("p", { class: "muted small" },
+      "Tick the crops to add. Each one uses its own defaults (method, repeat, quantity and location). Anything you set below applies to all of them."));
+    const filter = h("input", {
+      type: "search", placeholder: `Search ${all.length} crops`, class: "search", value: this._bulkFilter || "",
+    });
+    const list = h("div", { class: "list picks" });
+    const rows = [];
+    for (const c of all) {
+      const method = (c.defaults && c.defaults.method) || c.methods[0];
+      const row = h("label", { class: "pick" },
+        h("input", {
+          type: "checkbox", checked: f.picked.includes(c.key),
+          onchange: (e) => {
+            f.picked = e.target.checked ? [...f.picked, c.key] : f.picked.filter((k) => k !== c.key);
+            this._renderCount();
+          },
+        }),
+        icon(c.icon || "mdi:sprout"),
+        h("span", { class: "info" }, h("span", { class: "name" }, c.name),
+          h("span", { class: "muted small" }, METHOD_LABELS[method] || method || "")));
+      row.dataset.name = c.name.toLowerCase();
+      rows.push(row);
+      list.append(row);
+    }
+    const applyFilter = () => {
+      const q = (this._bulkFilter || "").trim().toLowerCase();
+      for (const row of rows) row.hidden = !!q && !row.dataset.name.includes(q) && !row.querySelector("input").checked;
+    };
+    filter.addEventListener("input", (e) => { this._bulkFilter = e.target.value; applyFilter(); });
+    applyFilter();
+    form.append(filter, list);
+    const names = this._locations().map((l) => [l.name, l.name]);
+    form.append(h("div", { class: "grid" },
+      this._input("year", "Year", "number", { min: 2000, max: 2100, placeholder: "Next season" }),
+      this._select("bulk_method", "Method", [["", "Each crop's default"],
+        ...Object.entries(METHOD_LABELS).map(([k, v]) => [k, `${v} (where it can be)`])]),
+      this._select("location", "Location", [["", "Each crop's default"], ...names])));
+    form.append(this._input("notes", "Notes"));
+    this._countBtn = h("button", { class: "primary", disabled: this._busy, onclick: () => this._saveBulk() });
+    this._countLabel = (n) => [icon("mdi:plus"), `Add ${n} planting${n === 1 ? "" : "s"}`];
+    this._countOf = () => (f.picked || []).length;
+    this._renderCount();
+    form.append(h("div", { class: "actions" },
+      h("button", { onclick: () => this._cancel() }, "Cancel"), this._countBtn));
+    return form;
+  }
+
+  _renderVarieties() {
+    const f = this._form;
+    const wrap = h("div", { class: "varieties" });
+    wrap.append(h("span", { class: "field-label" }, f.varieties.length > 1 ? "Varieties (one planting each)" : "Variety"));
+    f.varieties.forEach((row, i) => {
+      const variety = h("input", { type: "text", value: row.variety, placeholder: i ? "Another variety" : "Sungold",
+        oninput: (e) => { row.variety = e.target.value; this._preview = null; } });
+      const quantity = h("input", { type: "text", value: row.quantity, placeholder: "Quantity, such as 6 cells",
+        oninput: (e) => { row.quantity = e.target.value; } });
+      wrap.append(h("div", { class: "variety" }, variety, quantity,
+        f.varieties.length > 1
+          ? h("button", { class: "icon-btn", title: "Remove", onclick: () => { f.varieties.splice(i, 1); this._render(); } }, icon("mdi:close"))
+          : null));
+    });
+    wrap.append(h("div", {},
+      h("button", { onclick: () => { f.varieties.push({ variety: "", quantity: f.varieties[0].quantity || "" }); this._render(); } },
+        icon("mdi:plus"), "Add another variety")));
+    return wrap;
   }
 
   async _delete(id) {
@@ -530,6 +766,10 @@ class ReapCard extends HTMLElement {
           : null));
     }
 
+    if (this._notice && !this._mode) {
+      body.append(h("div", { class: "notice small" }, icon("mdi:information-outline"), h("span", {}, this._notice),
+        h("button", { class: "icon-btn", title: "Dismiss", onclick: () => { this._notice = null; this._render(); } }, icon("mdi:close"))));
+    }
     if (this._mode === "locations") {
       body.append(this._renderLocations());
       return;
@@ -544,6 +784,10 @@ class ReapCard extends HTMLElement {
     }
     if (this._mode === "crop") {
       body.append(this._renderCropForm());
+      return;
+    }
+    if (this._mode === "copy") {
+      body.append(this._renderCopy());
       return;
     }
     if (this._mode) {
@@ -567,6 +811,9 @@ class ReapCard extends HTMLElement {
       card.append(h("div", { class: "actions" },
         h("button", { onclick: () => this._openLocations() }, icon("mdi:map-marker-outline"), "Locations"),
         h("button", { onclick: () => this._openCrops(), disabled: !this._crops }, icon("mdi:sprout-outline"), "Crops"),
+        this._plantings().length
+          ? h("button", { onclick: () => this._startCopy() }, icon("mdi:calendar-sync"), "Plan a year again")
+          : null,
         h("button", { class: "primary", onclick: () => this._startAdd(), disabled: !this._crops },
           icon("mdi:plus"), "Add planting")));
     }
@@ -912,9 +1159,23 @@ class ReapCard extends HTMLElement {
   _renderForm() {
     const crop = this._crop(this._form.crop);
     const form = h("div", { class: "form" });
+    const adding = this._mode === "add";
+    const bulk = adding && this._form.bulk;
     form.append(h("div", { class: "form-title" },
-      icon((crop && crop.icon) || "mdi:sprout"),
-      this._mode === "add" ? "Add a planting" : `Edit ${crop ? crop.name : this._form.crop}`));
+      icon(bulk ? "mdi:sprout-outline" : (crop && crop.icon) || "mdi:sprout"),
+      adding ? (bulk ? "Add several crops" : "Add a planting") : `Edit ${crop ? crop.name : this._form.crop}`));
+    if (adding) {
+      const tab = (value, label) => h("button", {
+        class: `tab${!!this._form.bulk === value ? " active" : ""}`,
+        onclick: () => {
+          // Several crops start from each crop's own defaults, not the one picked above.
+          if (value && !this._form.bulk) this._form.location = "";
+          this._form.bulk = value; this._preview = null; this._error = null; this._render();
+        },
+      }, label);
+      form.append(h("div", { class: "tabs" }, tab(false, "One crop"), tab(true, "Several crops")));
+      if (bulk) return this._renderBulk(form);
+    }
 
     const crops = (this._crops || []).map((c) => [c.key, c.name]);
     form.append(this._select("crop", "Crop", crops, (key) => this._pickCrop(key)));
@@ -931,9 +1192,10 @@ class ReapCard extends HTMLElement {
       this._input("succession_days", "Repeat every (days)", "number", { min: 0, max: 365 }),
       this._input("succession_count", "Number of sowings", "number", { min: 1, max: 200 }),
       this._input("succession_until", "Repeat until", "date"),
-      this._input("variety", "Variety"),
-      this._input("quantity", "Quantity", "text", { placeholder: "6 cells" }),
+      adding ? null : this._input("variety", "Variety"),
+      adding ? null : this._input("quantity", "Quantity", "text", { placeholder: "6 cells" }),
       this._locationSelect()));
+    if (adding) form.append(this._renderVarieties());
     form.append(this._input("notes", "Notes"));
     form.append(h("label", { class: "check" },
       h("input", {
@@ -957,7 +1219,10 @@ class ReapCard extends HTMLElement {
       h("button", { onclick: () => this._cancel() }, "Cancel"),
       h("button", { disabled: this._busy || !crop, onclick: () => this._doPreview() }, icon("mdi:calendar-search"), "Preview dates"),
       h("button", { class: "primary", disabled: this._busy || !crop, onclick: () => this._save() },
-        icon("mdi:content-save-outline"), this._mode === "add" ? "Add" : "Save")));
+        icon("mdi:content-save-outline"),
+        adding && this._form.varieties.filter((r) => r.variety.trim()).length > 1
+          ? `Add ${this._form.varieties.filter((r) => r.variety.trim()).length} plantings`
+          : adding ? "Add" : "Save")));
     return form;
   }
 }
@@ -981,6 +1246,20 @@ const STYLE = `
   .icon-btn:hover { background: var(--secondary-background-color); color: var(--primary-text-color); }
   .actions { display: flex; justify-content: flex-end; gap: 8px; padding: 8px 16px 16px; flex-wrap: wrap; }
   .form .actions { padding: 12px 0 0; }
+  .tabs { display: flex; gap: 6px; }
+  .notice { padding: 6px 8px; border-radius: 8px; background: var(--secondary-background-color); }
+  .notice span { flex: 1; }
+  .tabs .tab.active { background: var(--primary-color); border-color: var(--primary-color); color: var(--text-primary-color, #fff); }
+  .picks { max-height: 320px; overflow-y: auto; border: 1px solid var(--divider-color); border-radius: 8px; padding: 0 8px; }
+  .pick { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--divider-color); cursor: pointer; }
+  .pick:last-child { border-bottom: none; }
+  .pick[hidden] { display: none; }
+  .pick > ha-icon { color: var(--primary-color); flex: none; }
+  .varieties { display: flex; flex-direction: column; gap: 6px; }
+  .field-label { font-size: 0.9em; color: var(--secondary-text-color); }
+  .variety { display: flex; gap: 6px; align-items: center; }
+  .variety input { font: inherit; flex: 1; min-width: 0; padding: 8px; border-radius: 6px; border: 1px solid var(--divider-color);
+    background: var(--card-background-color); color: var(--primary-text-color); }
   button { font: inherit; display: inline-flex; align-items: center; gap: 4px; padding: 6px 14px; border-radius: 18px; cursor: pointer;
     border: 1px solid var(--divider-color); background: none; color: var(--primary-text-color); }
   button ha-icon { --mdc-icon-size: 18px; }
