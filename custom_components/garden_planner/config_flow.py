@@ -252,6 +252,7 @@ class GardenPlannerOptionsFlow(OptionsFlow):
     def __init__(self) -> None:
         self._crop: str | None = None
         self._planting: dict[str, Any] = {}
+        self._save_defaults = False
 
     @property
     def _manager(self) -> Any:
@@ -316,6 +317,7 @@ class GardenPlannerOptionsFlow(OptionsFlow):
                 fields[key] = value
             if fields.get("succession_days") == 0:
                 fields.pop("succession_days")
+            self._save_defaults = bool(user_input.get("save_defaults"))
             try:
                 manager.preview(fields)
             except PlannerError:
@@ -326,8 +328,9 @@ class GardenPlannerOptionsFlow(OptionsFlow):
 
         methods = crop.methods(profile)
         seasons = sorted({w.season for w in crop.windows_for(profile)})
+        defaults = manager.crop_defaults(crop.key)
         fields: dict[Any, Any] = {
-            vol.Required("method", default=methods[0]): selector.SelectSelector(
+            vol.Required("method", default=defaults.get("method", methods[0])): selector.SelectSelector(
                 selector.SelectSelectorConfig(
                     options=[
                         selector.SelectOptionDict(value=m, label=METHOD_LABELS[m])
@@ -354,11 +357,13 @@ class GardenPlannerOptionsFlow(OptionsFlow):
                 vol.Optional("quantity"): str,
                 vol.Optional("location"): str,
                 vol.Optional("notes"): str,
+                vol.Optional("save_defaults", default=False): bool,
             }
         )
-        schema = self.add_suggested_values_to_schema(
-            vol.Schema(fields), user_input or {}
-        )
+        suggested = user_input or {
+            k: v for k, v in defaults.items() if k != "method"
+        }
+        schema = self.add_suggested_values_to_schema(vol.Schema(fields), suggested)
         return self.async_show_form(
             step_id="planting_details",
             data_schema=schema,
@@ -373,6 +378,14 @@ class GardenPlannerOptionsFlow(OptionsFlow):
         manager = self._manager
         if user_input is not None:
             await manager.async_add_planting(self._planting)
+            if self._save_defaults:
+                await manager.async_set_crop_defaults(
+                    self._planting["crop"],
+                    {
+                        k: v for k, v in self._planting.items()
+                        if k in ("method", "succession_days", "succession_count", "quantity", "location")
+                    },
+                )
             return self._done()
         _, tasks = manager.preview(self._planting)
         lines = [f"- {t.due:%a %b %-d, %Y}: {t.summary}" for t in tasks[:40]]

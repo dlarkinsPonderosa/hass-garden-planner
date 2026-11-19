@@ -63,6 +63,44 @@ crops that appear on both charts (`estimated_profiles` in `crops.json`).
 
 All of these can be changed later under **Configure**.
 
+## Dashboard card
+
+The integration includes a card, loaded automatically (no separate install).
+Edit a dashboard, add a card and pick **Garden Planner**, or use YAML:
+
+```yaml
+type: custom:garden-planner-card
+title: Garden              # optional
+show_done: false           # optional: also list plantings with no open tasks
+```
+
+It lists your plantings with the crop's icon, how they're grown, and the next
+task with its icon and date. The pencil edits a planting, the bin removes it,
+and **Add planting** opens a form. The form fills in the crop's defaults,
+**Preview dates** shows every task before you save, and **Save as the default
+for this crop** remembers the method, repeat interval, number of sowings,
+quantity and location for next time.
+
+## Crop defaults
+
+Each crop starts with sensible defaults: crops usually started indoors default
+to indoor starts, and quick crops are set to repeat (radishes, lettuce,
+arugula and spinach every 2 weeks; carrots, beets, cilantro and dill every 3;
+peas, bush beans and corn a few times). Change them from the card or the
+Configure menu with "Save as the default", or with the action:
+
+```yaml
+action: garden_planner.set_crop_defaults
+data:
+  crop: carrot
+  method: direct_bed
+  succession_days: 14
+  location: Bed 3
+```
+
+`clear: true` goes back to the built-in defaults. A planting can always
+override them.
+
 ## Adding plantings
 
 Go to **Settings > Devices & services > Garden Planner > Configure** and pick
@@ -91,7 +129,7 @@ data:
 | Field | Notes |
 | --- | --- |
 | `crop` | Catalog key, such as `tomato`, `pepper`, `garlic` |
-| `method` | `indoor_bed`, `indoor_greenhouse`, `direct_bed`, `direct_greenhouse` |
+| `method` | `indoor_bed`, `indoor_greenhouse`, `direct_bed`, `direct_greenhouse`. Defaults to the crop's default method |
 | `year` | Defaults to this year, or next year from September on |
 | `season` | For crops with more than one window, such as `fall` for garlic or broad beans |
 | `start_date` | Transplant date (indoor methods) or first sowing date (direct). Defaults to the start of the crop's window |
@@ -99,7 +137,8 @@ data:
 | `variety`, `quantity`, `location`, `notes` | Shown on the tasks |
 
 `garden_planner.preview_planting` takes the same fields and returns the tasks
-without saving anything. `garden_planner.remove_planting` removes a planting
+without saving anything. `garden_planner.update_planting` takes a
+`planting_id` plus any fields to change (an empty value clears a field). `garden_planner.remove_planting` removes a planting
 and its open tasks (completed ones stay on your list).
 
 ## How dates are worked out
@@ -143,7 +182,7 @@ offsets directly (`L-14`, `F+7`):
 ```
 
 Using a built-in key overrides that crop. `garden_planner.list_crops` returns
-the whole catalog.
+every crop with its icon, methods, seasons and defaults.
 
 ## Entities
 

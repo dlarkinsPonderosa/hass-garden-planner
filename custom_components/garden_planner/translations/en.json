@@ -68,7 +68,7 @@
       },
       "planting_details": {
         "title": "{crop}",
-        "description": "How and when to grow it. Leave the optional fields empty to use the crop's usual window.",
+        "description": "How and when to grow it. The fields start with this crop's defaults. Leave the optional ones empty to use the crop's usual window.",
         "data": {
           "method": "Method",
           "season": "Season",
@@ -80,7 +80,8 @@
           "variety": "Variety",
           "quantity": "Quantity",
           "location": "Location",
-          "notes": "Notes"
+          "notes": "Notes",
+          "save_defaults": "Save as the default for this crop"
         },
         "data_description": {
           "start_date": "Transplant date for indoor starts, or first sowing date for direct sowing. Empty means the start of the crop's window.",
@@ -89,7 +90,8 @@
           "succession_until": "Last date for a repeat sowing. Empty means the end of the crop's window.",
           "variety": "Shown in task names, for example Sungold.",
           "quantity": "For example 6 cells or 2 rows.",
-          "location": "For example Bed 3."
+          "location": "For example Bed 3.",
+          "save_defaults": "Next time you add this crop, the method, repeat interval, number of sowings, quantity and location start with these values."
         }
       },
       "planting_confirm": {
@@ -162,7 +164,7 @@
         },
         "method": {
           "name": "Method",
-          "description": "How it is grown."
+          "description": "How it is grown. Defaults to the crop's default method."
         },
         "year": {
           "name": "Year",
@@ -332,11 +334,103 @@
     },
     "list_crops": {
       "name": "List crops",
-      "description": "Return the crop catalog."
+      "description": "Return the crops with their icons, methods, seasons and defaults."
     },
     "sync": {
       "name": "Sync",
       "description": "Sync tasks with the task list now."
+    },
+    "set_crop_defaults": {
+      "name": "Set crop defaults",
+      "description": "Set what a new planting of a crop starts with.",
+      "fields": {
+        "crop": {
+          "name": "Crop",
+          "description": "The crop's key."
+        },
+        "method": {
+          "name": "Method",
+          "description": "Default method."
+        },
+        "succession_days": {
+          "name": "Repeat every",
+          "description": "Default days between sowings. 0 means a single sowing."
+        },
+        "succession_count": {
+          "name": "Number of sowings",
+          "description": "Default number of sowings."
+        },
+        "quantity": {
+          "name": "Quantity",
+          "description": "Default quantity."
+        },
+        "location": {
+          "name": "Location",
+          "description": "Default location."
+        },
+        "clear": {
+          "name": "Clear",
+          "description": "Go back to the built-in defaults."
+        }
+      }
+    },
+    "update_planting": {
+      "name": "Update planting",
+      "description": "Change a planting. Empty values clear a field.",
+      "fields": {
+        "planting_id": {
+          "name": "Planting ID",
+          "description": "From the Plantings sensor."
+        },
+        "crop": {
+          "name": "Crop",
+          "description": "Crop from the catalog, or the key of a crop you added."
+        },
+        "method": {
+          "name": "Method",
+          "description": "How it is grown. Defaults to the crop's default method."
+        },
+        "year": {
+          "name": "Year",
+          "description": "Growing year. Defaults to this year, or next year from September on."
+        },
+        "season": {
+          "name": "Season",
+          "description": "Which window to use when a crop has more than one, such as spring, summer or fall. Defaults to the first."
+        },
+        "start_date": {
+          "name": "Start date",
+          "description": "Transplant date for indoor starts, or first sowing date for direct sowing. Defaults to the start of the crop's window."
+        },
+        "succession_days": {
+          "name": "Repeat every",
+          "description": "Sow again every this many days. 0 means a single sowing."
+        },
+        "succession_count": {
+          "name": "Number of sowings",
+          "description": "Stop after this many sowings."
+        },
+        "succession_until": {
+          "name": "Repeat until",
+          "description": "Last date for a repeat sowing. Defaults to the end of the crop's window."
+        },
+        "variety": {
+          "name": "Variety",
+          "description": "Shown in task names, for example Sungold."
+        },
+        "quantity": {
+          "name": "Quantity",
+          "description": "For example 6 cells or 2 rows."
+        },
+        "location": {
+          "name": "Location",
+          "description": "For example Bed 3."
+        },
+        "notes": {
+          "name": "Notes",
+          "description": "Added to each task's description."
+        }
+      }
     }
   },
   "selector": {

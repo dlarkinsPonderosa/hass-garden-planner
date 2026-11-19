@@ -13,6 +13,7 @@ after that. That lets the planner work anywhere from its frost dates.
 Run: python scripts/build_catalog.py
 """
 import json
+import re
 import sys
 from datetime import date
 from pathlib import Path
@@ -427,6 +428,35 @@ for c in C:
         icon = LEAFY
     c["icon"] = icon
 
+
+# ---------------------------------------------------------------------------
+# Planting defaults: what a new planting of the crop starts with. People can
+# override these per crop in Home Assistant, and per planting.
+# ---------------------------------------------------------------------------
+SUCCESSION = {
+    # key: (repeat every N days, number of sowings or None for the whole window)
+    "arugula": (14, None), "cress": (14, None), "radish": (14, None), "spinach": (14, None),
+    "mustard": (14, None), "lettuce": (14, None), "pac_choi": (21, None),
+    "carrot": (21, None), "beet": (21, None), "turnip": (21, None), "kohlrabi": (21, None),
+    "scallion": (21, None), "cilantro": (21, None), "dill": (21, None), "chervil": (21, None),
+    "pea": (21, 3), "bean_bush_pole": (21, 4), "corn": (14, 3),
+}
+DIRECT_FIRST = {"lettuce", "scallion", "pac_choi", "cabbage", "kale", "chives", "shiso", "lemon_balm"}
+for c in C:
+    defaults = {}
+    has_indoor = any("transplant" in w for w in c["windows"])
+    has_direct = any("direct" in w for w in c["windows"])
+    if has_direct and (not has_indoor or c["key"] in DIRECT_FIRST or c["key"] in SUCCESSION):
+        defaults["method"] = "direct_bed"
+    elif has_indoor:
+        defaults["method"] = "indoor_bed"
+    if c["key"] in SUCCESSION:
+        days, count = SUCCESSION[c["key"]]
+        defaults["succession_days"] = days
+        if count:
+            defaults["succession_count"] = count
+    c["defaults"] = defaults
+
 out = {
     "source": "South Coastal BC Vegetable and Flower & Herb Planting Guides (West Coast Seeds), plus added crops",
     "format": "Ranges are days from the last spring frost (L) or first fall frost (F).",
@@ -447,13 +477,11 @@ options = "\n".join(
     for c in sorted(C, key=lambda c: c["name"])
 )
 text = SERVICES.read_text(encoding="utf-8")
-parts = text.split("    crop:\n      required: true\n      selector:\n        select:\n          custom_value: true\n          options:\n")
-rebuilt = [parts[0]]
-for part in parts[1:]:
-    rest = part[part.index("    method:"):]
-    rebuilt.append(options + "\n" + rest)
-SERVICES.write_text(
-    ("    crop:\n      required: true\n      selector:\n        select:\n          custom_value: true\n          options:\n").join(rebuilt),
-    encoding="utf-8",
+# Replace the option list under every crop dropdown.
+pattern = re.compile(
+    r"(    crop:\n(?:      required: true\n)?      selector:\n        select:\n"
+    r"          custom_value: true\n          options:\n)(?:              .*\n)+"
 )
-print(f"Crop options updated in {SERVICES}")
+text, count = pattern.subn(lambda m: m.group(1) + options + "\n", text)
+SERVICES.write_text(text, encoding="utf-8")
+print(f"Crop options updated in {count} places in {SERVICES}")

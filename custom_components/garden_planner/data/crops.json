@@ -46,7 +46,10 @@
      }
     ]
    },
-   "icon": "mdi:grain"
+   "icon": "mdi:grain",
+   "defaults": {
+    "method": "direct_bed"
+   }
   },
   {
    "key": "artichoke",
@@ -99,7 +102,10 @@
      }
     ]
    },
-   "icon": "mdi:flower"
+   "icon": "mdi:flower",
+   "defaults": {
+    "method": "indoor_bed"
+   }
   },
   {
    "key": "arugula",
@@ -126,7 +132,7 @@
       "season": "spring",
       "direct": [
        "L-28",
-       "F-35"
+       "L+40"
       ]
      }
     ],
@@ -147,7 +153,11 @@
      }
     ]
    },
-   "icon": "mdi:leaf"
+   "icon": "mdi:leaf",
+   "defaults": {
+    "method": "direct_bed",
+    "succession_days": 14
+   }
   },
   {
    "key": "asparagus",
@@ -201,7 +211,10 @@
      }
     ]
    },
-   "icon": "mdi:sprout"
+   "icon": "mdi:sprout",
+   "defaults": {
+    "method": "indoor_bed"
+   }
   },
   {
    "key": "bean_asparagus",
@@ -254,7 +267,10 @@
      }
     ]
    },
-   "icon": "mdi:seed"
+   "icon": "mdi:seed",
+   "defaults": {
+    "method": "indoor_bed"
+   }
   },
   {
    "key": "bean_broad",
@@ -316,7 +332,10 @@
      }
     ]
    },
-   "icon": "mdi:seed"
+   "icon": "mdi:seed",
+   "defaults": {
+    "method": "direct_bed"
+   }
   },
   {
    "key": "bean_bush_pole",
@@ -343,7 +362,7 @@
       "season": "spring",
       "direct": [
        "L+14",
-       "F-97"
+       "L+40"
       ]
      }
     ],
@@ -357,7 +376,12 @@
      }
     ]
    },
-   "icon": "mdi:seed"
+   "icon": "mdi:seed",
+   "defaults": {
+    "method": "direct_bed",
+    "succession_days": 21,
+    "succession_count": 4
+   }
   },
   {
    "key": "bean_soya",
@@ -398,7 +422,10 @@
      }
     ]
    },
-   "icon": "mdi:seed"
+   "icon": "mdi:seed",
+   "defaults": {
+    "method": "direct_bed"
+   }
   },
   {
    "key": "beet",
@@ -439,7 +466,11 @@
      }
     ]
    },
-   "icon": "mdi:sprout"
+   "icon": "mdi:sprout",
+   "defaults": {
+    "method": "direct_bed",
+    "succession_days": 21
+   }
   },
   {
    "key": "broccoli",
@@ -500,7 +531,10 @@
      }
     ]
    },
-   "icon": "mdi:tree"
+   "icon": "mdi:tree",
+   "defaults": {
+    "method": "indoor_bed"
+   }
   },
   {
    "key": "broccoli_sprouting",
@@ -568,7 +602,10 @@
      }
     ]
    },
-   "icon": "mdi:tree"
+   "icon": "mdi:tree",
+   "defaults": {
+    "method": "indoor_bed"
+   }
   },
   {
    "key": "brussels_sprouts",
@@ -602,8 +639,8 @@
        "L+10"
       ],
       "transplant": [
-       "F-78",
-       "F-62"
+       "L+4",
+       "L+15"
       ]
      }
     ],
@@ -621,7 +658,10 @@
      }
     ]
    },
-   "icon": "mdi:leaf-circle"
+   "icon": "mdi:leaf-circle",
+   "defaults": {
+    "method": "indoor_bed"
+   }
   },
   {
    "key": "cabbage",
@@ -686,7 +726,10 @@
      }
     ]
    },
-   "icon": "mdi:leaf-circle"
+   "icon": "mdi:leaf-circle",
+   "defaults": {
+    "method": "direct_bed"
+   }
   },
   {
    "key": "cabbage_overwinter",
@@ -747,7 +790,10 @@
      }
     ]
    },
-   "icon": "mdi:leaf-circle"
+   "icon": "mdi:leaf-circle",
+   "defaults": {
+    "method": "indoor_bed"
+   }
   },
   {
    "key": "carrot",
@@ -788,7 +834,11 @@
      }
     ]
    },
-   "icon": "mdi:carrot"
+   "icon": "mdi:carrot",
+   "defaults": {
+    "method": "direct_bed",
+    "succession_days": 21
+   }
   },
   {
    "key": "cauliflower",
@@ -852,7 +902,10 @@
      }
     ]
    },
-   "icon": "mdi:tree"
+   "icon": "mdi:tree",
+   "defaults": {
+    "method": "indoor_bed"
+   }
   },
   {
    "key": "celery",
@@ -905,7 +958,10 @@
      }
     ]
    },
-   "icon": "mdi:leaf"
+   "icon": "mdi:leaf",
+   "defaults": {
+    "method": "indoor_bed"
+   }
   },
   {
    "key": "corn",
@@ -946,7 +1002,12 @@
      }
     ]
    },
-   "icon": "mdi:corn"
+   "icon": "mdi:corn",
+   "defaults": {
+    "method": "direct_bed",
+    "succession_days": 14,
+    "succession_count": 3
+   }
   },
   {
    "key": "corn_salad",
@@ -1020,7 +1081,10 @@
      }
     ]
    },
-   "icon": "mdi:leaf"
+   "icon": "mdi:leaf",
+   "defaults": {
+    "method": "direct_bed"
+   }
   },
   {
    "key": "cress",
@@ -1068,7 +1132,11 @@
      }
     ]
    },
-   "icon": "mdi:leaf"
+   "icon": "mdi:leaf",
+   "defaults": {
+    "method": "direct_bed",
+    "succession_days": 14
+   }
   },
   {
    "key": "cucumber",
@@ -1129,7 +1197,10 @@
      }
     ]
    },
-   "icon": "mdi:food-variant"
+   "icon": "mdi:food-variant",
+   "defaults": {
+    "method": "indoor_bed"
+   }
   },
   {
    "key": "eggplant",
@@ -1182,7 +1253,10 @@
      }
     ]
    },
-   "icon": "mdi:food-variant"
+   "icon": "mdi:food-variant",
+   "defaults": {
+    "method": "indoor_bed"
+   }
   },
   {
    "key": "endive",
@@ -1245,7 +1319,10 @@
      }
     ]
    },
-   "icon": "mdi:leaf"
+   "icon": "mdi:leaf",
+   "defaults": {
+    "method": "direct_bed"
+   }
   },
   {
    "key": "fennel",
@@ -1286,7 +1363,10 @@
      }
     ]
    },
-   "icon": "mdi:leaf"
+   "icon": "mdi:leaf",
+   "defaults": {
+    "method": "direct_bed"
+   }
   },
   {
    "key": "garlic",
@@ -1335,7 +1415,10 @@
      }
     ]
    },
-   "icon": "mdi:sprout"
+   "icon": "mdi:sprout",
+   "defaults": {
+    "method": "direct_bed"
+   }
   },
   {
    "key": "kale",
@@ -1376,7 +1459,10 @@
      }
     ]
    },
-   "icon": "mdi:leaf"
+   "icon": "mdi:leaf",
+   "defaults": {
+    "method": "direct_bed"
+   }
   },
   {
    "key": "kohlrabi",
@@ -1439,7 +1525,11 @@
      }
     ]
    },
-   "icon": "mdi:leaf-circle"
+   "icon": "mdi:leaf-circle",
+   "defaults": {
+    "method": "direct_bed",
+    "succession_days": 21
+   }
   },
   {
    "key": "leek",
@@ -1511,7 +1601,10 @@
      }
     ]
    },
-   "icon": "mdi:sprout"
+   "icon": "mdi:sprout",
+   "defaults": {
+    "method": "indoor_bed"
+   }
   },
   {
    "key": "lettuce",
@@ -1580,7 +1673,11 @@
      }
     ]
    },
-   "icon": "mdi:leaf"
+   "icon": "mdi:leaf",
+   "defaults": {
+    "method": "direct_bed",
+    "succession_days": 14
+   }
   },
   {
    "key": "melon",
@@ -1633,7 +1730,10 @@
      }
     ]
    },
-   "icon": "mdi:fruit-watermelon"
+   "icon": "mdi:fruit-watermelon",
+   "defaults": {
+    "method": "indoor_bed"
+   }
   },
   {
    "key": "mustard",
@@ -1699,7 +1799,11 @@
      }
     ]
    },
-   "icon": "mdi:leaf"
+   "icon": "mdi:leaf",
+   "defaults": {
+    "method": "direct_bed",
+    "succession_days": 14
+   }
   },
   {
    "key": "okra",
@@ -1752,7 +1856,10 @@
      }
     ]
    },
-   "icon": "mdi:leaf"
+   "icon": "mdi:leaf",
+   "defaults": {
+    "method": "indoor_bed"
+   }
   },
   {
    "key": "onion",
@@ -1809,7 +1916,10 @@
      }
     ]
    },
-   "icon": "mdi:sprout"
+   "icon": "mdi:sprout",
+   "defaults": {
+    "method": "indoor_bed"
+   }
   },
   {
    "key": "onion_overwinter",
@@ -1862,7 +1972,10 @@
      }
     ]
    },
-   "icon": "mdi:sprout"
+   "icon": "mdi:sprout",
+   "defaults": {
+    "method": "indoor_bed"
+   }
   },
   {
    "key": "scallion",
@@ -1911,7 +2024,11 @@
      }
     ]
    },
-   "icon": "mdi:sprout"
+   "icon": "mdi:sprout",
+   "defaults": {
+    "method": "direct_bed",
+    "succession_days": 21
+   }
   },
   {
    "key": "pac_choi",
@@ -1942,7 +2059,7 @@
       "season": "spring",
       "direct": [
        "L-31",
-       "F-42"
+       "L+20"
       ],
       "cover": [
        "L-31",
@@ -1978,7 +2095,11 @@
      }
     ]
    },
-   "icon": "mdi:leaf"
+   "icon": "mdi:leaf",
+   "defaults": {
+    "method": "direct_bed",
+    "succession_days": 21
+   }
   },
   {
    "key": "parsnip",
@@ -2019,7 +2140,10 @@
      }
     ]
    },
-   "icon": "mdi:carrot"
+   "icon": "mdi:carrot",
+   "defaults": {
+    "method": "direct_bed"
+   }
   },
   {
    "key": "pea",
@@ -2081,7 +2205,12 @@
      }
     ]
    },
-   "icon": "mdi:seed"
+   "icon": "mdi:seed",
+   "defaults": {
+    "method": "direct_bed",
+    "succession_days": 21,
+    "succession_count": 3
+   }
   },
   {
    "key": "pepper",
@@ -2134,7 +2263,10 @@
      }
     ]
    },
-   "icon": "mdi:chili-mild"
+   "icon": "mdi:chili-mild",
+   "defaults": {
+    "method": "indoor_bed"
+   }
   },
   {
    "key": "radicchio",
@@ -2201,7 +2333,10 @@
      }
     ]
    },
-   "icon": "mdi:leaf"
+   "icon": "mdi:leaf",
+   "defaults": {
+    "method": "indoor_bed"
+   }
   },
   {
    "key": "radish",
@@ -2275,7 +2410,11 @@
      }
     ]
    },
-   "icon": "mdi:sprout"
+   "icon": "mdi:sprout",
+   "defaults": {
+    "method": "direct_bed",
+    "succession_days": 14
+   }
   },
   {
    "key": "rhubarb",
@@ -2329,7 +2468,10 @@
      }
     ]
    },
-   "icon": "mdi:leaf"
+   "icon": "mdi:leaf",
+   "defaults": {
+    "method": "indoor_bed"
+   }
   },
   {
    "key": "rutabaga",
@@ -2378,7 +2520,10 @@
      }
     ]
    },
-   "icon": "mdi:sprout"
+   "icon": "mdi:sprout",
+   "defaults": {
+    "method": "direct_bed"
+   }
   },
   {
    "key": "spinach",
@@ -2460,7 +2605,11 @@
      }
     ]
    },
-   "icon": "mdi:leaf"
+   "icon": "mdi:leaf",
+   "defaults": {
+    "method": "direct_bed",
+    "succession_days": 14
+   }
   },
   {
    "key": "squash",
@@ -2525,7 +2674,10 @@
      }
     ]
    },
-   "icon": "mdi:pumpkin"
+   "icon": "mdi:pumpkin",
+   "defaults": {
+    "method": "indoor_bed"
+   }
   },
   {
    "key": "strawberry",
@@ -2578,7 +2730,10 @@
      }
     ]
    },
-   "icon": "mdi:fruit-cherries"
+   "icon": "mdi:fruit-cherries",
+   "defaults": {
+    "method": "indoor_bed"
+   }
   },
   {
    "key": "swiss_chard",
@@ -2619,7 +2774,10 @@
      }
     ]
    },
-   "icon": "mdi:leaf"
+   "icon": "mdi:leaf",
+   "defaults": {
+    "method": "direct_bed"
+   }
   },
   {
    "key": "tomato",
@@ -2672,7 +2830,10 @@
      }
     ]
    },
-   "icon": "mdi:fruit-cherries"
+   "icon": "mdi:fruit-cherries",
+   "defaults": {
+    "method": "indoor_bed"
+   }
   },
   {
    "key": "turnip",
@@ -2713,7 +2874,11 @@
      }
     ]
    },
-   "icon": "mdi:sprout"
+   "icon": "mdi:sprout",
+   "defaults": {
+    "method": "direct_bed",
+    "succession_days": 21
+   }
   },
   {
    "key": "potato",
@@ -2759,7 +2924,10 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:sprout"
+   "icon": "mdi:sprout",
+   "defaults": {
+    "method": "direct_bed"
+   }
   },
   {
    "key": "tomatillo",
@@ -2816,7 +2984,10 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:fruit-cherries"
+   "icon": "mdi:fruit-cherries",
+   "defaults": {
+    "method": "indoor_bed"
+   }
   },
   {
    "key": "basil",
@@ -2873,7 +3044,10 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa"
+   "icon": "mdi:spa",
+   "defaults": {
+    "method": "indoor_bed"
+   }
   },
   {
    "key": "bergamot",
@@ -2963,7 +3137,10 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa"
+   "icon": "mdi:spa",
+   "defaults": {
+    "method": "indoor_bed"
+   }
   },
   {
    "key": "borage",
@@ -3008,7 +3185,10 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa"
+   "icon": "mdi:spa",
+   "defaults": {
+    "method": "direct_bed"
+   }
   },
   {
    "key": "chamomile",
@@ -3074,7 +3254,10 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa"
+   "icon": "mdi:spa",
+   "defaults": {
+    "method": "direct_bed"
+   }
   },
   {
    "key": "chervil",
@@ -3131,7 +3314,11 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa"
+   "icon": "mdi:spa",
+   "defaults": {
+    "method": "direct_bed",
+    "succession_days": 21
+   }
   },
   {
    "key": "chives",
@@ -3221,7 +3408,10 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa"
+   "icon": "mdi:spa",
+   "defaults": {
+    "method": "direct_bed"
+   }
   },
   {
    "key": "cilantro",
@@ -3267,7 +3457,11 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa"
+   "icon": "mdi:spa",
+   "defaults": {
+    "method": "direct_bed",
+    "succession_days": 21
+   }
   },
   {
    "key": "dill",
@@ -3312,7 +3506,11 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa"
+   "icon": "mdi:spa",
+   "defaults": {
+    "method": "direct_bed",
+    "succession_days": 21
+   }
   },
   {
    "key": "lavender",
@@ -3369,7 +3567,10 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa"
+   "icon": "mdi:spa",
+   "defaults": {
+    "method": "indoor_bed"
+   }
   },
   {
    "key": "lemon_balm",
@@ -3438,7 +3639,10 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa"
+   "icon": "mdi:spa",
+   "defaults": {
+    "method": "direct_bed"
+   }
   },
   {
    "key": "lemongrass",
@@ -3495,7 +3699,10 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa"
+   "icon": "mdi:spa",
+   "defaults": {
+    "method": "indoor_bed"
+   }
   },
   {
    "key": "lovage",
@@ -3585,7 +3792,10 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa"
+   "icon": "mdi:spa",
+   "defaults": {
+    "method": "indoor_bed"
+   }
   },
   {
    "key": "mint",
@@ -3642,7 +3852,10 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa"
+   "icon": "mdi:spa",
+   "defaults": {
+    "method": "indoor_bed"
+   }
   },
   {
    "key": "oregano",
@@ -3699,7 +3912,10 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa"
+   "icon": "mdi:spa",
+   "defaults": {
+    "method": "indoor_bed"
+   }
   },
   {
    "key": "parsley",
@@ -3745,7 +3961,10 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa"
+   "icon": "mdi:spa",
+   "defaults": {
+    "method": "direct_bed"
+   }
   },
   {
    "key": "rosemary",
@@ -3802,7 +4021,10 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa"
+   "icon": "mdi:spa",
+   "defaults": {
+    "method": "indoor_bed"
+   }
   },
   {
    "key": "sage",
@@ -3859,7 +4081,10 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa"
+   "icon": "mdi:spa",
+   "defaults": {
+    "method": "indoor_bed"
+   }
   },
   {
    "key": "savory",
@@ -3916,7 +4141,10 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa"
+   "icon": "mdi:spa",
+   "defaults": {
+    "method": "indoor_bed"
+   }
   },
   {
    "key": "shiso",
@@ -3985,7 +4213,10 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa"
+   "icon": "mdi:spa",
+   "defaults": {
+    "method": "direct_bed"
+   }
   },
   {
    "key": "stevia",
@@ -4042,7 +4273,10 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa"
+   "icon": "mdi:spa",
+   "defaults": {
+    "method": "indoor_bed"
+   }
   },
   {
    "key": "marjoram",
@@ -4099,7 +4333,10 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa"
+   "icon": "mdi:spa",
+   "defaults": {
+    "method": "indoor_bed"
+   }
   },
   {
    "key": "thyme",
@@ -4156,7 +4393,10 @@
     "continental",
     "atlantic"
    ],
-   "icon": "mdi:spa"
+   "icon": "mdi:spa",
+   "defaults": {
+    "method": "indoor_bed"
+   }
   }
  ]
 }
