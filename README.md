@@ -11,8 +11,9 @@ last spring frost and the first fall frost, so your own frost dates turn it
 into a calendar for your garden.
 
 The built-in crop catalog is transcribed from West Coast Seeds' *South Coastal
-BC Vegetable Planting Guide* (49 crops), plus potato, tomatillo, cilantro, dill
-and Italian parsley. You can add your own crops and varieties.
+BC Vegetable Planting Guide* (49 crops) and the herbs from its *Flower & Herb
+Planting Guide* (22 herbs), plus potato and tomatillo. You can add your own
+crops and varieties.
 
 ## Install
 

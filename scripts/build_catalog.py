@@ -94,14 +94,53 @@ crop("turnip","Turnip",[(S,{"direct":("03-01","08-31")})],dth=50,harvest_weeks=4
 A = "added"
 crop("potato","Potato",[(S,{"direct":("03-15","06-15")})],dth=100,harvest_weeks=6,source=A,notes="Plant seed potatoes. Early varieties about 70 days, main crop about 110.")
 crop("tomatillo","Tomatillo",[(S,{"indoor":("03-15","04-15"),"transplant":("05-15","06-15")})],weeks_indoor=7,dth=120,harvest_weeks=8,tender=True,pot_up=True,source=A)
-crop("cilantro","Cilantro",[(S,{"direct":("03-15","05-31")}),(SU,{"direct":("08-01","09-15")})],dth=45,harvest_weeks=3,source=A,notes="Bolts in summer heat, so sow small batches every 2 to 3 weeks.")
-crop("dill","Dill",[(S,{"direct":("04-01","07-31")})],dth=50,harvest_weeks=4,source=A)
-crop("parsley_italian","Parsley, Italian",[(S,{"indoor":("02-15","04-01"),"transplant":("04-15","05-15"),"direct":("04-01","06-30")})],weeks_indoor=8,dth=80,harvest_weeks=20,source=A)
+# Herbs, from the South Coastal BC Flower & Herb Planting Guide.
+H = "pdf_herbs"
+crop("basil","Basil",[(S,{"indoor":("04-15","05-20"),"transplant":("06-01","06-30")})],weeks_indoor=6,dth=85,harvest_weeks=10,tender=True,source=H)
+crop("bergamot","Bergamot",[(S,{"indoor":("02-15","03-20"),"direct":("03-20","04-15"),"transplant":("05-01","05-15")}),(F,{"direct":("10-01","10-31")})],weeks_indoor=10,dth=120,harvest_weeks=8,perennial=True,source=H)
+crop("borage","Borage",[(S,{"direct":("04-01","08-15")})],dth=55,harvest_weeks=8,source=H)
+crop("chamomile","Chamomile",[(S,{"direct":("04-01","06-30")}),(F,{"direct":("09-15","10-31")})],dth=65,harvest_weeks=8,source=H)
+crop("chervil","Chervil",[(S,{"indoor":("03-10","04-01"),"direct":("04-01","08-15")})],weeks_indoor=4,dth=50,harvest_weeks=6,source=H)
+crop("chives","Chives",[(S,{"indoor":("02-01","04-01"),"transplant":("04-01","04-20"),"direct":("04-20","06-30")}),(SU,{"direct":("08-01","09-30")})],weeks_indoor=8,dth=90,harvest_weeks=20,perennial=True,source=H)
+crop("cilantro","Cilantro",[(S,{"direct":("03-01","09-30")})],dth=45,harvest_weeks=3,source=H,notes="Bolts in summer heat, so sow small batches every 2 to 3 weeks.")
+crop("dill","Dill",[(S,{"direct":("05-01","08-31")})],dth=50,harvest_weeks=4,source=H)
+crop("lavender","Lavender",[(S,{"indoor":("01-15","03-01"),"transplant":("05-15","06-15")})],weeks_indoor=14,dth=365,harvest_weeks=6,perennial=True,source=H)
+crop("lemon_balm","Lemon balm",[(S,{"indoor":("02-01","03-01"),"transplant":("03-20","04-01"),"direct":("04-01","07-31")})],weeks_indoor=7,dth=80,harvest_weeks=16,perennial=True,source=H)
+crop("lemongrass","Lemongrass",[(S,{"indoor":("02-15","03-31"),"transplant":("05-15","06-15")})],weeks_indoor=12,dth=120,harvest_weeks=10,tender=True,source=H)
+crop("lovage","Lovage",[(S,{"indoor":("03-01","04-01"),"direct":("04-01","04-20"),"transplant":("04-20","05-01")}),(F,{"direct":("10-01","10-31")})],weeks_indoor=7,dth=365,harvest_weeks=12,perennial=True,source=H)
+crop("mint","Mint",[(S,{"indoor":("02-01","03-31"),"transplant":("05-01","06-15")})],weeks_indoor=10,dth=120,harvest_weeks=16,perennial=True,source=H)
+crop("oregano","Oregano",[(S,{"indoor":("02-15","04-20"),"transplant":("04-20","05-15")})],weeks_indoor=8,dth=110,harvest_weeks=16,perennial=True,source=H)
+crop("parsley","Parsley",[(S,{"direct":("04-15","08-15")})],dth=75,harvest_weeks=20,source=H,notes="Flat-leaf (Italian) and curly are timed the same.")
+crop("rosemary","Rosemary",[(S,{"indoor":("02-01","04-20"),"transplant":("04-20","05-15")})],weeks_indoor=10,dth=180,harvest_weeks=20,perennial=True,source=H)
+crop("sage","Sage",[(S,{"indoor":("02-01","04-20"),"transplant":("04-20","05-15")})],weeks_indoor=10,dth=150,harvest_weeks=20,perennial=True,source=H)
+crop("savory","Savory",[(S,{"indoor":("03-01","04-25"),"transplant":("04-25","05-10")})],weeks_indoor=7,dth=90,harvest_weeks=12,source=H)
+crop("shiso","Shiso",[(S,{"indoor":("03-15","04-01"),"transplant":("04-01","04-20"),"direct":("04-20","06-30")})],weeks_indoor=5,dth=80,harvest_weeks=12,source=H)
+crop("stevia","Stevia",[(S,{"indoor":("04-01","05-31"),"transplant":("06-01","06-30")})],weeks_indoor=8,dth=120,harvest_weeks=8,tender=True,source=H)
+crop("marjoram","Sweet marjoram",[(S,{"indoor":("02-15","04-20"),"transplant":("04-20","05-15")})],weeks_indoor=8,dth=100,harvest_weeks=12,source=H)
+crop("thyme","Thyme",[(S,{"indoor":("02-01","04-15"),"transplant":("04-20","05-20")})],weeks_indoor=10,dth=120,harvest_weeks=16,perennial=True,source=H)
 
 out = {
-    "source": "South Coastal BC Vegetable Planting Guide (West Coast Seeds), plus added crops",
+    "source": "South Coastal BC Vegetable and Flower & Herb Planting Guides (West Coast Seeds), plus added crops",
     "format": "Ranges are days from the last spring frost (L) or first fall frost (F).",
     "crops": C,
 }
 OUT.write_text(json.dumps(out, indent=1) + "\n", encoding="utf-8")
 print(f"{len(C)} crops written to {OUT}")
+
+# Keep the crop dropdown in services.yaml in step with the catalog.
+SERVICES = OUT.parent.parent / "services.yaml"
+options = "\n".join(
+    f'              - label: "{c["name"]}"\n                value: "{c["key"]}"'
+    for c in sorted(C, key=lambda c: c["name"])
+)
+text = SERVICES.read_text(encoding="utf-8")
+parts = text.split("    crop:\n      required: true\n      selector:\n        select:\n          custom_value: true\n          options:\n")
+rebuilt = [parts[0]]
+for part in parts[1:]:
+    rest = part[part.index("    method:"):]
+    rebuilt.append(options + "\n" + rest)
+SERVICES.write_text(
+    ("    crop:\n      required: true\n      selector:\n        select:\n          custom_value: true\n          options:\n").join(rebuilt),
+    encoding="utf-8",
+)
+print(f"Crop options updated in {SERVICES}")

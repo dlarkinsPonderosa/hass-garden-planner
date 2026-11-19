@@ -1,5 +1,5 @@
 {
- "source": "South Coastal BC Vegetable Planting Guide (West Coast Seeds), plus added crops",
+ "source": "South Coastal BC Vegetable and Flower & Herb Planting Guides (West Coast Seeds), plus added crops",
  "format": "Ranges are days from the last spring frost (L) or first fall frost (F).",
  "crops": [
   {
@@ -1302,22 +1302,180 @@
    "perennial": false
   },
   {
-   "key": "cilantro",
-   "name": "Cilantro",
-   "source": "added",
+   "key": "basil",
+   "name": "Basil",
+   "source": "pdf_herbs",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "L+14",
+      "L+49"
+     ],
+     "transplant": [
+      "L+61",
+      "L+90"
+     ]
+    }
+   ],
+   "weeks_indoor": 6,
+   "days_to_harvest": 85,
+   "harvest_weeks": 10,
+   "frost_tender": true,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "bergamot",
+   "name": "Bergamot",
+   "source": "pdf_herbs",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "L-45",
+      "L-12"
+     ],
+     "direct": [
+      "L-12",
+      "L+14"
+     ],
+     "transplant": [
+      "L+30",
+      "L+44"
+     ]
+    },
+    {
+     "season": "fall",
+     "direct": [
+      "F-46",
+      "F-16"
+     ]
+    }
+   ],
+   "weeks_indoor": 10,
+   "days_to_harvest": 120,
+   "harvest_weeks": 8,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": true
+  },
+  {
+   "key": "borage",
+   "name": "Borage",
+   "source": "pdf_herbs",
    "windows": [
     {
      "season": "spring",
      "direct": [
-      "L-17",
-      "L+60"
+      "L+0",
+      "F-93"
+     ]
+    }
+   ],
+   "weeks_indoor": null,
+   "days_to_harvest": 55,
+   "harvest_weeks": 8,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "chamomile",
+   "name": "Chamomile",
+   "source": "pdf_herbs",
+   "windows": [
+    {
+     "season": "spring",
+     "direct": [
+      "L+0",
+      "L+90"
+     ]
+    },
+    {
+     "season": "fall",
+     "direct": [
+      "F-62",
+      "F-16"
+     ]
+    }
+   ],
+   "weeks_indoor": null,
+   "days_to_harvest": 65,
+   "harvest_weeks": 8,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "chervil",
+   "name": "Chervil",
+   "source": "pdf_herbs",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "L-22",
+      "L+0"
+     ],
+     "direct": [
+      "L+0",
+      "F-93"
+     ]
+    }
+   ],
+   "weeks_indoor": 4,
+   "days_to_harvest": 50,
+   "harvest_weeks": 6,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "chives",
+   "name": "Chives",
+   "source": "pdf_herbs",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "L-59",
+      "L+0"
+     ],
+     "transplant": [
+      "L+0",
+      "L+19"
+     ],
+     "direct": [
+      "L+19",
+      "L+90"
      ]
     },
     {
      "season": "summer",
      "direct": [
       "F-107",
-      "F-62"
+      "F-47"
+     ]
+    }
+   ],
+   "weeks_indoor": 8,
+   "days_to_harvest": 90,
+   "harvest_weeks": 20,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": true
+  },
+  {
+   "key": "cilantro",
+   "name": "Cilantro",
+   "source": "pdf_herbs",
+   "windows": [
+    {
+     "season": "spring",
+     "direct": [
+      "L-31",
+      "F-47"
      ]
     }
    ],
@@ -1332,13 +1490,13 @@
   {
    "key": "dill",
    "name": "Dill",
-   "source": "added",
+   "source": "pdf_herbs",
    "windows": [
     {
      "season": "spring",
      "direct": [
-      "L+0",
-      "F-108"
+      "L+30",
+      "F-77"
      ]
     }
    ],
@@ -1350,32 +1508,356 @@
    "perennial": false
   },
   {
-   "key": "parsley_italian",
-   "name": "Parsley, Italian",
-   "source": "added",
+   "key": "lavender",
+   "name": "Lavender",
+   "source": "pdf_herbs",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "L-76",
+      "L-31"
+     ],
+     "transplant": [
+      "L+44",
+      "L+75"
+     ]
+    }
+   ],
+   "weeks_indoor": 14,
+   "days_to_harvest": 365,
+   "harvest_weeks": 6,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": true
+  },
+  {
+   "key": "lemon_balm",
+   "name": "Lemon balm",
+   "source": "pdf_herbs",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "L-59",
+      "L-31"
+     ],
+     "transplant": [
+      "L-12",
+      "L+0"
+     ],
+     "direct": [
+      "L+0",
+      "F-108"
+     ]
+    }
+   ],
+   "weeks_indoor": 7,
+   "days_to_harvest": 80,
+   "harvest_weeks": 16,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": true
+  },
+  {
+   "key": "lemongrass",
+   "name": "Lemongrass",
+   "source": "pdf_herbs",
    "windows": [
     {
      "season": "spring",
      "indoor": [
       "L-45",
-      "L+0"
+      "L-1"
      ],
      "transplant": [
-      "L+14",
-      "L+44"
+      "L+44",
+      "L+75"
+     ]
+    }
+   ],
+   "weeks_indoor": 12,
+   "days_to_harvest": 120,
+   "harvest_weeks": 10,
+   "frost_tender": true,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "lovage",
+   "name": "Lovage",
+   "source": "pdf_herbs",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "L-31",
+      "L+0"
      ],
      "direct": [
       "L+0",
+      "L+19"
+     ],
+     "transplant": [
+      "L+19",
+      "L+30"
+     ]
+    },
+    {
+     "season": "fall",
+     "direct": [
+      "F-46",
+      "F-16"
+     ]
+    }
+   ],
+   "weeks_indoor": 7,
+   "days_to_harvest": 365,
+   "harvest_weeks": 12,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": true
+  },
+  {
+   "key": "mint",
+   "name": "Mint",
+   "source": "pdf_herbs",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "L-59",
+      "L-1"
+     ],
+     "transplant": [
+      "L+30",
+      "L+75"
+     ]
+    }
+   ],
+   "weeks_indoor": 10,
+   "days_to_harvest": 120,
+   "harvest_weeks": 16,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": true
+  },
+  {
+   "key": "oregano",
+   "name": "Oregano",
+   "source": "pdf_herbs",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "L-45",
+      "L+19"
+     ],
+     "transplant": [
+      "L+19",
+      "L+44"
+     ]
+    }
+   ],
+   "weeks_indoor": 8,
+   "days_to_harvest": 110,
+   "harvest_weeks": 16,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": true
+  },
+  {
+   "key": "parsley",
+   "name": "Parsley",
+   "source": "pdf_herbs",
+   "windows": [
+    {
+     "season": "spring",
+     "direct": [
+      "L+14",
+      "F-93"
+     ]
+    }
+   ],
+   "weeks_indoor": null,
+   "days_to_harvest": 75,
+   "harvest_weeks": 20,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false,
+   "notes": "Flat-leaf (Italian) and curly are timed the same."
+  },
+  {
+   "key": "rosemary",
+   "name": "Rosemary",
+   "source": "pdf_herbs",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "L-59",
+      "L+19"
+     ],
+     "transplant": [
+      "L+19",
+      "L+44"
+     ]
+    }
+   ],
+   "weeks_indoor": 10,
+   "days_to_harvest": 180,
+   "harvest_weeks": 20,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": true
+  },
+  {
+   "key": "sage",
+   "name": "Sage",
+   "source": "pdf_herbs",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "L-59",
+      "L+19"
+     ],
+     "transplant": [
+      "L+19",
+      "L+44"
+     ]
+    }
+   ],
+   "weeks_indoor": 10,
+   "days_to_harvest": 150,
+   "harvest_weeks": 20,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": true
+  },
+  {
+   "key": "savory",
+   "name": "Savory",
+   "source": "pdf_herbs",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "L-31",
+      "L+24"
+     ],
+     "transplant": [
+      "L+24",
+      "L+39"
+     ]
+    }
+   ],
+   "weeks_indoor": 7,
+   "days_to_harvest": 90,
+   "harvest_weeks": 12,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "shiso",
+   "name": "Shiso",
+   "source": "pdf_herbs",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "L-17",
+      "L+0"
+     ],
+     "transplant": [
+      "L+0",
+      "L+19"
+     ],
+     "direct": [
+      "L+19",
+      "L+90"
+     ]
+    }
+   ],
+   "weeks_indoor": 5,
+   "days_to_harvest": 80,
+   "harvest_weeks": 12,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "stevia",
+   "name": "Stevia",
+   "source": "pdf_herbs",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "L+0",
+      "L+60"
+     ],
+     "transplant": [
+      "L+61",
       "L+90"
      ]
     }
    ],
    "weeks_indoor": 8,
-   "days_to_harvest": 80,
-   "harvest_weeks": 20,
+   "days_to_harvest": 120,
+   "harvest_weeks": 8,
+   "frost_tender": true,
+   "pot_up": false,
+   "perennial": false
+  },
+  {
+   "key": "marjoram",
+   "name": "Sweet marjoram",
+   "source": "pdf_herbs",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "L-45",
+      "L+19"
+     ],
+     "transplant": [
+      "L+19",
+      "L+44"
+     ]
+    }
+   ],
+   "weeks_indoor": 8,
+   "days_to_harvest": 100,
+   "harvest_weeks": 12,
    "frost_tender": false,
    "pot_up": false,
    "perennial": false
+  },
+  {
+   "key": "thyme",
+   "name": "Thyme",
+   "source": "pdf_herbs",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "L-59",
+      "L+14"
+     ],
+     "transplant": [
+      "L+19",
+      "L+49"
+     ]
+    }
+   ],
+   "weeks_indoor": 10,
+   "days_to_harvest": 120,
+   "harvest_weeks": 16,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": true
   }
  ]
 }
