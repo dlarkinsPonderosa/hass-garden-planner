@@ -72,7 +72,8 @@ class GardenTasksList(TodoListEntity):
         self._attr_unique_id = f"{manager.entry.entry_id}_tasks"
         self._attr_device_info = {
             "identifiers": {(DOMAIN, manager.entry.entry_id)},
-            "name": "Garden Planner",
+            "name": "Reap",
+            "model": "Reap what you Sow",
             "entry_type": "service",
         }
 

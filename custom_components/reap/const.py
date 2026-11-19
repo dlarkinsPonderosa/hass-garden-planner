@@ -1,8 +1,8 @@
-"""Constants for Garden Planner."""
+"""Constants for Reap."""
 
 from __future__ import annotations
 
-DOMAIN = "garden_planner"
+DOMAIN = "reap"
 
 CONF_TODO_ENTITY = "todo_entity"
 CONF_LAST_FROST = "last_frost"
@@ -40,7 +40,7 @@ STORAGE_VERSION = 1
 SYNC_INTERVAL_MINUTES = 15
 
 # Added to a task's description so the planner can find it on a shared list.
-MARKER_PREFIX = "garden-planner:"
+MARKER_PREFIX = "reap:"
 
 SIGNAL_UPDATED = f"{DOMAIN}_updated"
 

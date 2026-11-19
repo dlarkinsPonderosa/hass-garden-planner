@@ -1,15 +1,15 @@
 {
   "config": {
     "abort": {
-      "already_configured": "Garden Planner is already set up."
+      "already_configured": "Reap is already set up."
     },
     "error": {
       "invalid_month_day": "Use month-day, for example 03-06."
     },
     "step": {
       "user": {
-        "title": "Garden Planner",
-        "description": "Choose where tasks go and a starting point for your frost dates. You can adjust the dates on the next page.",
+        "title": "Reap",
+        "description": "Reap what you Sow.\n\nChoose where tasks go and a starting point for your frost dates. You can adjust the dates on the next page.",
         "data": {
           "todo_entity": "Task list",
           "zone": "Starting point"
@@ -52,7 +52,7 @@
     },
     "step": {
       "init": {
-        "title": "Garden Planner",
+        "title": "Reap",
         "menu_options": {
           "add_planting": "Add a planting",
           "remove_planting": "Remove plantings",
@@ -106,7 +106,7 @@
         }
       },
       "settings": {
-        "title": "Garden Planner settings",
+        "title": "Reap settings",
         "data": {
           "last_frost": "Last spring frost (MM-DD)",
           "first_frost": "First fall frost (MM-DD)",

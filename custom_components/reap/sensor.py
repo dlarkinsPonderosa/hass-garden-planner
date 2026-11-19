@@ -1,4 +1,4 @@
-"""Summary sensors for Garden Planner."""
+"""Summary sensors for Reap."""
 
 from __future__ import annotations
 
@@ -59,7 +59,8 @@ class GardenSensor(SensorEntity):
         self._attr_unique_id = f"{manager.entry.entry_id}_{key}"
         self._attr_device_info = {
             "identifiers": {(DOMAIN, manager.entry.entry_id)},
-            "name": "Garden Planner",
+            "name": "Reap",
+            "model": "Reap what you Sow",
             "entry_type": "service",
         }
 

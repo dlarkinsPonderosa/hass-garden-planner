@@ -1,4 +1,4 @@
-"""Garden Planner date engine.
+"""Reap date engine.
 
 Turns plantings into dated tasks. This module has no Home Assistant imports so
 it can be unit tested on its own.

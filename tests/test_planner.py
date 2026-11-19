@@ -4,7 +4,7 @@ from datetime import date
 
 import pytest
 
-from custom_components.garden_planner.planner import (
+from custom_components.reap.planner import (
     TASK_HARDEN_OFF,
     TASK_HARVEST,
     TASK_POT_UP,

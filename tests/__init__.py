@@ -1,1 +1,1 @@
-"""Tests for Garden Planner."""
+"""Tests for Reap."""
