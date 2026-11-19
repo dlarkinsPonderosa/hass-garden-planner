@@ -38,6 +38,8 @@ from .const import (
     ZONE_FROST_DATES,
     ZONE_VICTORIA,
 )
+from .manager import default_year
+from .planner import PlannerError
 
 
 def _list_selector(hass: HomeAssistant) -> selector.SelectSelector:
@@ -222,10 +224,211 @@ class GardenPlannerConfigFlow(ConfigFlow, domain=DOMAIN):
         return GardenPlannerOptionsFlow()
 
 
+METHOD_LABELS = {
+    "indoor_bed": "Start indoors, transplant to beds",
+    "indoor_greenhouse": "Start indoors, transplant to greenhouse",
+    "direct_bed": "Direct sow in beds",
+    "direct_greenhouse": "Direct sow in greenhouse",
+}
+PLANTING_KEYS = (
+    "method", "season", "year", "start_date", "succession_days",
+    "succession_count", "succession_until", "variety", "quantity",
+    "location", "notes",
+)
+
+
+def _box(minimum: int, maximum: int, unit: str | None = None) -> selector.NumberSelector:
+    config = selector.NumberSelectorConfig(
+        min=minimum, max=maximum, step=1, mode=selector.NumberSelectorMode.BOX
+    )
+    if unit:
+        config["unit_of_measurement"] = unit
+    return selector.NumberSelector(config)
+
+
 class GardenPlannerOptionsFlow(OptionsFlow):
-    """Change Garden Planner settings."""
+    """Add or remove plantings, or change Garden Planner settings."""
+
+    def __init__(self) -> None:
+        self._crop: str | None = None
+        self._planting: dict[str, Any] = {}
+
+    @property
+    def _manager(self) -> Any:
+        return self.config_entry.runtime_data
+
+    def _done(self) -> ConfigFlowResult:
+        # Keep the options as they are, so the integration isn't reloaded.
+        return self.async_create_entry(data=dict(self.config_entry.options))
 
     async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        options = ["add_planting", "settings"]
+        if self._manager.plantings():
+            options.insert(1, "remove_planting")
+        return self.async_show_menu(step_id="init", menu_options=options)
+
+    # ----- add a planting -----
+
+    async def async_step_add_planting(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Step 1: pick the crop."""
+        if user_input is not None:
+            self._crop = user_input["crop"]
+            return await self.async_step_planting_details()
+        crops = sorted(self._manager.crops.values(), key=lambda c: c.name)
+        return self.async_show_form(
+            step_id="add_planting",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("crop"): selector.SelectSelector(
+                        selector.SelectSelectorConfig(
+                            options=[
+                                selector.SelectOptionDict(value=c.key, label=c.name)
+                                for c in crops
+                            ],
+                            mode=selector.SelectSelectorMode.DROPDOWN,
+                            sort=False,
+                        )
+                    )
+                }
+            ),
+        )
+
+    async def async_step_planting_details(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Step 2: how and when it's grown."""
+        manager = self._manager
+        crop = manager.crop(self._crop)
+        profile = manager.settings.profile
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            fields = {"crop": crop.key}
+            for key in PLANTING_KEYS:
+                value = user_input.get(key)
+                if value in (None, ""):
+                    continue
+                if key in ("year", "succession_days", "succession_count"):
+                    value = int(value)
+                fields[key] = value
+            if fields.get("succession_days") == 0:
+                fields.pop("succession_days")
+            try:
+                manager.preview(fields)
+            except PlannerError:
+                errors["base"] = "cannot_schedule"
+            else:
+                self._planting = fields
+                return await self.async_step_planting_confirm()
+
+        methods = crop.methods(profile)
+        seasons = sorted({w.season for w in crop.windows_for(profile)})
+        fields: dict[Any, Any] = {
+            vol.Required("method", default=methods[0]): selector.SelectSelector(
+                selector.SelectSelectorConfig(
+                    options=[
+                        selector.SelectOptionDict(value=m, label=METHOD_LABELS[m])
+                        for m in methods
+                    ],
+                    mode=selector.SelectSelectorMode.LIST,
+                )
+            ),
+        }
+        if len(seasons) > 1:
+            fields[vol.Required("season", default=seasons[0])] = selector.SelectSelector(
+                selector.SelectSelectorConfig(
+                    options=seasons, mode=selector.SelectSelectorMode.LIST
+                )
+            )
+        fields.update(
+            {
+                vol.Required("year", default=default_year()): _box(2024, 2100),
+                vol.Optional("start_date"): selector.DateSelector(),
+                vol.Optional("succession_days", default=0): _box(0, 365, "days"),
+                vol.Optional("succession_count"): _box(1, 200),
+                vol.Optional("succession_until"): selector.DateSelector(),
+                vol.Optional("variety"): str,
+                vol.Optional("quantity"): str,
+                vol.Optional("location"): str,
+                vol.Optional("notes"): str,
+            }
+        )
+        schema = self.add_suggested_values_to_schema(
+            vol.Schema(fields), user_input or {}
+        )
+        return self.async_show_form(
+            step_id="planting_details",
+            data_schema=schema,
+            errors=errors,
+            description_placeholders={"crop": crop.name},
+        )
+
+    async def async_step_planting_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Step 3: show the dates, then save."""
+        manager = self._manager
+        if user_input is not None:
+            await manager.async_add_planting(self._planting)
+            return self._done()
+        _, tasks = manager.preview(self._planting)
+        lines = [f"- {t.due:%a %b %-d, %Y}: {t.summary}" for t in tasks[:40]]
+        if len(tasks) > 40:
+            lines.append(f"- ...and {len(tasks) - 40} more")
+        return self.async_show_form(
+            step_id="planting_confirm",
+            data_schema=vol.Schema({}),
+            description_placeholders={
+                "crop": manager.crop(self._planting["crop"]).name,
+                "tasks": "\n".join(lines),
+            },
+        )
+
+    # ----- remove plantings -----
+
+    async def async_step_remove_planting(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        manager = self._manager
+        if user_input is not None:
+            for planting_id in user_input.get("plantings", []):
+                await manager.async_remove_planting(planting_id)
+            return self._done()
+        crops = manager.crops
+        options = []
+        for planting in sorted(manager.plantings(), key=lambda p: (p.year, p.crop)):
+            crop = crops.get(planting.crop)
+            name = crop.name if crop else planting.crop
+            if planting.variety:
+                name = f"{name} ({planting.variety})"
+            extra = f", every {planting.succession_days} days" if planting.succession_days else ""
+            where = f", {planting.location}" if planting.location else ""
+            options.append(
+                selector.SelectOptionDict(
+                    value=planting.id,
+                    label=f"{name}: {METHOD_LABELS.get(planting.method, planting.method).lower()}, {planting.year}{extra}{where}",
+                )
+            )
+        return self.async_show_form(
+            step_id="remove_planting",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("plantings"): selector.SelectSelector(
+                        selector.SelectSelectorConfig(
+                            options=options, multiple=True,
+                            mode=selector.SelectSelectorMode.LIST,
+                        )
+                    )
+                }
+            ),
+        )
+
+    # ----- settings -----
+
+    async def async_step_settings(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         errors: dict[str, str] = {}
@@ -235,7 +438,7 @@ class GardenPlannerOptionsFlow(OptionsFlow):
                 return self.async_create_entry(data=_clean(user_input))
         current = {**self.config_entry.data, **self.config_entry.options}
         return self.async_show_form(
-            step_id="init",
+            step_id="settings",
             data_schema=_schema(self.hass, user_input or current),
             errors=errors,
         )

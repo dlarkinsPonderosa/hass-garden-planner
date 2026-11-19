@@ -65,8 +65,18 @@ All of these can be changed later under **Configure**.
 
 ## Adding plantings
 
-Use the `garden_planner.add_planting` action (Developer tools > Actions, a
-script, or a dashboard button). The crop field is a dropdown of the catalog.
+Go to **Settings > Devices & services > Garden Planner > Configure** and pick
+**Add a planting**:
+
+1. Choose the crop.
+2. Choose how it's grown (only the methods that crop supports are offered),
+   and optionally a start date, repeat sowings, variety, quantity and location.
+3. Check the list of dates, then submit.
+
+**Remove plantings** and **Settings** are on the same menu.
+
+You can also use the `garden_planner.add_planting` action from Developer tools
+> Actions, a script or a dashboard button.
 
 ```yaml
 action: garden_planner.add_planting

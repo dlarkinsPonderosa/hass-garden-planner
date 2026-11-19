@@ -47,10 +47,63 @@
   },
   "options": {
     "error": {
-      "invalid_month_day": "Use month-day, for example 03-06."
+      "invalid_month_day": "Use month-day, for example 03-06.",
+      "cannot_schedule": "That crop can't be planned that way. Check the method, season and dates."
     },
     "step": {
       "init": {
+        "title": "Garden Planner",
+        "menu_options": {
+          "add_planting": "Add a planting",
+          "remove_planting": "Remove plantings",
+          "settings": "Settings"
+        }
+      },
+      "add_planting": {
+        "title": "Add a planting",
+        "description": "Pick what you want to grow.",
+        "data": {
+          "crop": "Crop"
+        }
+      },
+      "planting_details": {
+        "title": "{crop}",
+        "description": "How and when to grow it. Leave the optional fields empty to use the crop's usual window.",
+        "data": {
+          "method": "Method",
+          "season": "Season",
+          "year": "Year",
+          "start_date": "Start date",
+          "succession_days": "Repeat every",
+          "succession_count": "Number of sowings",
+          "succession_until": "Repeat until",
+          "variety": "Variety",
+          "quantity": "Quantity",
+          "location": "Location",
+          "notes": "Notes"
+        },
+        "data_description": {
+          "start_date": "Transplant date for indoor starts, or first sowing date for direct sowing. Empty means the start of the crop's window.",
+          "succession_days": "Sow again every this many days. 0 means a single sowing.",
+          "succession_count": "Stop after this many sowings.",
+          "succession_until": "Last date for a repeat sowing. Empty means the end of the crop's window.",
+          "variety": "Shown in task names, for example Sungold.",
+          "quantity": "For example 6 cells or 2 rows.",
+          "location": "For example Bed 3."
+        }
+      },
+      "planting_confirm": {
+        "title": "{crop}: check the dates",
+        "description": "These tasks will be planned. Each one is added to your task list when it's within the look-ahead window.\n\n{tasks}"
+      },
+      "remove_planting": {
+        "title": "Remove plantings",
+        "description": "Open tasks for these plantings are removed from your list. Completed ones stay.",
+        "data": {
+          "plantings": "Plantings"
+        }
+      },
+      "settings": {
         "title": "Garden Planner settings",
         "data": {
           "last_frost": "Last spring frost (MM-DD)",
