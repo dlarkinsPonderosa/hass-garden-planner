@@ -14,7 +14,7 @@ from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN
 from .manager import GardenManager
-from .planner import Task
+from .planner import Task, is_southern, planting_timeline
 
 MAX_LISTED = 25
 # Open tasks listed per planting on the plantings sensor. Every task of every
@@ -170,6 +170,8 @@ class PlantingsSensor(GardenSensor):
                     "task_count": len(tasks),
                     "open_count": len(open_tasks),
                     "tasks": [t.to_dict() for t in open_tasks[:MAX_PLANTING_TASKS]],
+                    # Phase date ranges for the planner card's season chart.
+                    "timeline": planting_timeline(tasks, crop) if crop else None,
                     # Why it can't be scheduled right now, if it can't.
                     "problem": self.manager.problems.get(planting.id),
                 }
@@ -178,6 +180,8 @@ class PlantingsSensor(GardenSensor):
         self._attr_extra_state_attributes = {
             "plantings": plantings,
             "locations": self.manager.locations(),
+            # The planner card runs a southern growing year July to June.
+            "southern": is_southern(self.manager.settings),
             "problems": [
                 {"planting_id": pid, "problem": text}
                 for pid, text in self.manager.problems.items()
