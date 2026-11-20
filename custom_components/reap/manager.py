@@ -438,9 +438,10 @@ class GardenManager:
             try:
                 generate_tasks(planting, self.crop(planting.crop), self.settings)
             except PlannerError as err:
-                name = self.crops[planting.crop].name if planting.crop in self.crops else planting.crop
-                label = name + (f" ({planting.variety})" if planting.variety else "")
-                raise PlannerError(f"{label}: {err}") from err
+                # The message already names the crop; add the variety if any.
+                if planting.variety:
+                    raise PlannerError(f"{planting.variety}: {err}") from err
+                raise
             new.append(planting)
         # Only now that every planting is valid: new locations get created.
         for planting in new:
@@ -469,11 +470,7 @@ class GardenManager:
         shift = to_year - from_year
         if not shift:
             raise PlannerError("Pick a different year to copy to")
-        this_year = dt_util.now().date().year
-        if to_year < this_year:
-            raise PlannerError(
-                f"Copy to {this_year} or later; every task in {to_year} would be overdue"
-            )
+        today = dt_util.now().date()
         source = [p for p in self.plantings() if p.year == from_year]
         skipped: list[dict[str, str]] = []
         if planting_ids is not None:
@@ -509,7 +506,14 @@ class GardenManager:
                     raw[key] = _add_years(raw[key], shift)
             planting = Planting.from_dict(raw)
             try:
-                generate_tasks(planting, self.crop(planting.crop), self.settings)
+                crop = self.crop(planting.crop)
+                generate_tasks(planting, crop, self.settings)
+                # Copying into a season that's over would only add overdue tasks.
+                sched = sowing_dates(planting, crop, self.settings)
+                if max(sched.dates[-1], sched.window_end) < today:
+                    skipped.append({"planting_id": old.id, "name": label,
+                                    "reason": f"its {to_year} sowing time is over"})
+                    continue
             except PlannerError as err:
                 skipped.append({"planting_id": old.id, "name": label, "reason": str(err)})
                 continue

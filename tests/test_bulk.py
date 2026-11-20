@@ -126,13 +126,19 @@ async def test_copy_tells_blocks_of_one_crop_apart(hass: HomeAssistant) -> None:
 
 
 @pytest.mark.freeze_time("2026-11-20 12:00:00")
-async def test_copy_refuses_past_years_and_reports_other_years(hass: HomeAssistant) -> None:
+async def test_copy_skips_seasons_that_are_over_and_reports_other_years(hass: HomeAssistant) -> None:
     entry = await _setup(hass)
     manager = entry.runtime_data
     await _call(hass, "add_planting", {"crop": "pea", "method": "direct_bed", "year": 2026})
     await _call(hass, "add_planting", {"crop": "pea", "method": "direct_bed", "year": 2025})
-    with pytest.raises(ServiceValidationError, match="overdue"):
-        await _call(hass, "copy_plantings", {"from_year": 2026, "to_year": 2020})
+    await _call(hass, "add_planting", {"crop": "lettuce", "method": "direct_bed", "year": 2025})
+    # Lettuce for 2026 can't be sown any more in November: skipped, not overdue.
+    lettuce = next(p for p in manager.plantings() if p.crop == "lettuce")
+    resp = await _call(hass, "copy_plantings", {
+        "from_year": 2025, "to_year": 2026, "planting_ids": [lettuce.id],
+    }, True)
+    assert resp["planting_ids"] == []
+    assert resp["skipped"][0]["reason"] == "its 2026 sowing time is over"
     other = next(p for p in manager.plantings() if p.year == 2025)
     resp = await _call(hass, "copy_plantings", {"from_year": 2026, "planting_ids": [other.id]}, True)
     assert resp["planting_ids"] == []
@@ -152,3 +158,21 @@ async def test_rejected_batch_adds_no_location(hass: HomeAssistant) -> None:
         {"crop": "lettuce", "year": 2027, "location": "bed 9"},
     ]})
     assert [loc["name"] for loc in manager.locations()].count("bed 9") == 1
+
+
+@pytest.mark.freeze_time("2026-10-01 12:00:00")
+async def test_copy_into_this_year_while_its_season_runs(hass: HomeAssistant) -> None:
+    entry = await _setup(hass)
+    await _call(hass, "add_planting", {"crop": "garlic", "method": "direct_bed", "year": 2025, "season": "fall"})
+    resp = await _call(hass, "copy_plantings", {"from_year": 2025, "to_year": 2026}, True)
+    assert len(resp["planting_ids"]) == 1
+
+
+async def test_batch_error_names_the_crop_once(hass: HomeAssistant) -> None:
+    await _setup(hass)
+    with pytest.raises(ServiceValidationError) as err:
+        await _call(hass, "add_plantings", {"plantings": [
+            {"crop": "garlic", "year": 2027, "method": "indoor_bed", "variety": "Music"},
+        ]})
+    assert str(err.value).startswith("Music: Garlic can't be grown")
+    assert str(err.value).count("Garlic") == 1
