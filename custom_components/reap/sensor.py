@@ -156,6 +156,7 @@ class PlantingsSensor(GardenSensor):
 
     def _update_from_manager(self) -> None:
         crops = self.manager.crops
+        dismissed = set(self.manager.data["dismissed"])
         plantings = []
         for planting in self.manager.plantings():
             crop = crops.get(planting.crop)
@@ -171,7 +172,11 @@ class PlantingsSensor(GardenSensor):
                     "open_count": len(open_tasks),
                     "tasks": [t.to_dict() for t in open_tasks[:MAX_PLANTING_TASKS]],
                     # Phase date ranges for the planner card's season chart.
-                    "timeline": planting_timeline(tasks, crop) if crop else None,
+                    # Tasks deleted from the to-do list aren't planned any more.
+                    "timeline": (
+                        planting_timeline([t for t in tasks if t.uid not in dismissed], crop)
+                        if crop else None
+                    ),
                     # Why it can't be scheduled right now, if it can't.
                     "problem": self.manager.problems.get(planting.id),
                 }

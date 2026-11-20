@@ -69,3 +69,18 @@ async def test_sensor_carries_timeline_and_hemisphere(hass: HomeAssistant) -> No
     if dump:
         with open(dump, "w", encoding="utf-8") as fh:
             json.dump(dict(state.attributes), fh, default=str)
+
+
+async def test_deleted_tasks_leave_the_timeline(hass: HomeAssistant) -> None:
+    entry = await _setup(hass)
+    manager = entry.runtime_data
+    resp = await _call(hass, "add_planting", {"crop": "tomato", "method": "indoor_bed", "year": 2027}, True)
+    await hass.async_block_till_done()
+    sow = next(t for t in manager.tasks if t.planting_id == resp["planting_id"] and t.kind == "sow_indoors")
+    manager.data["dismissed"].append(sow.uid)
+    manager._notify()
+    await hass.async_block_till_done()
+    state = hass.states.get("sensor.reap_plantings")
+    timeline = state.attributes["plantings"][0]["timeline"]
+    assert "indoor" not in timeline
+    assert "out" in timeline
