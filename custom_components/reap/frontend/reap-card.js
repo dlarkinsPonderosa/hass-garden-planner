@@ -14,7 +14,7 @@
  * planner_path: /lovelace/plan    # optional: a Plan button that opens this view
  *
  * type: custom:reap-planner-card    # the season chart, defined further down
- * group_by: date                    # or location
+ * group_by: date                    # or crop, or location
  * max_height: 480                   # chart height in px before it scrolls; 0 = no limit
  */
 
@@ -1343,6 +1343,31 @@ class ReapPlannerCard extends ReapCard {
     return STYLE + PLANNER_STYLE;
   }
 
+  // Redrawing rebuilds the chart, so keep its scroll position, and bring a
+  // planting's details into view when it's opened.
+  _render() {
+    const old = this.shadowRoot && this.shadowRoot.querySelector(".chart");
+    const top = old ? old.scrollTop : 0;
+    super._render();
+    const chart = this.shadowRoot && this.shadowRoot.querySelector(".chart");
+    if (!chart) return;
+    chart.scrollTop = top;
+    if (this._reveal) {
+      this._reveal = false;
+      const detail = chart.querySelector(".plan-detail");
+      const row = detail && detail.previousElementSibling;
+      if (detail) {
+        const head = chart.querySelector(".chart-head");
+        const view = chart.getBoundingClientRect();
+        const topEdge = view.top + (head ? head.offsetHeight : 0);
+        const a = row.getBoundingClientRect();
+        const b = detail.getBoundingClientRect();
+        if (b.bottom > view.bottom) chart.scrollTop += Math.min(b.bottom - view.bottom, a.top - topEdge);
+        else if (a.top < topEdge) chart.scrollTop -= topEdge - a.top;
+      }
+    }
+  }
+
   _defaultTitle() {
     return "Garden plan";
   }
@@ -1413,6 +1438,11 @@ class ReapPlannerCard extends ReapCard {
   }
 
   _groups(rows) {
+    if (this._group === "crop") {
+      const sorted = [...rows].sort((a, b) => this._name(a.p).localeCompare(this._name(b.p), LOCALE) ||
+        (a.other === b.other ? 0 : a.other ? -1 : 1) || a.first - b.first);
+      return [{ name: null, rows: sorted }];
+    }
     if (this._group !== "location") return [{ name: null, rows }];
     const order = this._locations().map((l) => l.name.toLowerCase());
     const groups = new Map();
@@ -1478,7 +1508,7 @@ class ReapPlannerCard extends ReapCard {
       h("div", { class: "year" }, nav(-1, "Previous year", "mdi:chevron-left"),
         h("span", { class: "year-label" }, this._yearLabel(year)),
         nav(1, "Next year", "mdi:chevron-right")),
-      h("div", { class: "segs" }, tab("date", "By date"), tab("location", "By location"))));
+      h("div", { class: "segs" }, tab("date", "By date"), tab("crop", "By crop"), tab("location", "By location"))));
     body.append(h("div", { class: "muted small plan-summary" }, [
       `${own.length} planting${own.length === 1 ? "" : "s"}`,
       places.size ? `${places.size} location${places.size === 1 ? "" : "s"}` : null,
@@ -1605,7 +1635,12 @@ class ReapPlannerCard extends ReapCard {
       class: `prow${row.other ? " other" : ""}${selected ? " selected" : ""}`,
       title: [this._name(p), ...sub].filter(Boolean).join(" \u00b7 "),
       "aria-expanded": selected ? "true" : "false",
-      onclick: () => { this._selected = selected ? null : p.id; this._confirmDelete = null; this._render(); },
+      onclick: () => {
+        this._selected = selected ? null : p.id;
+        this._reveal = !selected;
+        this._confirmDelete = null;
+        this._render();
+      },
     }, label, track);
   }
 
@@ -1871,7 +1906,8 @@ const PLANNER_SCHEMA = [
   { name: "entity", selector: { entity: { domain: "sensor", integration: "reap" } } },
   {
     name: "group_by", selector: { select: { mode: "dropdown", options: [
-      { value: "date", label: "By date" }, { value: "location", label: "By location" }] } },
+      { value: "date", label: "By date" }, { value: "crop", label: "By crop" },
+      { value: "location", label: "By location" }] } },
   },
   { name: "max_height", selector: { number: { min: 0, max: 2000, step: 20, mode: "box", unit_of_measurement: "px" } } },
   { name: "editable", selector: { boolean: {} } },

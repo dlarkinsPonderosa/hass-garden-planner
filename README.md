@@ -134,7 +134,7 @@ months. Pick **Reap planner** when adding a card, or:
 ```yaml
 type: custom:reap-planner-card
 title: Garden plan     # optional
-group_by: date         # or location
+group_by: date         # or crop, or location
 max_height: 480        # chart height in pixels before it scrolls; 0 for no limit
 editable: true         # add, edit, remove and copy
 ```
