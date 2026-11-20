@@ -458,10 +458,11 @@ class ReapCard extends HTMLElement {
           this._render();
         },
       }, options.map((y) => h("option", { value: y, selected: Number(f[key]) === y }, String(y)))));
-    // Only this year on: a copy into the past would be all overdue tasks.
+    // Last year on (a southern season can still be running), up to two
+    // years past the latest. Reap skips plantings whose sowing time is over.
     const toYears = [];
     const thisYear = new Date().getFullYear();
-    for (let y = thisYear; y <= Math.max(...years, Number(f.from_year)) + 2; y++) {
+    for (let y = thisYear - 1; y <= Math.max(...years, thisYear) + 2; y++) {
       if (y !== Number(f.from_year)) toYears.push(y);
     }
     wrap.append(h("div", { class: "grid" },
