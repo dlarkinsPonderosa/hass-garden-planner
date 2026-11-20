@@ -421,6 +421,107 @@ class GardenManager:
         await self.async_sync()
         return planting, [t for t in self.tasks if t.planting_id == planting_id]
 
+    async def async_add_plantings(
+        self, many: list[dict[str, Any]], use_defaults: bool = True
+    ) -> list[Planting]:
+        """Add several plantings at once: all of them, or none if one fails.
+
+        Each starts from its crop's saved defaults (method, repeat, quantity,
+        location...) unless use_defaults is off; what's given wins.
+        """
+        new: list[Planting] = []
+        for fields in many:
+            if use_defaults and fields.get("crop"):
+                fields = {**self.crop_defaults(fields["crop"]), **fields}
+            fields = self._with_method(fields)
+            planting = Planting.from_dict({**fields, "id": uuid.uuid4().hex[:8]})
+            try:
+                generate_tasks(planting, self.crop(planting.crop), self.settings)
+            except PlannerError as err:
+                name = self.crops[planting.crop].name if planting.crop in self.crops else planting.crop
+                label = name + (f" ({planting.variety})" if planting.variety else "")
+                raise PlannerError(f"{label}: {err}") from err
+            new.append(planting)
+        # Only now that every planting is valid: new locations get created.
+        for planting in new:
+            if planting.location:
+                planting.location = self._location_name(planting.location)
+            self.data["plantings"][planting.id] = planting.to_dict()
+        self.rebuild()
+        await self._async_save()
+        await self.async_sync()
+        return new
+
+    async def async_copy_plantings(
+        self,
+        from_year: int,
+        to_year: int | None = None,
+        planting_ids: list[str] | None = None,
+    ) -> tuple[list[Planting], list[dict[str, str]]]:
+        """Plan a year's plantings again for another year, same settings.
+
+        Dates move by the same number of years. Plantings already planned in
+        the target year (same crop, method, season, variety and location) are
+        skipped unless picked by id. Returns the new plantings and the skipped
+        ones with why.
+        """
+        to_year = to_year or from_year + 1
+        shift = to_year - from_year
+        if not shift:
+            raise PlannerError("Pick a different year to copy to")
+        this_year = dt_util.now().date().year
+        if to_year < this_year:
+            raise PlannerError(
+                f"Copy to {this_year} or later; every task in {to_year} would be overdue"
+            )
+        source = [p for p in self.plantings() if p.year == from_year]
+        skipped: list[dict[str, str]] = []
+        if planting_ids is not None:
+            wanted = set(planting_ids)
+            source = [p for p in source if p.id in wanted]
+            for planting_id in sorted(wanted - {p.id for p in source}):
+                skipped.append({"planting_id": planting_id, "name": planting_id,
+                                "reason": f"not a {from_year} planting"})
+
+        def same(p: Planting) -> tuple[Any, ...]:
+            start = (p.start_date or "")[5:]  # month-day: a March and a June block differ
+            return (p.crop, p.method, p.season or "", p.variety or "",
+                    (p.location or "").casefold(), start)
+
+        # Each planting already planned covers one source planting, no more.
+        planned: dict[tuple[Any, ...], int] = {}
+        for p in self.plantings():
+            if p.year == to_year:
+                planned[same(p)] = planned.get(same(p), 0) + 1
+        new: list[Planting] = []
+        for old in source:
+            label = self.crops[old.crop].name if old.crop in self.crops else old.crop
+            if old.variety:
+                label += f" ({old.variety})"
+            if planting_ids is None and planned.get(same(old)):
+                planned[same(old)] -= 1
+                skipped.append({"planting_id": old.id, "name": label,
+                                "reason": f"already planned for {to_year}"})
+                continue
+            raw = {**old.to_dict(), "id": uuid.uuid4().hex[:8], "year": to_year}
+            for key in ("start_date", "succession_until"):
+                if raw.get(key):
+                    raw[key] = _add_years(raw[key], shift)
+            planting = Planting.from_dict(raw)
+            try:
+                generate_tasks(planting, self.crop(planting.crop), self.settings)
+            except PlannerError as err:
+                skipped.append({"planting_id": old.id, "name": label, "reason": str(err)})
+                continue
+            new.append(planting)
+        for planting in new:
+            self.data["plantings"][planting.id] = planting.to_dict()
+        if new:
+            self.rebuild()
+            await self._async_save()
+            await self.async_sync()
+        return new, skipped
+
     async def async_update_planting(
         self, planting_id: str, changes: dict[str, Any]
     ) -> tuple[Planting, list[Task]]:
@@ -997,6 +1098,15 @@ def _shift_l(windows: list[dict[str, Any]], shift: int) -> list[dict[str, Any]]:
                 ]
         out.append(moved)
     return out
+
+
+def _add_years(iso: str, years: int) -> str:
+    """An ISO date the given number of years later (Feb 29 becomes Feb 28)."""
+    day = date.fromisoformat(str(iso))
+    try:
+        return day.replace(year=day.year + years).isoformat()
+    except ValueError:
+        return day.replace(year=day.year + years, day=28).isoformat()
 
 
 def _southern(hass: HomeAssistant) -> bool | None:

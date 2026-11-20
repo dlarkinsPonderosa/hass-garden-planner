@@ -201,6 +201,41 @@ without saving anything. `reap.update_planting` takes a
 `planting_id` plus any fields to change (an empty value clears a field). `reap.remove_planting` removes a planting
 and its open tasks (completed ones stay on your list).
 
+### Several at once
+
+On the card, **Add planting** has two tabs:
+
+- **One crop**: under the variety, **Add another variety** makes one planting
+  per variety (Sungold, Brandywine, San Marzano...), each with its own
+  quantity and the same method, dates and location.
+- **Several crops**: tick the crops you want. Each one starts from its own
+  defaults (method, repeat, quantity, location). A year, method, location or
+  notes set on the form apply to all of them; a method is only used for crops
+  that can be grown that way.
+
+**Plan a year again** copies a year's plantings to another year with the same
+settings, moving start and repeat-until dates with them. Plantings already
+planned for the new year start unticked.
+
+The same as actions:
+
+```yaml
+action: reap.add_plantings
+data:
+  plantings:
+    - crop: lettuce
+    - crop: tomato
+      variety: Sungold
+      location: Greenhouse
+---
+action: reap.copy_plantings
+data:
+  from_year: 2026      # to_year defaults to the next year
+```
+
+`add_plantings` adds all of them, or none if one can't be scheduled. Set
+`use_defaults: false` to skip the crops' saved defaults.
+
 ## How dates are worked out
 
 - **Frost offsets**: each crop window is stored as offsets such as `L-31`

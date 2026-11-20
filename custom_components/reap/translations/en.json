@@ -293,6 +293,38 @@
         }
       }
     },
+    "add_plantings": {
+      "name": "Add plantings",
+      "description": "Add several plantings at once. All are added, or none if one can't be scheduled.",
+      "fields": {
+        "plantings": {
+          "name": "Plantings",
+          "description": "A list of plantings, each with the same fields as Add planting (crop is required)."
+        },
+        "use_defaults": {
+          "name": "Use crop defaults",
+          "description": "Start each planting from its crop's saved defaults (method, repeat, quantity, location). Fields you give win."
+        }
+      }
+    },
+    "copy_plantings": {
+      "name": "Copy plantings to another year",
+      "description": "Plan a year's plantings again with the same settings. Dates move by the same number of years.",
+      "fields": {
+        "from_year": {
+          "name": "From year",
+          "description": "The year to copy."
+        },
+        "to_year": {
+          "name": "To year",
+          "description": "Defaults to the next year."
+        },
+        "planting_ids": {
+          "name": "Plantings",
+          "description": "Only these plantings. Without it, every planting of that year is copied, except ones already planned for the new year."
+        }
+      }
+    },
     "remove_planting": {
       "name": "Remove planting",
       "description": "Remove a planting and its open tasks.",

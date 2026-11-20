@@ -190,6 +190,35 @@ update_planting:
         text:
           multiline: true
 
+add_plantings:
+  fields:
+    plantings:
+      required: true
+      example: '[{"crop": "lettuce"}, {"crop": "tomato", "variety": "Sungold"}]'
+      selector:
+        object:
+    use_defaults:
+      default: true
+      selector:
+        boolean:
+copy_plantings:
+  fields:
+    from_year:
+      required: true
+      selector:
+        number:
+          min: 2000
+          max: 2100
+          mode: box
+    to_year:
+      selector:
+        number:
+          min: 2000
+          max: 2100
+          mode: box
+    planting_ids:
+      selector:
+        object:
 remove_planting:
   fields:
     planting_id:
