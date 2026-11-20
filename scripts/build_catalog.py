@@ -99,6 +99,8 @@ crop("turnip","Turnip",[(S,{"direct":("03-01","08-31")})],dth=50,harvest_weeks=4
 # Added crops (not on the charts)
 A = "added"
 crop("potato","Potato",[(S,{"direct":("03-15","06-15")})],dth=100,harvest_weeks=6,source=A,notes="Plant seed potatoes. Early varieties about 70 days, main crop about 110.")
+crop("daikon","Daikon radish",[(F,{"direct":("07-15","08-31")})],dth=60,harvest_weeks=4,source=A,notes="Sow in late summer for a fall harvest. Spring sowings tend to bolt.")
+crop("napa_cabbage","Napa cabbage",[(S,{"indoor":("03-15","04-15"),"transplant":("04-15","05-10")}),(F,{"direct":("07-15","08-15")})],weeks_indoor=4,dth=70,harvest_weeks=3,source=A,notes="Late-summer sowings head best. Spring plantings can bolt as days lengthen.")
 crop("tomatillo","Tomatillo",[(S,{"indoor":("03-15","04-15"),"transplant":("05-15","06-15")})],weeks_indoor=7,dth=120,harvest_weeks=8,tender=True,pot_up=True,source=A)
 # Herbs, from the same chart's flower and herb guide.
 H = "pdf_herbs"
@@ -404,7 +406,7 @@ for profile, charts in PROFILES.items():
 # ---------------------------------------------------------------------------
 ICONS = {
     "carrot": "mdi:carrot", "parsnip": "mdi:carrot",
-    "beet": "mdi:sprout", "radish": "mdi:sprout", "turnip": "mdi:sprout",
+    "beet": "mdi:sprout", "radish": "mdi:sprout", "daikon": "mdi:sprout", "turnip": "mdi:sprout",
     "rutabaga": "mdi:sprout", "potato": "mdi:sprout",
     "corn": "mdi:corn", "pepper": "mdi:chili-mild", "tomato": "mdi:fruit-cherries",
     "tomatillo": "mdi:fruit-cherries", "eggplant": "mdi:food-variant",
@@ -416,7 +418,7 @@ ICONS = {
     "onion": "mdi:sprout", "onion_overwinter": "mdi:sprout", "scallion": "mdi:sprout",
     "leek": "mdi:sprout", "garlic": "mdi:sprout",
     "broccoli": "mdi:tree", "broccoli_sprouting": "mdi:tree", "cauliflower": "mdi:tree",
-    "cabbage": "mdi:leaf-circle", "cabbage_overwinter": "mdi:leaf-circle",
+    "cabbage": "mdi:leaf-circle", "cabbage_overwinter": "mdi:leaf-circle", "napa_cabbage": "mdi:leaf-circle",
     "brussels_sprouts": "mdi:leaf-circle", "kohlrabi": "mdi:leaf-circle",
     "amaranth": "mdi:grain", "corn_salad": "mdi:leaf",
 }

@@ -16,7 +16,7 @@ own frost dates turn it into a calendar for your garden. A climate profile
 handles how fast spring warms up after the last frost, which hardiness zones
 don't capture.
 
-The built-in catalog has 51 vegetables and 22 herbs. You can add your own crops
+The built-in catalog has 53 vegetables and 22 herbs. You can add your own crops
 and varieties from the card, the Configure menu or an action.
 
 ## Install
@@ -134,7 +134,7 @@ months. Pick **Reap planner** when adding a card, or:
 ```yaml
 type: custom:reap-planner-card
 title: Garden plan     # optional
-group_by: date         # or location
+group_by: date         # or crop, or location
 max_height: 480        # chart height in pixels before it scrolls; 0 for no limit
 editable: true         # add, edit, remove and copy
 ```

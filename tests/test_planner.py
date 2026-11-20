@@ -37,9 +37,9 @@ def by_kind(tasks):
 
 def test_catalog_has_vegetables_and_herbs():
     assert all(c.source == "builtin" for c in CATALOG.values())
-    assert len([c for c in CATALOG.values() if c.category == "vegetable"]) == 51
+    assert len([c for c in CATALOG.values() if c.category == "vegetable"]) == 53
     assert len([c for c in CATALOG.values() if c.category == "herb"]) == 22
-    for key in ("potato", "tomatillo"):
+    for key in ("potato", "tomatillo", "daikon", "napa_cabbage"):
         assert key in CATALOG
     for crop in CATALOG.values():
         assert crop.methods(), crop.key
