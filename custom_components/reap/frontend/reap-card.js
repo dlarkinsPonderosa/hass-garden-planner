@@ -11,6 +11,11 @@
  * show_sensors: true              # soil moisture and light of the location
  * icon_size: 40                   # crop icon size in pixels
  * editable: true                  # show add, edit and remove buttons
+ * planner_path: /lovelace/plan    # optional: a Plan button that opens this view
+ *
+ * type: custom:reap-planner-card    # the season chart, defined further down
+ * group_by: date                    # or location
+ * max_height: 480                   # chart height in px before it scrolls; 0 = no limit
  */
 
 const CARD_DEFAULTS = {
@@ -21,6 +26,7 @@ const CARD_DEFAULTS = {
   show_sensors: true,
   icon_size: 40,
   editable: true,
+  planner_path: "",
 };
 
 const METHOD_LABELS = {
@@ -101,6 +107,12 @@ const CROP_SEASONS = ["spring", "summer", "fall"];
 function sameKey(p) {
   return [p.crop, p.method, p.season || "", p.variety || "", (p.location || "").toLowerCase(),
     (p.start_date || "").slice(5)].join("|");
+}
+
+// Go to a dashboard path the way Home Assistant's own links do.
+function navigate(path) {
+  window.history.pushState(null, "", path);
+  window.dispatchEvent(new CustomEvent("location-changed", { detail: { replace: false } }));
 }
 
 function slug(text) {
@@ -380,12 +392,12 @@ class ReapCard extends HTMLElement {
     return [...new Set(this._plantings().map((p) => p.year))].sort((a, b) => b - a);
   }
 
-  _startCopy() {
+  _startCopy(fromYear, toYear) {
     const years = this._years();
     const thisYear = new Date().getFullYear();
-    const from = years.find((y) => y <= thisYear) || years[years.length - 1];
+    const from = fromYear || years.find((y) => y <= thisYear) || years[years.length - 1];
     this._mode = "copy";
-    this._form = { from_year: from, to_year: Math.max(from + 1, thisYear) };
+    this._form = { from_year: from, to_year: toYear || Math.max(from + 1, thisYear) };
     this._pickCopy();
     this._error = null;
     this._notice = null;
@@ -432,6 +444,7 @@ class ReapCard extends HTMLElement {
       const skipped = res.skipped || [];
       this._mode = null;
       this._form = {};
+      this._copied(Number(f.to_year));
       if (skipped.length) {
         this._notice = `Copied ${res.planting_ids.length}. Not copied: ${skipped.map((s) => `${s.name} (${s.reason})`).join("; ")}`;
       }
@@ -488,6 +501,17 @@ class ReapCard extends HTMLElement {
     wrap.append(h("div", { class: "actions" },
       h("button", { onclick: () => this._cancel() }, "Cancel"), this._countBtn));
     return wrap;
+  }
+
+  // The planner card shows the year copied to.
+  _copied(_year) {}
+
+  _style() {
+    return STYLE;
+  }
+
+  _defaultTitle() {
+    return "Garden";
   }
 
   _renderCount() {
@@ -768,10 +792,10 @@ class ReapCard extends HTMLElement {
     if (!this.shadowRoot) this.attachShadow({ mode: "open" });
     const root = this.shadowRoot;
     root.textContent = "";
-    root.append(h("style", {}, STYLE));
+    root.append(h("style", {}, this._style()));
 
     const state = this._hass.states[this._config.entity];
-    const card = h("ha-card", { header: this._config.title || "Garden" });
+    const card = h("ha-card", { header: this._config.title || this._defaultTitle() });
     const body = h("div", { class: "card-content" });
     card.append(body);
     root.append(card);
@@ -815,7 +839,10 @@ class ReapCard extends HTMLElement {
       body.append(this._renderForm());
       return;
     }
+    this._renderHome(card, body);
+  }
 
+  _renderHome(card, body) {
     const plantings = this._plantings()
       .map((p) => ({ ...p, open: (p.tasks || []).filter((t) => !t.done_on) }))
       .filter((p) => this._config.show_done || p.open.length || p.open_count || p.problem)
@@ -832,8 +859,8 @@ class ReapCard extends HTMLElement {
       card.append(h("div", { class: "actions" },
         h("button", { onclick: () => this._openLocations() }, icon("mdi:map-marker-outline"), "Locations"),
         h("button", { onclick: () => this._openCrops(), disabled: !this._crops }, icon("mdi:sprout-outline"), "Crops"),
-        this._plantings().length
-          ? h("button", { onclick: () => this._startCopy() }, icon("mdi:calendar-sync"), "Plan a year again")
+        this._config.planner_path
+          ? h("button", { onclick: () => navigate(this._config.planner_path) }, icon("mdi:chart-timeline"), "Plan")
           : null,
         h("button", { class: "primary", onclick: () => this._startAdd(), disabled: !this._crops },
           icon("mdi:plus"), "Add planting")));
@@ -1254,6 +1281,476 @@ class ReapCard extends HTMLElement {
   }
 }
 
+// ----- the planner card: one growing year as a season chart -----
+
+const PLANNER_DEFAULTS = {
+  entity: "sensor.reap_plantings",
+  group_by: "date",
+  max_height: 480,
+  editable: true,
+  show_sensors: false,
+};
+// Calendar month (0 = January) to season, northern hemisphere.
+const NORTH_SEASONS = ["winter", "winter", "spring", "spring", "spring", "summer",
+  "summer", "summer", "fall", "fall", "fall", "winter"];
+const SEASON_NAMES = { winter: "Winter", spring: "Spring", summer: "Summer", fall: "Fall" };
+const PHASES = ["indoor", "out", "sow", "harvest"];
+
+// Whole days since 1970, so date maths ignores time zones and clock changes.
+function dayNum(iso) {
+  const [y, m, d] = iso.split("-").map(Number);
+  return Date.UTC(y, m - 1, d) / 86400000;
+}
+
+function todayIso() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+}
+
+function monthName(month, style) {
+  try {
+    return new Date(2001, month, 1).toLocaleDateString(LOCALE, { month: style });
+  } catch (err) {
+    return new Date(2001, month, 1).toLocaleDateString(undefined, { month: style });
+  }
+}
+
+class ReapPlannerCard extends ReapCard {
+  setConfig(config) {
+    this._group = (config && config.group_by) || PLANNER_DEFAULTS.group_by;
+    this._selected = null;
+    super.setConfig({ ...PLANNER_DEFAULTS, ...config });
+  }
+
+  static getConfigElement() {
+    return document.createElement("reap-planner-card-editor");
+  }
+
+  static getStubConfig() {
+    return { entity: "sensor.reap_plantings" };
+  }
+
+  getCardSize() {
+    return 8;
+  }
+
+  _style() {
+    return STYLE + PLANNER_STYLE;
+  }
+
+  _defaultTitle() {
+    return "Garden plan";
+  }
+
+  _copied(year) {
+    this._view = year;
+    this._selected = null;
+  }
+
+  _southern() {
+    const state = this._hass && this._hass.states[this._config.entity];
+    return !!(state && state.attributes.southern);
+  }
+
+  // A southern growing year runs July to June and is named for the year its
+  // spring is in.
+  _growingYear(iso) {
+    const [y, m] = iso.split("-").map(Number);
+    return this._southern() && m < 7 ? y - 1 : y;
+  }
+
+  _range(year) {
+    return this._southern()
+      ? [dayNum(`${year}-07-01`), dayNum(`${year + 1}-07-01`)]
+      : [dayNum(`${year}-01-01`), dayNum(`${year + 1}-01-01`)];
+  }
+
+  _yearLabel(year) {
+    return this._southern() ? `${year}–${String(year + 1).slice(2)}` : String(year);
+  }
+
+  _yearBounds() {
+    const now = this._growingYear(todayIso());
+    const years = this._plantings().map((p) => p.year);
+    return [Math.min(now, ...years), Math.max(now, ...years) + 1];
+  }
+
+  // This growing year, or the first later one with sowing still ahead.
+  _defaultYear() {
+    const today = todayIso();
+    const now = this._growingYear(today);
+    const busy = this._plantings()
+      .filter((p) => p.year >= now && p.timeline &&
+        ["indoor", "out", "sow"].some((k) => p.timeline[k] && !p.timeline[k].done && p.timeline[k].end >= today))
+      .map((p) => p.year);
+    return busy.length ? Math.min(...busy) : now;
+  }
+
+  _name(p) {
+    return p.variety ? `${p.crop_name} (${p.variety})` : p.crop_name;
+  }
+
+  // The plantings drawn for a year: its own, plus other years' plantings
+  // still growing in it (fall garlic in the spring after, say).
+  _rows(year) {
+    const [r0, r1] = this._range(year);
+    const rows = [];
+    for (const p of this._plantings()) {
+      const phases = PHASES.map((k) => p.timeline && p.timeline[k]).filter(Boolean);
+      const overlaps = phases.some((ph) => dayNum(ph.end) >= r0 && dayNum(ph.start) < r1);
+      if (p.year !== year && !overlaps) continue;
+      const first = phases.length ? Math.max(Math.min(...phases.map((ph) => dayNum(ph.start))), r0 - 1) : r1;
+      rows.push({ p, other: p.year !== year, first });
+    }
+    rows.sort((a, b) => (a.other === b.other ? 0 : a.other ? -1 : 1) || a.first - b.first ||
+      this._name(a.p).localeCompare(this._name(b.p)));
+    return rows;
+  }
+
+  _groups(rows) {
+    if (this._group !== "location") return [{ name: null, rows }];
+    const order = this._locations().map((l) => l.name.toLowerCase());
+    const groups = new Map();
+    for (const row of rows) {
+      const name = row.p.location || "";
+      const key = name.toLowerCase();
+      if (!groups.has(key)) groups.set(key, { name: name || "No location", key, rows: [] });
+      groups.get(key).rows.push(row);
+    }
+    const rank = (key) => (key === "" ? 1e6 : order.indexOf(key) === -1 ? 1e5 : order.indexOf(key));
+    return [...groups.values()].sort((a, b) => rank(a.key) - rank(b.key) || a.name.localeCompare(b.name));
+  }
+
+  // Month columns of the chart: [calendar month, first day, days].
+  _months(year) {
+    const start = this._southern() ? 6 : 0;
+    const months = [];
+    for (let i = 0; i < 12; i++) {
+      const month = (start + i) % 12;
+      const y = year + (start + i >= 12 ? 1 : 0);
+      const first = dayNum(`${y}-${String(month + 1).padStart(2, "0")}-01`);
+      const next = month === 11 ? dayNum(`${y + 1}-01-01`) : dayNum(`${y}-${String(month + 2).padStart(2, "0")}-01`);
+      months.push([month, first, next - first]);
+    }
+    return months;
+  }
+
+  _season(month) {
+    return NORTH_SEASONS[this._southern() ? (month + 6) % 12 : month];
+  }
+
+  _renderHome(card, body) {
+    const bounds = this._yearBounds();
+    if (this._view === undefined || this._view === null) this._view = this._defaultYear();
+    const year = Math.min(Math.max(this._view, bounds[0]), bounds[1]);
+    this._view = year;
+    const [r0, r1] = this._range(year);
+    const total = r1 - r0;
+    const pct = (day) => `${((day - r0) / total) * 100}%`;
+    const months = this._months(year);
+    const today = dayNum(todayIso());
+
+    // Season tints behind every row, one stop per month.
+    const stops = months.map(([month, first, days]) =>
+      `var(--reap-${this._season(month)}) ${pct(first)} ${pct(first + days)}`);
+    const tint = `linear-gradient(90deg, ${stops.join(", ")})`;
+
+    const rows = this._rows(year);
+    const own = rows.filter((r) => !r.other).map((r) => r.p);
+    const places = new Set(own.map((p) => (p.location || "").toLowerCase()).filter(Boolean));
+    const problems = own.filter((p) => p.problem).length;
+
+    const nav = (delta, label, iconName) => h("button", {
+      class: "icon-btn", title: label, "aria-label": label,
+      disabled: year + delta < bounds[0] || year + delta > bounds[1],
+      onclick: () => { this._view = year + delta; this._selected = null; this._confirmDelete = null; this._render(); },
+    }, icon(iconName));
+    const tab = (key, label) => h("button", {
+      class: `seg${this._group === key ? " on" : ""}`, "aria-pressed": this._group === key ? "true" : "false",
+      onclick: () => { this._group = key; this._render(); },
+    }, label);
+    body.append(h("div", { class: "plan-bar" },
+      h("div", { class: "year" }, nav(-1, "Previous year", "mdi:chevron-left"),
+        h("span", { class: "year-label" }, this._yearLabel(year)),
+        nav(1, "Next year", "mdi:chevron-right")),
+      h("div", { class: "segs" }, tab("date", "By date"), tab("location", "By location"))));
+    body.append(h("div", { class: "muted small plan-summary" }, [
+      `${own.length} planting${own.length === 1 ? "" : "s"}`,
+      places.size ? `${places.size} location${places.size === 1 ? "" : "s"}` : null,
+      problems ? `${problems} need${problems === 1 ? "s" : ""} attention` : null,
+    ].filter(Boolean).join(" · ")));
+
+    if (!own.length) {
+      const before = this._plantings().some((p) => p.year === year - 1);
+      body.append(h("div", { class: "plan-empty" },
+        icon("mdi:calendar-blank-outline"),
+        h("div", { class: "name" }, `Nothing planned for ${this._yearLabel(year)} yet`),
+        h("div", { class: "muted small" }, before
+          ? "Start from last season's plan, or add plantings."
+          : "Add plantings to see them here."),
+        this._config.editable ? h("div", { class: "row-actions gap" },
+          h("button", { onclick: () => this._startAdd(), disabled: !this._crops }, icon("mdi:plus"), "Add planting"),
+          before ? h("button", { class: "primary", onclick: () => this._startCopy(year - 1, year) },
+            icon("mdi:content-copy"), `Copy ${this._yearLabel(year - 1)} here`) : null) : null));
+      if (!rows.length) {
+        this._renderLegend(body);
+        return;
+      }
+    }
+
+    const chart = h("div", { class: "chart" });
+    const maxHeight = Number(this._config.max_height) || 0;
+    if (maxHeight > 0) chart.style.maxHeight = `${maxHeight}px`;
+
+    // Season names over the months they cover, then the months.
+    const seasons = [];
+    for (const [month, first, days] of months) {
+      const name = this._season(month);
+      const last = seasons[seasons.length - 1];
+      if (last && last.name === name) last.days += days;
+      else seasons.push({ name, first, days });
+    }
+    const seasonRow = h("div", { class: "track head" }, seasons.map((s) => {
+      const el = h("div", { class: `season-name ${s.name}${s.days < 45 ? " part" : ""}` }, SEASON_NAMES[s.name]);
+      el.style.left = pct(s.first);
+      el.style.width = `${(s.days / total) * 100}%`;
+      return el;
+    }));
+    const monthRow = h("div", { class: "track head" }, months.map(([month, first, days]) => {
+      const el = h("div", { class: "month" },
+        h("span", { class: "long" }, monthName(month, "short")),
+        h("span", { class: "short" }, monthName(month, "narrow")));
+      el.style.left = pct(first);
+      el.style.width = `${(days / total) * 100}%`;
+      return el;
+    }));
+    chart.append(h("div", { class: "chart-head" },
+      h("div", { class: "prow head" }, h("div", { class: "plabel" }), seasonRow),
+      h("div", { class: "prow head" }, h("div", { class: "plabel" }), monthRow)));
+
+    for (const group of this._groups(rows)) {
+      if (group.name) chart.append(h("div", { class: "group-name" }, group.name));
+      for (const row of group.rows) {
+        chart.append(this._renderPlanRow(row, year, { r0, r1, pct, tint, today }));
+        if (this._selected === row.p.id) chart.append(this._renderPlanDetail(row, year));
+      }
+    }
+    body.append(chart);
+    this._renderLegend(body);
+
+    if (this._config.editable && own.length) {
+      card.append(h("div", { class: "actions" },
+        h("button", { onclick: () => this._startAdd(), disabled: !this._crops }, icon("mdi:plus"), "Add planting"),
+        own.length
+          ? h("button", { class: "primary", onclick: () => this._startCopy(year, year + 1) },
+            icon("mdi:content-copy"), `Copy to ${this._yearLabel(year + 1)}`)
+          : null));
+    }
+  }
+
+  _renderPlanRow(row, year, { r0, r1, pct, tint, today }) {
+    const p = row.p;
+    const t = p.timeline || {};
+    const track = h("div", { class: "track" });
+    track.style.background = tint;
+    const span = (kind, ph) => {
+      const s = Math.max(dayNum(ph.start), r0);
+      const e = Math.min(dayNum(ph.end) + 1, r1);
+      if (e <= s) return;
+      const el = h("div", { class: `bar ${kind}${ph.done ? " done" : ""}` });
+      el.style.left = pct(s);
+      el.style.width = `max(${((e - s) / (r1 - r0)) * 100}%, 6px)`;
+      track.append(el);
+    };
+    if (t.grow) span("grow", t.grow);
+    // Seedlings are indoors from sowing until they're planted out.
+    if (t.indoor) span("indoor", t.out && t.out.start > t.indoor.end ? { ...t.indoor, end: t.out.start } : t.indoor);
+    if (t.sow) span("sow", t.sow);
+    if (t.harvest) span("harvest", t.harvest);
+    if (t.out) {
+      for (const day of new Set([t.out.start, t.out.end])) {
+        const d = dayNum(day);
+        if (d < r0 || d >= r1) continue;
+        const dot = h("div", { class: `dot${t.out.done ? " done" : ""}` });
+        dot.style.left = pct(d + 0.5);
+        track.append(dot);
+      }
+    }
+    const ends = PHASES.map((k) => t[k]).filter(Boolean);
+    if (ends.some((ph) => dayNum(ph.end) >= r1)) track.append(h("div", { class: "more after" }, icon("mdi:chevron-right")));
+    if (ends.some((ph) => dayNum(ph.start) < r0)) track.append(h("div", { class: "more before" }, icon("mdi:chevron-left")));
+    if (today >= r0 && today < r1) {
+      const line = h("div", { class: "today" });
+      line.style.left = pct(today + 0.5);
+      track.append(line);
+    }
+
+    const sub = row.other
+      ? [`From ${this._yearLabel(p.year)}`, p.location]
+      : [p.location || null, p.problem ? null : (METHOD_LABELS[p.method] || p.method)];
+    const selected = this._selected === p.id;
+    const label = h("div", { class: "plabel" },
+      h("div", { class: "pname" }, icon(p.icon || "mdi:sprout"), h("span", {}, this._name(p))),
+      p.problem
+        ? h("div", { class: "error small" }, icon("mdi:alert-circle-outline"), "Needs attention")
+        : h("div", { class: "muted psub" }, sub.filter(Boolean).join(" · ")));
+    return h("button", {
+      class: `prow${row.other ? " other" : ""}${selected ? " selected" : ""}`,
+      "aria-expanded": selected ? "true" : "false",
+      onclick: () => { this._selected = selected ? null : p.id; this._confirmDelete = null; this._render(); },
+    }, label, track);
+  }
+
+  _renderPlanDetail(row, year) {
+    const p = row.p;
+    const t = p.timeline || {};
+    const crop = this._crop(p.crop);
+    const when = (ph) => {
+      const withYear = (iso) => this._growingYear(iso) !== year;
+      const a = shortDate(ph.start, withYear(ph.start));
+      const b = shortDate(ph.end, withYear(ph.end));
+      return a === b ? a : `${a} – ${b}`;
+    };
+    const labels = {
+      indoor: "Start indoors",
+      out: "Plant out",
+      sow: crop && crop.planted ? "Plant outside" : "Sow outside",
+      harvest: "Harvest",
+    };
+    const steps = h("div", { class: "steps" });
+    for (const kind of PHASES) {
+      if (!t[kind]) continue;
+      steps.append(h("div", { class: "step" },
+        h("span", { class: `swatch ${kind}` }),
+        h("span", { class: "muted step-label" }, labels[kind]),
+        h("span", {}, when(t[kind])),
+        t[kind].done ? icon("mdi:check", "done-mark") : null));
+    }
+    const sowings = p.sowings || 0;
+    const facts = [
+      row.other ? `From the ${this._yearLabel(p.year)} plan` : null,
+      METHOD_LABELS[p.method] || p.method,
+      p.season && p.season !== "spring" ? `${p.season} planting` : null,
+      sowings > 1 ? `${sowings} sowings, every ${p.succession_days} days` : null,
+      p.location,
+      p.quantity,
+    ].filter(Boolean).join(" · ");
+    const box = h("div", { class: "plan-detail" },
+      h("div", { class: "muted small" }, facts),
+      p.problem ? h("div", { class: "error small" }, icon("mdi:alert-circle-outline"), p.problem) : null,
+      steps.childElementCount ? steps : null,
+      p.notes ? h("div", { class: "muted small" }, p.notes) : null);
+    if (this._config.editable) {
+      if (this._confirmDelete === p.id) {
+        box.append(h("div", { class: "confirm" },
+          `Remove ${this._name(p)}? Its open tasks come off your list.`,
+          h("button", { onclick: () => { this._confirmDelete = null; this._render(); } }, "Keep"),
+          h("button", { class: "danger", disabled: this._busy, onclick: () => this._delete(p.id) }, "Remove")));
+      } else {
+        box.append(h("div", { class: "row-actions gap" },
+          h("button", { onclick: () => this._startEdit(p), disabled: !this._crops }, icon("mdi:pencil"), "Edit"),
+          h("button", { onclick: () => { this._confirmDelete = p.id; this._render(); } }, icon("mdi:delete-outline"), "Remove")));
+      }
+    }
+    return box;
+  }
+
+  _renderLegend(body) {
+    const item = (cls, text) => h("span", { class: "legend-item" }, h("span", { class: `swatch ${cls}` }), text);
+    body.append(h("div", { class: "legend muted" },
+      item("indoor", "Start indoors"), item("sow", "Sow outside"), item("out", "Plant out"),
+      item("grow", "Growing"), item("harvest", "Harvest")));
+  }
+}
+
+const PLANNER_STYLE = `
+  :host {
+    --reap-indoor: var(--reap-indoor-color, var(--purple-color, #926bc7));
+    --reap-sow: var(--reap-sow-color, var(--green-color, #4caf50));
+    --reap-harvest: var(--reap-harvest-color, var(--amber-color, #ffc107));
+    --reap-grow: var(--reap-grow-color, var(--secondary-text-color));
+    --reap-winter: var(--reap-winter-color, color-mix(in srgb, var(--blue-color, #2196f3) 11%, transparent));
+    --reap-spring: var(--reap-spring-color, color-mix(in srgb, var(--green-color, #4caf50) 11%, transparent));
+    --reap-summer: var(--reap-summer-color, color-mix(in srgb, var(--amber-color, #ffc107) 14%, transparent));
+    --reap-fall: var(--reap-fall-color, color-mix(in srgb, var(--deep-orange-color, #ff6f22) 11%, transparent));
+    --reap-card-bg: var(--ha-card-background, var(--card-background-color, #fff));
+  }
+  .plan-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+  .year { display: flex; align-items: center; }
+  .year-label { font-size: 1.1em; font-weight: 500; min-width: 64px; text-align: center; }
+  .segs { display: flex; border: 1px solid var(--divider-color); border-radius: 18px; overflow: hidden; }
+  button.seg { border: none; border-radius: 0; padding: 6px 12px; font-size: 0.875em; background: none; color: var(--secondary-text-color); }
+  button.seg.on { background: color-mix(in srgb, var(--primary-color) 16%, transparent); color: var(--primary-text-color); }
+  .plan-summary { padding: 2px 0 8px; }
+  .chart { overflow-y: auto; container-type: inline-size; margin: 0 -16px; }
+  .chart-head { position: sticky; top: 0; z-index: 2; background: var(--reap-card-bg); border-bottom: 1px solid var(--divider-color); }
+  button.prow, .prow { display: flex; align-items: center; width: 100%; box-sizing: border-box; gap: 0; padding: 4px 16px;
+    margin: 0; border: none; border-radius: 0; background: none; color: inherit; text-align: left; font: inherit; }
+  button.prow { cursor: pointer; }
+  button.prow:hover { background: var(--secondary-background-color); }
+  button.prow.selected { background: color-mix(in srgb, var(--primary-color) 13%, transparent); }
+  button.prow.other .plabel, button.prow.other .track > div { opacity: 0.5; }
+  .prow.head { padding-top: 0; padding-bottom: 0; }
+  .plabel { width: 170px; flex: none; min-width: 0; padding-right: 10px; box-sizing: border-box; }
+  .pname { display: flex; align-items: center; gap: 6px; font-weight: 500; font-size: 0.95em; }
+  .pname span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pname ha-icon { --mdc-icon-size: 18px; color: var(--secondary-text-color); flex: none; }
+  .psub { font-size: 0.8em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-left: 24px; }
+  .plabel .error { padding: 0 0 0 24px; font-size: 0.8em; }
+  .track { position: relative; flex: 1; height: 30px; border-radius: 6px; }
+  .track.head { height: 22px; border-radius: 0; }
+  .season-name { position: absolute; top: 0; bottom: 0; display: flex; align-items: center; justify-content: center; overflow: hidden;
+    font-size: 0.7em; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; }
+  .season-name.winter { color: color-mix(in srgb, var(--blue-color, #2196f3) 65%, var(--primary-text-color)); }
+  .season-name.spring { color: color-mix(in srgb, var(--green-color, #4caf50) 65%, var(--primary-text-color)); }
+  .season-name.summer { color: color-mix(in srgb, var(--amber-color, #ffc107) 60%, var(--primary-text-color)); }
+  .season-name.fall { color: color-mix(in srgb, var(--deep-orange-color, #ff6f22) 65%, var(--primary-text-color)); }
+  .month { position: absolute; top: 0; bottom: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 0.75em; color: var(--secondary-text-color); }
+  .month .short { display: none; }
+  .bar { position: absolute; top: 50%; transform: translateY(-50%); height: 12px; border-radius: 6px; box-sizing: border-box; }
+  .bar.grow { height: 2px; border-radius: 1px; background: var(--reap-grow); opacity: 0.7; }
+  .bar.indoor, .swatch.indoor { border: 1px solid var(--reap-indoor);
+    background: repeating-linear-gradient(135deg, var(--reap-indoor) 0 2px, color-mix(in srgb, var(--reap-indoor) 30%, transparent) 2px 5px); }
+  .bar.sow, .swatch.sow { background: var(--reap-sow); }
+  .bar.harvest, .swatch.harvest { background: var(--reap-harvest); border: 1px solid color-mix(in srgb, var(--reap-harvest) 70%, var(--primary-text-color)); }
+  .bar.done { filter: saturate(0.45); }
+  .dot, .swatch.out { width: 12px; height: 12px; border-radius: 50%; box-sizing: border-box; background: var(--reap-card-bg); border: 2.5px solid var(--reap-sow); }
+  .dot { position: absolute; top: 50%; transform: translate(-50%, -50%); }
+  .dot.done { filter: saturate(0.45); }
+  .swatch { display: inline-block; width: 18px; height: 10px; border-radius: 5px; box-sizing: border-box; flex: none; }
+  .swatch.out { width: 10px; height: 10px; }
+  .swatch.grow { height: 2px; background: var(--reap-grow); }
+  .today { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: var(--error-color, #db4437); opacity: 0.8; }
+  .more { position: absolute; top: 50%; transform: translateY(-50%); display: flex; color: var(--secondary-text-color); --mdc-icon-size: 18px; }
+  .more.after { right: -6px; }
+  .more.before { left: -6px; }
+  .group-name { padding: 10px 16px 2px; font-size: 0.75em; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--secondary-text-color); }
+  .plan-detail { margin: 2px 16px 8px; padding: 12px; border-radius: 12px; background: var(--secondary-background-color);
+    display: flex; flex-direction: column; gap: 8px; }
+  .steps { display: flex; flex-direction: column; gap: 4px; font-size: 0.9em; }
+  .step { display: flex; align-items: center; gap: 8px; }
+  .step-label { width: 110px; flex: none; }
+  .done-mark { --mdc-icon-size: 16px; color: var(--success-color, #43a047); }
+  .row-actions.gap { gap: 8px; flex-wrap: wrap; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.8em; padding: 10px 0 0; }
+  .legend-item { display: inline-flex; align-items: center; gap: 6px; }
+  .plan-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; padding: 28px 16px;
+    margin: 4px 0; border: 1px dashed var(--divider-color); border-radius: 12px; }
+  .plan-empty > ha-icon { --mdc-icon-size: 36px; color: var(--secondary-text-color); }
+  @container (max-width: 760px) {
+    .season-name.part { visibility: hidden; }
+  }
+  @container (max-width: 520px) {
+    .plabel { width: 112px; }
+    .psub { padding-left: 0; }
+    .pname ha-icon { display: none; }
+    .month .long { display: none; }
+    .month .short { display: inline; }
+    .season-name { font-size: 0.6em; letter-spacing: 0.02em; }
+  }
+`;
+
 const STYLE = `
   .card-content { padding: 0 16px 8px; }
   .list { display: flex; flex-direction: column; }
@@ -1344,6 +1841,7 @@ const EDITOR_SCHEMA = [
     ],
   },
   { name: "icon_size", selector: { number: { min: 16, max: 72, step: 4, mode: "slider", unit_of_measurement: "px" } } },
+  { name: "planner_path", selector: { text: {} } },
 ];
 const EDITOR_LABELS = {
   title: "Title",
@@ -1354,9 +1852,34 @@ const EDITOR_LABELS = {
   editable: "Edit mode (add, edit and remove)",
   show_done: "Show finished plantings",
   icon_size: "Icon size",
+  planner_path: "Planner view path, such as /lovelace/plan (adds a Plan button)",
+};
+
+const PLANNER_SCHEMA = [
+  { name: "title", selector: { text: {} } },
+  { name: "entity", selector: { entity: { domain: "sensor", integration: "reap" } } },
+  {
+    name: "group_by", selector: { select: { mode: "dropdown", options: [
+      { value: "date", label: "By date" }, { value: "location", label: "By location" }] } },
+  },
+  { name: "max_height", selector: { number: { min: 0, max: 2000, step: 20, mode: "box", unit_of_measurement: "px" } } },
+  { name: "editable", selector: { boolean: {} } },
+];
+const PLANNER_LABELS = {
+  title: "Title",
+  entity: "Plantings sensor",
+  group_by: "Group plantings",
+  max_height: "Chart height before it scrolls (0 for no limit)",
+  editable: "Edit mode (add, edit, remove and copy)",
 };
 
 class ReapCardEditor extends HTMLElement {
+  get _schema() { return EDITOR_SCHEMA; }
+
+  get _labels() { return EDITOR_LABELS; }
+
+  get _defaults() { return CARD_DEFAULTS; }
+
   setConfig(config) {
     this._config = config;
     this._render();
@@ -1372,13 +1895,13 @@ class ReapCardEditor extends HTMLElement {
     if (!this._config) return;
     if (!this._form) {
       this._form = document.createElement("ha-form");
-      this._form.schema = EDITOR_SCHEMA;
-      this._form.computeLabel = (s) => EDITOR_LABELS[s.name] || s.name;
+      this._form.schema = this._schema;
+      this._form.computeLabel = (s) => this._labels[s.name] || s.name;
       this._form.addEventListener("value-changed", (ev) => {
         // Only keep options that differ from the defaults in the card's YAML.
         const config = {};
         for (const [key, value] of Object.entries(ev.detail.value)) {
-          if (key === "type" || key === "entity" || CARD_DEFAULTS[key] !== value) config[key] = value;
+          if (key === "type" || key === "entity" || this._defaults[key] !== value) config[key] = value;
         }
         this.dispatchEvent(new CustomEvent("config-changed", {
           bubbles: true, composed: true, detail: { config },
@@ -1387,12 +1910,23 @@ class ReapCardEditor extends HTMLElement {
       this.append(this._form);
     }
     if (this._hass) this._form.hass = this._hass;
-    this._form.data = { ...CARD_DEFAULTS, ...this._config };
+    this._form.data = { ...this._defaults, ...this._config };
   }
+}
+
+class ReapPlannerCardEditor extends ReapCardEditor {
+  get _schema() { return PLANNER_SCHEMA; }
+
+  get _labels() { return PLANNER_LABELS; }
+
+  get _defaults() { return PLANNER_DEFAULTS; }
 }
 
 if (!customElements.get("reap-card-editor")) {
   customElements.define("reap-card-editor", ReapCardEditor);
+}
+if (!customElements.get("reap-planner-card-editor")) {
+  customElements.define("reap-planner-card-editor", ReapPlannerCardEditor);
 }
 
 if (!customElements.get("reap-card")) {
@@ -1402,6 +1936,16 @@ if (!customElements.get("reap-card")) {
     type: "reap-card",
     name: "Reap",
     description: "Reap what you Sow. Your plantings with their next task, soil moisture and lights. Add, edit and remove plantings and locations.",
+    preview: true,
+  });
+}
+if (!customElements.get("reap-planner-card")) {
+  customElements.define("reap-planner-card", ReapPlannerCard);
+  window.customCards = window.customCards || [];
+  window.customCards.push({
+    type: "reap-planner-card",
+    name: "Reap planner",
+    description: "Reap's season chart: one growing year of plantings from sowing to harvest. Switch years and copy a plan to the next season.",
     preview: true,
   });
 }

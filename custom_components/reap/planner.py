@@ -599,6 +599,44 @@ def generate_tasks(
     return tasks
 
 
+def planting_timeline(tasks: list[Task], crop: Crop) -> dict[str, Any] | None:
+    """A planting's phases as date ranges, for drawing it on a season chart.
+
+    Each phase spans every sowing: from the first to the last. Harvest runs
+    to the last harvest's end. "grow" joins going in the ground (planting out,
+    or sowing outside) to the first harvest. Dates already follow what was
+    done early or late.
+    """
+    if not tasks:
+        return None
+    by_kind: dict[str, list[Task]] = {}
+    for task in tasks:
+        by_kind.setdefault(task.kind, []).append(task)
+
+    def span(kind: str, extra_days: int = 0) -> dict[str, Any] | None:
+        group = by_kind.get(kind)
+        if not group:
+            return None
+        start = min(t.due for t in group)
+        end = max(t.due for t in group) + timedelta(days=extra_days)
+        return {
+            "start": start.isoformat(),
+            "end": end.isoformat(),
+            "done": all(t.done_on for t in group),
+        }
+
+    phases = {
+        "indoor": span(TASK_SOW_INDOORS),
+        "out": span(TASK_TRANSPLANT),
+        "sow": span(TASK_SOW),
+        "harvest": span(TASK_HARVEST, crop.harvest_weeks * 7),
+    }
+    begin = phases["out"] or phases["sow"]
+    if begin and phases["harvest"] and phases["harvest"]["start"] > begin["start"]:
+        phases["grow"] = {"start": begin["start"], "end": phases["harvest"]["start"]}
+    return {key: value for key, value in phases.items() if value}
+
+
 def apply_actuals(tasks: list[Task], actuals: dict[str, str | date]) -> list[Task]:
     """Mark tasks done and shift later tasks in the same chain to match.
 

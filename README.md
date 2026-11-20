@@ -110,6 +110,7 @@ show_sensors: true     # soil moisture and light of each planting's location
 icon_size: 40          # crop icon size in pixels
 editable: true         # show Add, Locations, edit and remove buttons
 show_done: false       # also list plantings with no open tasks
+planner_path: /lovelace/plan   # optional: adds a Plan button that opens this view
 ```
 
 Every option is also in the card's visual editor. When a row is turned off the
@@ -123,6 +124,48 @@ for this crop** remembers the method, repeat interval, number of sowings,
 quantity and location for next time.
 
 The card uses your theme's colours.
+
+### Planner card
+
+The planner card shows one growing year as a season chart: a row for each
+planting, from starting indoors and planting out to harvest, across the
+months. Pick **Reap planner** when adding a card, or:
+
+```yaml
+type: custom:reap-planner-card
+title: Garden plan     # optional
+group_by: date         # or location
+max_height: 480        # chart height in pixels before it scrolls; 0 for no limit
+editable: true         # add, edit, remove and copy
+```
+
+- The arrows change year. A year runs January to December, or July to June
+  in the southern hemisphere ("2027–28").
+- Plantings from another year that are still in the ground show faded, such
+  as fall garlic in the spring after it was planted. A planting that runs
+  into the next year has an arrow at the right edge.
+- Click a planting to see its dates under it, with **Edit** and **Remove**.
+- **Copy to 2028** copies the year's plantings to the next one with the same
+  settings. Untick anything you're not growing again.
+
+It can sit on the same dashboard as the Reap card. To keep the main dashboard
+simple, put it on a [subview](https://www.home-assistant.io/dashboards/views/#subview)
+instead and set the Reap card's `planner_path` to that view's path, such as
+`/lovelace/plan`. The Reap card then has a **Plan** button that opens it.
+
+```yaml
+views:
+  - title: Garden plan
+    path: plan
+    subview: true
+    cards:
+      - type: custom:reap-planner-card
+```
+
+Its colours follow your theme in light and dark mode. Themes can set
+`reap-indoor-color`, `reap-sow-color`, `reap-harvest-color`,
+`reap-grow-color` and `reap-winter-color`, `reap-spring-color`,
+`reap-summer-color`, `reap-fall-color` to change them.
 
 ## Locations
 
@@ -213,9 +256,9 @@ On the card, **Add planting** has two tabs:
   notes set on the form apply to all of them; a method is only used for crops
   that can be grown that way.
 
-**Plan a year again** copies a year's plantings to another year with the same
-settings, moving start and repeat-until dates with them. Plantings already
-planned for the new year start unticked.
+**Copy to** on the [planner card](#planner-card) copies a year's plantings to
+another year with the same settings, moving start and repeat-until dates with
+them. Plantings already planned for the new year start unticked.
 
 The same as actions:
 
@@ -310,7 +353,7 @@ with its icon, category, methods, seasons and defaults.
 | `sensor.reap_next_task` | Next open task | due date, crop, method |
 | `sensor.reap_tasks_due_this_week` | Count, including overdue | task list |
 | `sensor.reap_overdue_tasks` | Count | task list |
-| `sensor.reap_plantings` | Count | every planting with its full schedule |
+| `sensor.reap_plantings` | Count | every planting with its next tasks and `timeline` (phase date ranges); `southern` |
 | `todo.reap_garden_tasks` | Only when the planner makes its own list | |
 
 Each crop has a Material Design icon (`mdi:carrot`, `mdi:chili-mild`,
