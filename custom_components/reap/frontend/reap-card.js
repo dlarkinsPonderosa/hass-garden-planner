@@ -111,7 +111,7 @@ function sameKey(p) {
 
 // Go to a dashboard path the way Home Assistant's own links do.
 function navigate(path) {
-  window.history.pushState(null, "", path);
+  window.history.pushState(null, "", path.startsWith("/") ? path : `/${path}`);
   window.dispatchEvent(new CustomEvent("location-changed", { detail: { replace: false } }));
 }
 
@@ -1334,6 +1334,11 @@ class ReapPlannerCard extends ReapCard {
     return 8;
   }
 
+  // A twelve-month chart needs the full width of a Sections view.
+  getGridOptions() {
+    return { columns: "full", min_columns: 6 };
+  }
+
   _style() {
     return STYLE + PLANNER_STYLE;
   }
@@ -1576,6 +1581,8 @@ class ReapPlannerCard extends ReapCard {
         track.append(dot);
       }
     }
+    // Repeated sowings can run on into the harvest: draw them one above the other.
+    if (t.sow && t.harvest && t.harvest.start <= t.sow.end) track.classList.add("stack");
     const ends = PHASES.map((k) => t[k]).filter(Boolean);
     if (ends.some((ph) => dayNum(ph.end) >= r1)) track.append(h("div", { class: "more after" }, icon("mdi:chevron-right")));
     if (ends.some((ph) => dayNum(ph.start) < r0)) track.append(h("div", { class: "more before" }, icon("mdi:chevron-left")));
@@ -1596,6 +1603,7 @@ class ReapPlannerCard extends ReapCard {
         : h("div", { class: "muted psub" }, sub.filter(Boolean).join(" · ")));
     return h("button", {
       class: `prow${row.other ? " other" : ""}${selected ? " selected" : ""}`,
+      title: [this._name(p), ...sub].filter(Boolean).join(" \u00b7 "),
       "aria-expanded": selected ? "true" : "false",
       onclick: () => { this._selected = selected ? null : p.id; this._confirmDelete = null; this._render(); },
     }, label, track);
@@ -1683,7 +1691,8 @@ const PLANNER_STYLE = `
   button.seg.on { background: color-mix(in srgb, var(--primary-color) 16%, transparent); color: var(--primary-text-color); }
   .plan-summary { padding: 2px 0 8px; }
   .chart { overflow-y: auto; container-type: inline-size; margin: 0 -16px; }
-  .chart-head { position: sticky; top: 0; z-index: 2; background: var(--reap-card-bg); border-bottom: 1px solid var(--divider-color); }
+  .chart-head { position: sticky; top: 0; z-index: 2; background: var(--reap-card-bg); border-bottom: 1px solid var(--divider-color);
+    -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
   button.prow, .prow { display: flex; align-items: center; width: 100%; box-sizing: border-box; gap: 0; padding: 4px 16px;
     margin: 0; border: none; border-radius: 0; background: none; color: inherit; text-align: left; font: inherit; }
   button.prow { cursor: pointer; }
@@ -1714,17 +1723,19 @@ const PLANNER_STYLE = `
     background: repeating-linear-gradient(135deg, var(--reap-indoor) 0 2px, color-mix(in srgb, var(--reap-indoor) 30%, transparent) 2px 5px); }
   .bar.sow, .swatch.sow { background: var(--reap-sow); }
   .bar.harvest, .swatch.harvest { background: var(--reap-harvest); border: 1px solid color-mix(in srgb, var(--reap-harvest) 70%, var(--primary-text-color)); }
-  .bar.done { filter: saturate(0.45); }
+  .bar.done { filter: saturate(0.45); opacity: 0.45; }
+  .track.stack .bar.sow { top: 32%; height: 9px; }
+  .track.stack .bar.harvest { top: 68%; height: 9px; }
   .dot, .swatch.out { width: 12px; height: 12px; border-radius: 50%; box-sizing: border-box; background: var(--reap-card-bg); border: 2.5px solid var(--reap-sow); }
   .dot { position: absolute; top: 50%; transform: translate(-50%, -50%); }
-  .dot.done { filter: saturate(0.45); }
+  .dot.done { filter: saturate(0.45); opacity: 0.45; }
   .swatch { display: inline-block; width: 18px; height: 10px; border-radius: 5px; box-sizing: border-box; flex: none; }
   .swatch.out { width: 10px; height: 10px; }
   .swatch.grow { height: 2px; background: var(--reap-grow); }
   .today { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: var(--error-color, #db4437); opacity: 0.8; }
-  .more { position: absolute; top: 50%; transform: translateY(-50%); display: flex; color: var(--secondary-text-color); --mdc-icon-size: 18px; }
-  .more.after { right: -6px; }
-  .more.before { left: -6px; }
+  .more { position: absolute; top: 50%; transform: translateY(-50%); display: flex; color: var(--secondary-text-color); --mdc-icon-size: 16px; }
+  .more.after { right: -15px; }
+  .more.before { left: -15px; }
   .group-name { padding: 10px 16px 2px; font-size: 0.75em; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--secondary-text-color); }
   .plan-detail { margin: 2px 16px 8px; padding: 12px; border-radius: 12px; background: var(--secondary-background-color);
     display: flex; flex-direction: column; gap: 8px; }
