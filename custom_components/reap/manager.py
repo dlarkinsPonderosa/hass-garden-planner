@@ -87,8 +87,12 @@ def _empty_data() -> dict[str, Any]:
         "own_items": [],
         # crop key -> the user's planting defaults for that crop
         "crop_defaults": {},
-        # location id -> {id, name, soil_sensor, light}
+        # location id -> {id, name, soil_sensor, light, camera, water}
         "locations": {},
+        # location id -> {last, minutes, manual, started}: when it was last
+        # watered, for how long, by hand or not, and when the valve opened if
+        # it's open now
+        "watering": {},
     }
 
 
@@ -96,7 +100,9 @@ def _empty_data() -> dict[str, Any]:
 OWN_LIST_KEY = "own"
 
 DEFAULT_LOCATIONS = ("Seedling Tray", "Garden", "Greenhouse")
-LOCATION_ENTITY_KEYS = ("soil_sensor", "light")
+LOCATION_ENTITY_KEYS = ("soil_sensor", "light", "camera", "water")
+# States of a watering valve or switch that mean water is running.
+WATER_ON_STATES = ("on", "open", "opening")
 
 
 class GardenManager:
@@ -114,6 +120,8 @@ class GardenManager:
         self.own_entity_id: str | None = None
         self._listeners: list[Callable[[], None]] = []
         self._unsubs: list[Callable[[], None]] = []
+        self._water_unsub: Callable[[], None] | None = None
+        self._watched_water: tuple[str, ...] = ()
         self._syncing = False
         self._resync = False
         self._crops: dict[str, Crop] | None = None
@@ -169,6 +177,7 @@ class GardenManager:
             self._seed_locations()
             await self._async_save()
         self.rebuild()
+        self._watch_watering()
 
         self._unsubs.append(
             async_track_time_interval(
@@ -188,6 +197,9 @@ class GardenManager:
         for unsub in self._unsubs:
             unsub()
         self._unsubs.clear()
+        if self._water_unsub:
+            self._water_unsub()
+            self._water_unsub = None
         await self._store.async_save(self.data)
 
     def add_listener(self, listener: Callable[[], None]) -> Callable[[], None]:
@@ -279,15 +291,77 @@ class GardenManager:
         return location
 
     def locations(self) -> list[dict[str, Any]]:
-        """Locations in the order they were added, with how many plantings use each."""
+        """Locations in the order they were added, with how many plantings use
+        each and when each was last watered."""
         counts: dict[str, int] = {}
         for raw in self.data["plantings"].values():
             name = (raw.get("location") or "").casefold()
             counts[name] = counts.get(name, 0) + 1
-        return [
-            {**loc, "plantings": counts.get(loc["name"].casefold(), 0)}
-            for loc in self.data["locations"].values()
-        ]
+        result = []
+        for loc in self.data["locations"].values():
+            watering = self.data["watering"].get(loc["id"], {})
+            result.append({
+                **{key: None for key in LOCATION_ENTITY_KEYS},
+                **loc,
+                "plantings": counts.get(loc["name"].casefold(), 0),
+                "last_watered": watering.get("last"),
+                "watered_minutes": watering.get("minutes"),
+                "watered_by_hand": bool(watering.get("manual")),
+            })
+        return result
+
+    # ----- watering -----
+
+    def _watch_watering(self) -> None:
+        """Follow every location's watering valve or switch."""
+        entities = tuple(sorted({
+            loc["water"] for loc in self.data["locations"].values() if loc.get("water")
+        }))
+        if entities == self._watched_water and (self._water_unsub or not entities):
+            return
+        if self._water_unsub:
+            self._water_unsub()
+            self._water_unsub = None
+        self._watched_water = entities
+        if entities:
+            self._water_unsub = async_track_state_change_event(
+                self.hass, list(entities), self._async_water_changed
+            )
+
+    async def _async_water_changed(self, event: Event) -> None:
+        entity_id = event.data["entity_id"]
+        old, new = event.data.get("old_state"), event.data.get("new_state")
+        was_on = old is not None and old.state in WATER_ON_STATES
+        is_on = new is not None and new.state in WATER_ON_STATES
+        if was_on == is_on or new is None or new.state in ("unavailable", "unknown"):
+            return
+        now = dt_util.now()
+        for loc in self.data["locations"].values():
+            if loc.get("water") != entity_id:
+                continue
+            record = self.data["watering"].setdefault(loc["id"], {})
+            if is_on:
+                record.update(last=now.isoformat(), minutes=None, manual=False,
+                              started=now.isoformat())
+            elif record.get("started"):
+                started = dt_util.parse_datetime(record["started"])
+                if started:
+                    record["minutes"] = max(0, round((now - started).total_seconds() / 60))
+                record["started"] = None
+        await self._async_save()
+        self._notify()
+
+    async def async_log_watering(self, location: str) -> dict[str, Any]:
+        """Record that a location was watered by hand just now."""
+        loc = self.data["locations"].get(location) or self._location_named(location)
+        if loc is None:
+            raise PlannerError(f"Unknown location: {location}")
+        self.data["watering"][loc["id"]] = {
+            "last": dt_util.now().isoformat(), "minutes": None, "manual": True, "started": None,
+        }
+        await self._async_save()
+        self._notify()
+        return next(item for item in self.locations() if item["id"] == loc["id"])
 
     def _location_named(self, name: str) -> dict[str, Any] | None:
         folded = name.strip().casefold()
@@ -304,16 +378,19 @@ class GardenManager:
         return loc["name"]
 
     async def async_add_location(
-        self, name: str, soil_sensor: str | None = None, light: str | None = None
+        self, name: str, **entities: str | None
     ) -> dict[str, Any]:
         name = name.strip()
         if not name:
             raise PlannerError("A location needs a name")
         if self._location_named(name):
             raise PlannerError(f"There is already a location called {name}")
-        location = self._new_location(name, soil_sensor=soil_sensor, light=light)
+        location = self._new_location(
+            name, **{k: v for k, v in entities.items() if k in LOCATION_ENTITY_KEYS}
+        )
         await self._async_save()
         self.rebuild()
+        self._watch_watering()
         return location
 
     async def async_update_location(
@@ -345,6 +422,7 @@ class GardenManager:
                     defaults["location"] = location["name"]
         await self._async_save()
         self.rebuild()
+        self._watch_watering()
         await self.async_sync()
         return location
 
@@ -363,11 +441,13 @@ class GardenManager:
                 "move or remove them first"
             )
         del self.data["locations"][location_id]
+        self.data["watering"].pop(location_id, None)
         for defaults in self.data["crop_defaults"].values():
             if (defaults.get("location") or "").casefold() == folded:
                 defaults.pop("location", None)
         await self._async_save()
         self.rebuild()
+        self._watch_watering()
 
     # ----- plantings -----
 

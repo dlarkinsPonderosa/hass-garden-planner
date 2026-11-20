@@ -12,8 +12,12 @@
  * icon_size: 40                   # crop icon size in pixels
  * editable: true                  # show add, edit and remove buttons
  * planner_path: /lovelace/plan    # optional: a Plan button that opens this view
+ * moisture_good: 30               # soil moisture % above this is green
+ * moisture_low: 15                # below this is red; in between is yellow
  *
  * type: custom:reap-planner-card    # the season chart, defined further down
+ *
+ * type: custom:reap-locations-card  # read-only location tiles, defined further down
  * group_by: date                    # or crop, or location
  * max_height: 480                   # chart height in px before it scrolls; 0 = no limit
  */
@@ -27,6 +31,8 @@ const CARD_DEFAULTS = {
   icon_size: 40,
   editable: true,
   planner_path: "",
+  moisture_good: 30,
+  moisture_low: 15,
 };
 
 const METHOD_LABELS = {
@@ -80,13 +86,17 @@ function shortDate(iso, withYear = false) {
   }
 }
 
-function moistureLevel(value) {
-  if (value > 30) return "good";
-  if (value >= 15) return "low";
+// Green above moisture_good, yellow down to moisture_low, red below that.
+function moistureLevel(value, config = {}) {
+  const good = Number.isFinite(Number(config.moisture_good)) ? Number(config.moisture_good) : 30;
+  const low = Number.isFinite(Number(config.moisture_low)) ? Number(config.moisture_low) : 15;
+  if (value > good) return "good";
+  if (value >= low) return "low";
   return "dry";
 }
 
 const LIGHT_DOMAINS = ["light.", "switch.", "input_boolean."];
+const WATER_DOMAINS = ["valve.", "switch.", "input_boolean."];
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const CATEGORIES = [["vegetable", "Vegetable"], ["herb", "Herb"], ["fruit", "Fruit"], ["flower", "Flower"]];
 // Crop form date fields: [form key, window season, window kind, end of range?]
@@ -613,8 +623,9 @@ class ReapCard extends HTMLElement {
     this._mode = "location";
     this._editing = loc ? loc.id : null;
     this._form = loc
-      ? { name: loc.name, soil_sensor: loc.soil_sensor || "", light: loc.light || "" }
-      : { name: "", soil_sensor: "", light: "" };
+      ? { name: loc.name, soil_sensor: loc.soil_sensor || "", light: loc.light || "",
+        camera: loc.camera || "", water: loc.water || "" }
+      : { name: "", soil_sensor: "", light: "", camera: "", water: "" };
     this._error = null;
     this._render();
   }
@@ -628,6 +639,8 @@ class ReapCard extends HTMLElement {
         name: (this._form.name || "").trim(),
         soil_sensor: this._form.soil_sensor || "",
         light: this._form.light || "",
+        camera: this._form.camera || "",
+        water: this._form.water || "",
       };
       if (this._editing) await this._call("update_location", { location_id: this._editing, ...data });
       else await this._call("add_location", data);
@@ -926,7 +939,7 @@ class ReapCard extends HTMLElement {
       const value = st ? parseFloat(st.state) : NaN;
       const ok = !Number.isNaN(value);
       box.append(h("button", {
-        class: `chip moisture ${ok ? moistureLevel(value) : "unknown"}`,
+        class: `chip moisture ${ok ? moistureLevel(value, this._config) : "unknown"}`,
         title: `${loc.name} soil moisture`,
         onclick: () => this._moreInfo(loc.soil_sensor),
       }, icon("mdi:water-percent"), ok ? `${Math.round(value)}%` : "--"));
@@ -1165,6 +1178,10 @@ class ReapCard extends HTMLElement {
       this._entityOptions(soil, this._form.soil_sensor)));
     form.append(this._select("light", "Light (optional)",
       this._entityOptions((id) => LIGHT_DOMAINS.some((d) => id.startsWith(d)), this._form.light)));
+    form.append(this._select("water", "Watering valve or switch (optional)",
+      this._entityOptions((id) => WATER_DOMAINS.some((d) => id.startsWith(d)), this._form.water)));
+    form.append(this._select("camera", "Camera (optional)",
+      this._entityOptions((id) => id.startsWith("camera."), this._form.camera)));
     form.append(h("p", { class: "muted small" },
       "Renaming a location moves its plantings with it."));
     form.append(h("div", { class: "actions" },
@@ -1797,6 +1814,290 @@ const PLANNER_STYLE = `
   }
 `;
 
+// ----- the locations card: a read-only view of each bed, tray or greenhouse -----
+
+const LOCATIONS_DEFAULTS = {
+  entity: "sensor.reap_plantings",
+  locations: [],
+  show_moisture: true,
+  show_last_watered: true,
+  show_watering: true,
+  show_light: true,
+  show_camera: true,
+  show_snapshot: false,
+  show_plantings: true,
+  moisture_good: 30,
+  moisture_low: 15,
+};
+const SNAPSHOT_SECONDS = 60;
+
+function timeOfDay(date) {
+  const opts = { hour: "numeric", minute: "2-digit" };
+  try {
+    return date.toLocaleTimeString(LOCALE, opts);
+  } catch (err) {
+    return date.toLocaleTimeString(undefined, opts);
+  }
+}
+
+// "Today 7:10 AM", "Yesterday 6:02 PM", or "Nov 18, 6:02 PM".
+function whenText(iso) {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  const day = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const diff = Math.round((day(new Date()) - day(date)) / 86400000);
+  if (diff === 0) return `Today ${timeOfDay(date)}`;
+  if (diff === 1) return `Yesterday ${timeOfDay(date)}`;
+  const local = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  return `${shortDate(local, date.getFullYear() !== new Date().getFullYear())}, ${timeOfDay(date)}`;
+}
+
+function isOn(state) {
+  return !!state && ["on", "open", "opening"].includes(state.state);
+}
+
+class ReapLocationsCard extends ReapCard {
+  setConfig(config) {
+    this._confirmWater = null;
+    super.setConfig({ ...LOCATIONS_DEFAULTS, ...config });
+    // No crop list needed here.
+    this._crops = this._crops || [];
+  }
+
+  static getConfigElement() {
+    return document.createElement("reap-locations-card-editor");
+  }
+
+  static getStubConfig() {
+    return { entity: "sensor.reap_plantings" };
+  }
+
+  getCardSize() {
+    return 2 + Math.ceil(this._shown().length / 2) * 3;
+  }
+
+  getGridOptions() {
+    return { columns: 12, min_columns: 6 };
+  }
+
+  connectedCallback() {
+    if (this._timer) return;
+    // Camera snapshots refresh on their own; nothing else changes without a state change.
+    this._timer = setInterval(() => {
+      if (this._config && this._config.show_snapshot && this._config.show_camera) this._refreshSnapshots();
+    }, SNAPSHOT_SECONDS * 1000);
+  }
+
+  disconnectedCallback() {
+    clearInterval(this._timer);
+    this._timer = null;
+  }
+
+  _defaultTitle() {
+    return "Garden locations";
+  }
+
+  _style() {
+    return STYLE + PLANNER_STYLE + LOCATIONS_STYLE;
+  }
+
+  _shown() {
+    const all = this._locations();
+    const picked = (this._config.locations || []).map((n) => String(n).toLowerCase());
+    if (!picked.length) return all;
+    return picked.map((n) => all.find((l) => l.name.toLowerCase() === n || l.id === n)).filter(Boolean);
+  }
+
+  _watched() {
+    const ids = [this._config.entity];
+    for (const loc of this._shown()) {
+      for (const key of ["soil_sensor", "light", "water"]) if (loc[key]) ids.push(loc[key]);
+    }
+    return ids;
+  }
+
+  async _service(domain, service, data) {
+    try {
+      await this._hass.connection.sendMessagePromise({ type: "call_service", domain, service, service_data: data });
+      this._error = null;
+    } catch (err) {
+      this._error = err.message || String(err);
+      this._render();
+    }
+  }
+
+  _setWater(entityId, on) {
+    this._confirmWater = null;
+    const domain = entityId.split(".")[0];
+    if (domain === "valve") this._service("valve", on ? "open_valve" : "close_valve", { entity_id: entityId });
+    else this._service("homeassistant", on ? "turn_on" : "turn_off", { entity_id: entityId });
+    this._render();
+  }
+
+  async _logWatering(loc) {
+    this._busy = true;
+    this._render();
+    try {
+      await this._call("log_watering", { location: loc.id });
+      this._error = null;
+    } catch (err) {
+      this._error = err.message || String(err);
+    }
+    this._busy = false;
+    this._render();
+  }
+
+  _refreshSnapshots() {
+    if (!this.shadowRoot) return;
+    for (const img of this.shadowRoot.querySelectorAll("img.snapshot")) {
+      const st = this._hass && this._hass.states[img.dataset.entity];
+      const url = st && st.attributes.entity_picture;
+      if (url) img.src = `${url}${url.includes("?") ? "&" : "?"}t=${Date.now()}`;
+    }
+  }
+
+  // Plantings still under way in a location: ones with open tasks.
+  _growing(loc) {
+    const name = loc.name.toLowerCase();
+    return this._plantings().filter((p) => (p.location || "").toLowerCase() === name && (p.open_count || 0) > 0);
+  }
+
+  _render() {
+    if (!this._config || !this._hass) return;
+    if (!this.shadowRoot) this.attachShadow({ mode: "open" });
+    const root = this.shadowRoot;
+    root.textContent = "";
+    root.append(h("style", {}, this._style()));
+    const card = h("ha-card", { header: this._config.title || this._defaultTitle() });
+    const body = h("div", { class: "card-content" });
+    card.append(body);
+    root.append(card);
+    if (!this._hass.states[this._config.entity]) {
+      body.append(h("p", { class: "muted" }, `Entity ${this._config.entity} not found. Is Reap set up?`));
+      return;
+    }
+    if (this._error) body.append(h("div", { class: "error" }, icon("mdi:alert-circle-outline"), this._error));
+    const shown = this._shown();
+    if (!shown.length) {
+      body.append(h("p", { class: "muted" }, "No locations to show. Add them on the Reap card."));
+      return;
+    }
+    body.append(h("div", { class: "loc-grid" }, shown.map((loc) => this._renderTile(loc))));
+  }
+
+  _renderTile(loc) {
+    const cfg = this._config;
+    const states = this._hass.states;
+    const tile = h("div", { class: "loc-tile" });
+
+    const head = h("div", { class: "loc-head" }, h("div", { class: "loc-name" }, loc.name));
+    if (cfg.show_plantings) {
+      const growing = this._growing(loc);
+      if (growing.length) {
+        const names = growing.map((p) => (p.variety ? `${p.crop_name} (${p.variety})` : p.crop_name));
+        const icons = growing.slice(0, 6).map((p) => icon(p.icon || "mdi:sprout"));
+        head.append(h("div", { class: "loc-crops", title: names.join(", ") }, icons,
+          growing.length > 6 ? h("span", { class: "muted" }, `+${growing.length - 6}`) : null));
+      }
+    }
+    tile.append(head);
+
+    if (cfg.show_camera && cfg.show_snapshot && loc.camera && states[loc.camera] && states[loc.camera].attributes.entity_picture) {
+      tile.append(h("button", { class: "snapshot-btn", title: `${loc.name} camera`, onclick: () => this._moreInfo(loc.camera) },
+        h("img", { class: "snapshot", src: states[loc.camera].attributes.entity_picture, alt: `${loc.name} camera`, "data-entity": loc.camera })));
+    }
+
+    const rows = h("div", { class: "loc-rows" });
+    if (cfg.show_moisture && loc.soil_sensor) {
+      const st = states[loc.soil_sensor];
+      const value = st ? parseFloat(st.state) : NaN;
+      const ok = !Number.isNaN(value);
+      rows.append(h("button", { class: "loc-row", onclick: () => this._moreInfo(loc.soil_sensor) },
+        icon("mdi:water-percent", `loc-icon moisture ${ok ? moistureLevel(value, cfg) : "unknown"}`),
+        h("span", { class: "loc-label muted" }, "Moisture"),
+        h("span", { class: `loc-value moisture ${ok ? moistureLevel(value, cfg) : "unknown"}` }, ok ? `${Math.round(value)}%` : "Unavailable")));
+    }
+
+    const water = loc.water ? states[loc.water] : null;
+    const running = isOn(water);
+    if (cfg.show_last_watered) {
+      let text = "Not recorded yet";
+      if (running) text = `Running since ${timeOfDay(new Date(loc.last_watered || Date.now()))}`;
+      else if (loc.last_watered) {
+        const extra = loc.watered_by_hand ? "by hand" : loc.watered_minutes !== null && loc.watered_minutes !== undefined ? `${loc.watered_minutes} min` : null;
+        text = [whenText(loc.last_watered), extra].filter(Boolean).join(" · ");
+      }
+      rows.append(h("div", { class: "loc-row" },
+        icon(running ? "mdi:sprinkler-variant" : "mdi:watering-can-outline", `loc-icon${running ? " running" : ""}`),
+        h("span", { class: "loc-label muted" }, "Watered"),
+        h("span", { class: "loc-value" }, text)));
+    }
+    tile.append(rows);
+
+    const actions = h("div", { class: "loc-actions" });
+    if (cfg.show_watering) {
+      if (loc.water) {
+        actions.append(h("button", {
+          class: running ? "primary" : "", disabled: !water || water.state === "unavailable",
+          onclick: () => { if (running) this._setWater(loc.water, false); else { this._confirmWater = loc.id; this._render(); } },
+        }, icon(running ? "mdi:stop" : "mdi:sprinkler-variant"), running ? "Stop" : "Water"));
+      }
+      if (!loc.water || !running) {
+        actions.append(h("button", { disabled: this._busy, title: "Log a watering by hand", onclick: () => this._logWatering(loc) },
+          icon("mdi:watering-can-outline"), "Watered"));
+      }
+    }
+    if (cfg.show_light && loc.light) {
+      const st = states[loc.light];
+      const on = isOn(st);
+      actions.append(h("button", {
+        class: `icon-btn light${on ? " on" : ""}`, title: `${loc.name} light: ${st ? st.state : "unavailable"}`,
+        "aria-label": `${loc.name} light`, disabled: !st || st.state === "unavailable",
+        onclick: () => this._service("homeassistant", "toggle", { entity_id: loc.light }),
+      }, icon(on ? "mdi:lightbulb-on" : "mdi:lightbulb-outline")));
+    }
+    if (cfg.show_camera && loc.camera) {
+      actions.append(h("button", {
+        class: "icon-btn", title: `${loc.name} camera`, "aria-label": `${loc.name} camera`,
+        onclick: () => this._moreInfo(loc.camera),
+      }, icon("mdi:cctv")));
+    }
+    if (actions.childElementCount) tile.append(actions);
+
+    if (this._confirmWater === loc.id) {
+      tile.append(h("div", { class: "confirm" }, `Start watering ${loc.name}?`,
+        h("button", { onclick: () => { this._confirmWater = null; this._render(); } }, "Cancel"),
+        h("button", { class: "primary", onclick: () => this._setWater(loc.water, true) }, "Start")));
+    }
+    return tile;
+  }
+}
+
+const LOCATIONS_STYLE = `
+  .loc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; padding-bottom: 8px; align-items: start; }
+  .loc-tile { border: 1px solid var(--divider-color); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .loc-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .loc-name { font-weight: 500; font-size: 1.05em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .loc-crops { display: flex; align-items: center; gap: 2px; color: var(--secondary-text-color); --mdc-icon-size: 18px; font-size: 0.8em; flex: none; }
+  .loc-rows { display: flex; flex-direction: column; gap: 4px; }
+  button.loc-row, .loc-row { display: flex; align-items: center; gap: 8px; padding: 2px 0; border: none; border-radius: 0; background: none;
+    color: inherit; font: inherit; text-align: left; width: 100%; font-size: 0.9em; }
+  button.loc-row { cursor: pointer; }
+  .loc-label { width: 70px; flex: none; }
+  .loc-value { flex: 1; min-width: 0; }
+  .loc-icon { --mdc-icon-size: 20px; color: var(--secondary-text-color); flex: none; }
+  .loc-icon.running { color: var(--info-color, var(--primary-color)); }
+  .moisture.good { color: var(--success-color, #43a047); }
+  .moisture.low { color: var(--warning-color, #ffa600); }
+  .moisture.dry { color: var(--error-color, #db4437); }
+  .loc-value.moisture { font-weight: 500; }
+  .loc-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .loc-actions .icon-btn.light.on { color: var(--state-light-active-color, var(--amber-color, #ffc107)); }
+  .snapshot-btn { padding: 0; border: none; border-radius: 8px; overflow: hidden; background: var(--secondary-background-color); display: block; width: 100%; }
+  .snapshot { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+  .loc-tile .confirm { margin: 0; }
+`;
+
 const STYLE = `
   .card-content { padding: 0 16px 8px; }
   .list { display: flex; flex-direction: column; }
@@ -1888,6 +2189,12 @@ const EDITOR_SCHEMA = [
   },
   { name: "icon_size", selector: { number: { min: 16, max: 72, step: 4, mode: "slider", unit_of_measurement: "px" } } },
   { name: "planner_path", selector: { text: {} } },
+  {
+    type: "grid", name: "", schema: [
+      { name: "moisture_good", selector: { number: { min: 0, max: 100, mode: "box", unit_of_measurement: "%" } } },
+      { name: "moisture_low", selector: { number: { min: 0, max: 100, mode: "box", unit_of_measurement: "%" } } },
+    ],
+  },
 ];
 const EDITOR_LABELS = {
   title: "Title",
@@ -1899,6 +2206,8 @@ const EDITOR_LABELS = {
   show_done: "Show finished plantings",
   icon_size: "Icon size",
   planner_path: "Planner view path, such as /lovelace/plan (adds a Plan button)",
+  moisture_good: "Moisture is green above",
+  moisture_low: "Moisture is red below",
 };
 
 const PLANNER_SCHEMA = [
@@ -1961,6 +2270,57 @@ class ReapCardEditor extends HTMLElement {
   }
 }
 
+const LOCATIONS_LABELS = {
+  title: "Title",
+  entity: "Plantings sensor",
+  locations: "Locations to show (all if none picked)",
+  show_moisture: "Soil moisture",
+  show_last_watered: "Last watered",
+  show_watering: "Watering buttons",
+  show_light: "Light switch",
+  show_camera: "Camera button",
+  show_snapshot: "Camera snapshot",
+  show_plantings: "What's planted there",
+  moisture_good: "Moisture is green above",
+  moisture_low: "Moisture is red below",
+};
+
+class ReapLocationsCardEditor extends ReapCardEditor {
+  get _schema() {
+    const state = this._hass && this._config && this._hass.states[this._config.entity || LOCATIONS_DEFAULTS.entity];
+    const names = ((state && state.attributes.locations) || []).map((l) => l.name);
+    return [
+      { name: "title", selector: { text: {} } },
+      { name: "entity", selector: { entity: { domain: "sensor", integration: "reap" } } },
+      { name: "locations", selector: { select: { multiple: true, mode: "list", options: names } } },
+      {
+        type: "grid", name: "", schema: ["show_moisture", "show_last_watered", "show_watering", "show_light",
+          "show_camera", "show_snapshot", "show_plantings"].map((name) => ({ name, selector: { boolean: {} } })),
+      },
+      {
+        type: "grid", name: "", schema: [
+          { name: "moisture_good", selector: { number: { min: 0, max: 100, mode: "box", unit_of_measurement: "%" } } },
+          { name: "moisture_low", selector: { number: { min: 0, max: 100, mode: "box", unit_of_measurement: "%" } } },
+        ],
+      },
+    ];
+  }
+
+  get _labels() { return LOCATIONS_LABELS; }
+
+  get _defaults() { return LOCATIONS_DEFAULTS; }
+
+  set hass(hass) {
+    const first = !this._hass;
+    this._hass = hass;
+    if (this._form) {
+      this._form.hass = hass;
+      // The location list comes from Home Assistant, so fill it in once known.
+      if (first) this._form.schema = this._schema;
+    } else this._render();
+  }
+}
+
 class ReapPlannerCardEditor extends ReapCardEditor {
   get _schema() { return PLANNER_SCHEMA; }
 
@@ -1971,6 +2331,9 @@ class ReapPlannerCardEditor extends ReapCardEditor {
 
 if (!customElements.get("reap-card-editor")) {
   customElements.define("reap-card-editor", ReapCardEditor);
+}
+if (!customElements.get("reap-locations-card-editor")) {
+  customElements.define("reap-locations-card-editor", ReapLocationsCardEditor);
 }
 if (!customElements.get("reap-planner-card-editor")) {
   customElements.define("reap-planner-card-editor", ReapPlannerCardEditor);
@@ -1993,6 +2356,16 @@ if (!customElements.get("reap-planner-card")) {
     type: "reap-planner-card",
     name: "Reap planner",
     description: "Reap's season chart: one growing year of plantings from sowing to harvest. Switch years and copy a plan to the next season.",
+    preview: true,
+  });
+}
+if (!customElements.get("reap-locations-card")) {
+  customElements.define("reap-locations-card", ReapLocationsCard);
+  window.customCards = window.customCards || [];
+  window.customCards.push({
+    type: "reap-locations-card",
+    name: "Reap locations",
+    description: "Reap's beds, trays and greenhouses at a glance: soil moisture, when each was last watered, watering, lights and cameras.",
     preview: true,
   });
 }

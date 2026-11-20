@@ -352,6 +352,17 @@ add_location:
             - light
             - switch
             - input_boolean
+    camera:
+      selector:
+        entity:
+          domain: camera
+    water:
+      selector:
+        entity:
+          domain:
+            - valve
+            - switch
+            - input_boolean
 update_location:
   fields:
     location_id:
@@ -372,6 +383,17 @@ update_location:
             - light
             - switch
             - input_boolean
+    camera:
+      selector:
+        entity:
+          domain: camera
+    water:
+      selector:
+        entity:
+          domain:
+            - valve
+            - switch
+            - input_boolean
 remove_location:
   fields:
     location_id:
@@ -384,5 +406,12 @@ reset_crop:
     key:
       required: true
       example: tomato
+      selector:
+        text:
+log_watering:
+  fields:
+    location:
+      required: true
+      example: Bed 3
       selector:
         text:
