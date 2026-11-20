@@ -3034,6 +3034,141 @@
    "planted": true
   },
   {
+   "key": "daikon",
+   "name": "Daikon radish",
+   "source": "builtin",
+   "windows": [
+    {
+     "season": "fall",
+     "direct": [
+      "F-124",
+      "F-77"
+     ]
+    }
+   ],
+   "weeks_indoor": null,
+   "days_to_harvest": 60,
+   "harvest_weeks": 4,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false,
+   "notes": "Sow in late summer for a fall harvest. Spring sowings tend to bolt.",
+   "profiles": {
+    "continental": [
+     {
+      "season": "fall",
+      "direct": [
+       "F-89",
+       "F-42"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "fall",
+      "direct": [
+       "F-99",
+       "F-52"
+      ]
+     }
+    ]
+   },
+   "estimated_profiles": [
+    "continental",
+    "atlantic"
+   ],
+   "icon": "mdi:sprout",
+   "defaults": {
+    "method": "direct_bed"
+   },
+   "category": "vegetable",
+   "planted": false
+  },
+  {
+   "key": "napa_cabbage",
+   "name": "Napa cabbage",
+   "source": "builtin",
+   "windows": [
+    {
+     "season": "spring",
+     "indoor": [
+      "L-17",
+      "L+14"
+     ],
+     "transplant": [
+      "L+14",
+      "L+39"
+     ]
+    },
+    {
+     "season": "fall",
+     "direct": [
+      "F-124",
+      "F-93"
+     ]
+    }
+   ],
+   "weeks_indoor": 4,
+   "days_to_harvest": 70,
+   "harvest_weeks": 3,
+   "frost_tender": false,
+   "pot_up": false,
+   "perennial": false,
+   "notes": "Late-summer sowings head best. Spring plantings can bolt as days lengthen.",
+   "profiles": {
+    "continental": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-25",
+       "L+6"
+      ],
+      "transplant": [
+       "L+6",
+       "L+31"
+      ]
+     },
+     {
+      "season": "fall",
+      "direct": [
+       "F-89",
+       "F-58"
+      ]
+     }
+    ],
+    "atlantic": [
+     {
+      "season": "spring",
+      "indoor": [
+       "L-31",
+       "L+0"
+      ],
+      "transplant": [
+       "L+0",
+       "L+25"
+      ]
+     },
+     {
+      "season": "fall",
+      "direct": [
+       "F-99",
+       "F-68"
+      ]
+     }
+    ]
+   },
+   "estimated_profiles": [
+    "continental",
+    "atlantic"
+   ],
+   "icon": "mdi:leaf-circle",
+   "defaults": {
+    "method": "indoor_bed"
+   },
+   "category": "vegetable",
+   "planted": false
+  },
+  {
    "key": "tomatillo",
    "name": "Tomatillo",
    "source": "builtin",

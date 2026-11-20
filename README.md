@@ -16,7 +16,7 @@ own frost dates turn it into a calendar for your garden. A climate profile
 handles how fast spring warms up after the last frost, which hardiness zones
 don't capture.
 
-The built-in catalog has 51 vegetables and 22 herbs. You can add your own crops
+The built-in catalog has 53 vegetables and 22 herbs. You can add your own crops
 and varieties from the card, the Configure menu or an action.
 
 ## Install
