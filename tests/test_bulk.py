@@ -32,7 +32,7 @@ async def test_add_several_crops_with_their_defaults(hass: HomeAssistant) -> Non
 async def test_add_several_is_all_or_nothing(hass: HomeAssistant) -> None:
     entry = await _setup(hass)
     manager = entry.runtime_data
-    with pytest.raises(ServiceValidationError, match="garlic"):
+    with pytest.raises(ServiceValidationError, match="Garlic"):
         await _call(hass, "add_plantings", {"plantings": [
             {"crop": "lettuce", "year": 2027},
             {"crop": "garlic", "year": 2027, "method": "indoor_bed"},
@@ -57,6 +57,7 @@ async def test_several_varieties_at_once(hass: HomeAssistant) -> None:
     assert "Sow Tomato (Brandywine) indoors" in summaries
 
 
+@pytest.mark.freeze_time("2026-11-20 12:00:00")
 async def test_plan_a_year_again(hass: HomeAssistant) -> None:
     entry = await _setup(hass)
     manager = entry.runtime_data
@@ -92,6 +93,7 @@ async def test_plan_a_year_again(hass: HomeAssistant) -> None:
     assert len(resp["planting_ids"]) == 1
 
 
+@pytest.mark.freeze_time("2026-11-20 12:00:00")
 async def test_copy_moves_a_leap_day(hass: HomeAssistant) -> None:
     entry = await _setup(hass)
     manager = entry.runtime_data
@@ -107,3 +109,46 @@ async def test_copy_to_the_same_year_is_refused(hass: HomeAssistant) -> None:
     await _setup(hass)
     with pytest.raises(ServiceValidationError):
         await _call(hass, "copy_plantings", {"from_year": 2026, "to_year": 2026})
+
+
+@pytest.mark.freeze_time("2026-11-20 12:00:00")
+async def test_copy_tells_blocks_of_one_crop_apart(hass: HomeAssistant) -> None:
+    entry = await _setup(hass)
+    manager = entry.runtime_data
+    lettuce = {"crop": "lettuce", "method": "direct_bed", "location": "Garden"}
+    await _call(hass, "add_planting", {**lettuce, "year": 2026, "start_date": "2026-03-15"})
+    await _call(hass, "add_planting", {**lettuce, "year": 2026, "start_date": "2026-06-01"})
+    await _call(hass, "add_planting", {**lettuce, "year": 2027, "start_date": "2027-03-15"})
+    resp = await _call(hass, "copy_plantings", {"from_year": 2026}, True)
+    assert len(resp["planting_ids"]) == 1
+    copy = next(p for p in manager.plantings() if p.id == resp["planting_ids"][0])
+    assert copy.start_date == "2027-06-01"
+
+
+@pytest.mark.freeze_time("2026-11-20 12:00:00")
+async def test_copy_refuses_past_years_and_reports_other_years(hass: HomeAssistant) -> None:
+    entry = await _setup(hass)
+    manager = entry.runtime_data
+    await _call(hass, "add_planting", {"crop": "pea", "method": "direct_bed", "year": 2026})
+    await _call(hass, "add_planting", {"crop": "pea", "method": "direct_bed", "year": 2025})
+    with pytest.raises(ServiceValidationError, match="overdue"):
+        await _call(hass, "copy_plantings", {"from_year": 2026, "to_year": 2020})
+    other = next(p for p in manager.plantings() if p.year == 2025)
+    resp = await _call(hass, "copy_plantings", {"from_year": 2026, "planting_ids": [other.id]}, True)
+    assert resp["planting_ids"] == []
+    assert resp["skipped"][0]["reason"] == "not a 2026 planting"
+
+
+async def test_rejected_batch_adds_no_location(hass: HomeAssistant) -> None:
+    entry = await _setup(hass)
+    manager = entry.runtime_data
+    with pytest.raises(ServiceValidationError, match="Garlic"):
+        await _call(hass, "add_plantings", {"plantings": [
+            {"crop": "lettuce", "year": 2027, "location": "Bed 9"},
+            {"crop": "garlic", "year": 2027, "method": "indoor_bed"},
+        ]})
+    assert not any(loc["name"] == "Bed 9" for loc in manager.locations())
+    await _call(hass, "add_plantings", {"plantings": [
+        {"crop": "lettuce", "year": 2027, "location": "bed 9"},
+    ]})
+    assert [loc["name"] for loc in manager.locations()].count("bed 9") == 1

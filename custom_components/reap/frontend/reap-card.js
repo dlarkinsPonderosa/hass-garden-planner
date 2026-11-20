@@ -97,6 +97,12 @@ const CROP_DATES = [
 ];
 const CROP_SEASONS = ["spring", "summer", "fall"];
 
+// What makes two plantings "the same" when planning a year again.
+function sameKey(p) {
+  return [p.crop, p.method, p.season || "", p.variety || "", (p.location || "").toLowerCase(),
+    (p.start_date || "").slice(5)].join("|");
+}
+
 function slug(text) {
   return text.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "") || "crop";
 }
@@ -289,6 +295,8 @@ class ReapCard extends HTMLElement {
         // One planting per variety row, all with the same settings.
         const rows = (this._form.varieties || []).map((r) => ({ variety: r.variety.trim(), quantity: r.quantity.trim() }));
         const used = rows.filter((r) => r.variety || r.quantity);
+        // The rows hold the quantity: an emptied one means no quantity.
+        delete payload.quantity;
         if (used.length <= 1) {
           const row = used[0] || {};
           if (row.variety) payload.variety = row.variety;
@@ -296,6 +304,8 @@ class ReapCard extends HTMLElement {
           await this._call("add_planting", payload);
         } else {
           if (used.some((r) => !r.variety)) throw new Error("Give each variety a name, or remove the empty row.");
+          const names = used.map((r) => r.variety.toLowerCase());
+          if (new Set(names).size < names.length) throw new Error("Each variety is listed once; two rows have the same name.");
           const plantings = used.map((r) => {
             const one = { ...payload, variety: r.variety };
             if (r.quantity) one.quantity = r.quantity;
@@ -375,7 +385,7 @@ class ReapCard extends HTMLElement {
     const thisYear = new Date().getFullYear();
     const from = years.find((y) => y <= thisYear) || years[years.length - 1];
     this._mode = "copy";
-    this._form = { from_year: from, to_year: from + 1 };
+    this._form = { from_year: from, to_year: Math.max(from + 1, thisYear) };
     this._pickCopy();
     this._error = null;
     this._notice = null;
@@ -386,13 +396,22 @@ class ReapCard extends HTMLElement {
   // target year.
   _pickCopy() {
     const f = this._form;
-    const same = (p) => [p.crop, p.method, p.season || "", p.variety || "", (p.location || "").toLowerCase()].join("|");
-    const planned = new Set(this._plantings().filter((p) => p.year === Number(f.to_year)).map(same));
-    f.copy = {};
-    for (const p of this._plantings().filter((p) => p.year === Number(f.from_year))) {
-      f.copy[p.id] = !planned.has(same(p));
+    // Each planting already planned covers one, so a March and a June block of
+    // the same crop are told apart by their start date.
+    const planned = {};
+    for (const p of this._plantings().filter((p) => p.year === Number(f.to_year))) {
+      planned[sameKey(p)] = (planned[sameKey(p)] || 0) + 1;
     }
-    f.planned = planned;
+    f.copy = {};
+    f.planned = new Set();
+    for (const p of this._plantings().filter((p) => p.year === Number(f.from_year))) {
+      const key = sameKey(p);
+      if (planned[key]) {
+        planned[key] -= 1;
+        f.planned.add(p.id);
+      }
+      f.copy[p.id] = !f.planned.has(p.id);
+    }
   }
 
   async _saveCopy() {
@@ -434,26 +453,27 @@ class ReapCard extends HTMLElement {
       h("select", {
         onchange: (e) => {
           f[key] = Number(e.target.value);
-          if (key === "from_year") f.to_year = f.from_year + 1;
+          if (key === "from_year") f.to_year = Math.max(f.from_year + 1, new Date().getFullYear());
           this._pickCopy();
           this._render();
         },
       }, options.map((y) => h("option", { value: y, selected: Number(f[key]) === y }, String(y)))));
+    // Only this year on: a copy into the past would be all overdue tasks.
     const toYears = [];
-    for (let y = Math.min(...years, Number(f.from_year)); y <= Math.max(...years, Number(f.from_year)) + 2; y++) {
+    const thisYear = new Date().getFullYear();
+    for (let y = thisYear; y <= Math.max(...years, Number(f.from_year)) + 2; y++) {
       if (y !== Number(f.from_year)) toYears.push(y);
     }
     wrap.append(h("div", { class: "grid" },
       yearSelect("from_year", "Copy from", years),
       yearSelect("to_year", "To", toYears)));
-    const same = (p) => [p.crop, p.method, p.season || "", p.variety || "", (p.location || "").toLowerCase()].join("|");
     const list = h("div", { class: "list picks" });
     const source = this._plantings().filter((p) => p.year === Number(f.from_year));
     if (!source.length) list.append(h("p", { class: "muted" }, "No plantings in that year."));
     for (const p of source) {
       const name = p.variety ? `${p.crop_name} (${p.variety})` : p.crop_name;
       const extra = [METHOD_LABELS[p.method] || p.method, p.season && p.season !== "spring" ? p.season : null,
-        p.location, f.planned && f.planned.has(same(p)) ? `already planned for ${f.to_year}` : null].filter(Boolean).join(" · ");
+        p.location, f.planned && f.planned.has(p.id) ? `already planned for ${f.to_year}` : null].filter(Boolean).join(" · ");
       list.append(h("label", { class: "pick" },
         h("input", { type: "checkbox", checked: !!f.copy[p.id], onchange: (e) => { f.copy[p.id] = e.target.checked; this._renderCount(); } }),
         icon(p.icon || "mdi:sprout"),
@@ -1169,7 +1189,12 @@ class ReapCard extends HTMLElement {
         class: `tab${!!this._form.bulk === value ? " active" : ""}`,
         onclick: () => {
           // Several crops start from each crop's own defaults, not the one picked above.
-          if (value && !this._form.bulk) this._form.location = "";
+          if (value && !this._form.bulk) {
+            this._form.single_location = this._form.location;
+            this._form.location = "";
+          } else if (!value && this._form.bulk) {
+            this._form.location = this._form.single_location || "";
+          }
           this._form.bulk = value; this._preview = null; this._error = null; this._render();
         },
       }, label);
@@ -1204,7 +1229,8 @@ class ReapCard extends HTMLElement {
       }),
       "Save method, repeat, sowings, quantity and location as the default for this crop"));
     form.append(h("p", { class: "muted small" },
-      "Start date is the transplant date for indoor starts, or the first sowing for direct sowing. Leave it empty to use the crop's usual window."));
+      "Start date is the transplant date for indoor starts, or the first sowing for direct sowing. Leave it empty to use the crop's usual window."
+      + (adding && this._form.varieties.length > 1 ? " Preview shows the first variety; the others get the same dates." : "")));
 
     if (this._preview) {
       const list = h("div", { class: "preview" });

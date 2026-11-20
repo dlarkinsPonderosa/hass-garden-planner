@@ -434,16 +434,18 @@ class GardenManager:
             if use_defaults and fields.get("crop"):
                 fields = {**self.crop_defaults(fields["crop"]), **fields}
             fields = self._with_method(fields)
-            if fields.get("location"):
-                fields = {**fields, "location": self._location_name(fields["location"])}
             planting = Planting.from_dict({**fields, "id": uuid.uuid4().hex[:8]})
             try:
                 generate_tasks(planting, self.crop(planting.crop), self.settings)
             except PlannerError as err:
-                label = planting.crop + (f" ({planting.variety})" if planting.variety else "")
+                name = self.crops[planting.crop].name if planting.crop in self.crops else planting.crop
+                label = name + (f" ({planting.variety})" if planting.variety else "")
                 raise PlannerError(f"{label}: {err}") from err
             new.append(planting)
+        # Only now that every planting is valid: new locations get created.
         for planting in new:
+            if planting.location:
+                planting.location = self._location_name(planting.location)
             self.data["plantings"][planting.id] = planting.to_dict()
         self.rebuild()
         await self._async_save()
@@ -467,23 +469,37 @@ class GardenManager:
         shift = to_year - from_year
         if not shift:
             raise PlannerError("Pick a different year to copy to")
+        this_year = dt_util.now().date().year
+        if to_year < this_year:
+            raise PlannerError(
+                f"Copy to {this_year} or later; every task in {to_year} would be overdue"
+            )
         source = [p for p in self.plantings() if p.year == from_year]
+        skipped: list[dict[str, str]] = []
         if planting_ids is not None:
             wanted = set(planting_ids)
             source = [p for p in source if p.id in wanted]
+            for planting_id in sorted(wanted - {p.id for p in source}):
+                skipped.append({"planting_id": planting_id, "name": planting_id,
+                                "reason": f"not a {from_year} planting"})
 
         def same(p: Planting) -> tuple[Any, ...]:
+            start = (p.start_date or "")[5:]  # month-day: a March and a June block differ
             return (p.crop, p.method, p.season or "", p.variety or "",
-                    (p.location or "").casefold())
+                    (p.location or "").casefold(), start)
 
-        planned = {same(p) for p in self.plantings() if p.year == to_year}
+        # Each planting already planned covers one source planting, no more.
+        planned: dict[tuple[Any, ...], int] = {}
+        for p in self.plantings():
+            if p.year == to_year:
+                planned[same(p)] = planned.get(same(p), 0) + 1
         new: list[Planting] = []
-        skipped: list[dict[str, str]] = []
         for old in source:
             label = self.crops[old.crop].name if old.crop in self.crops else old.crop
             if old.variety:
                 label += f" ({old.variety})"
-            if planting_ids is None and same(old) in planned:
+            if planting_ids is None and planned.get(same(old)):
+                planned[same(old)] -= 1
                 skipped.append({"planting_id": old.id, "name": label,
                                 "reason": f"already planned for {to_year}"})
                 continue
