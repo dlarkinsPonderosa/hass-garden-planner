@@ -93,30 +93,36 @@ On a phone the month names shorten and the chart still fits:
 
 ## Locations card
 
-A card for keeping an eye on your locations (adding and editing them is on the Reap card): one tile each with soil
-moisture, when it was last watered, buttons to start or stop watering (starting
-asks first) or log a watering by hand, the light switch, a camera button, and
-icons of what's growing there now. Plantings show up once their first task is
-done or due, and drop off when their harvest is done or its window is over, so
-next year's plans don't crowd the tiles. Pick **Reap locations** when adding a card, or:
+A card for keeping an eye on your locations (adding and editing them is on the Reap card). Each location
+is one row: its name, an optional second line, then round buttons for what it has:
+
+- a drip coloured green, yellow or red for soil moisture (tap it for the reading);
+- the valve or switch, filled in while watering is running (starting asks first);
+- a watering can to log a watering by hand;
+- the light switch, lit up when it's on;
+- the camera.
+
+Buttons only show when they're turned on in the card and the location has that
+thing, and the rest slide to the right to leave room for the name. A camera
+picture can go under the row. Pick **Reap locations** when adding a card, or:
 
 ```yaml
 type: custom:reap-locations-card
 title: Garden locations   # optional
 locations: []             # names to show, in this order; empty shows all
+second_line: watered      # watered, growing (what's there now) or none (larger name)
 show_moisture: true
-show_last_watered: true
-show_watering: true
+show_watering: true       # the valve and watered-by-hand buttons
 show_light: true
 show_camera: true
-show_snapshot: false      # a camera picture on the tile, refreshed every minute
-show_plantings: true      # icons of the crops growing there
+show_snapshot: false      # a camera picture under the row, refreshed every minute
 moisture_good: 30         # green above this %
 moisture_low: 15          # red below this %
 ```
 
-Anything a location doesn't have is left off its tile. Locations are added
-and edited on the Reap card.
+With `second_line: growing`, plantings show up once their first task is done or
+due, and drop off when their harvest is done or its window is over, so next
+year's plans don't crowd the list. Locations are added and edited on the Reap card.
 
 <p><img src="images/locations-light.png" alt="Locations card, light theme"></p>
 <p><img src="images/locations-dark-phone.png" alt="Locations card on a phone, dark theme" width="300"></p>
