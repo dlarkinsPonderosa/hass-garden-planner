@@ -28,16 +28,22 @@ GREENHOUSE_METHODS = (METHOD_INDOOR_GREENHOUSE, METHOD_DIRECT_GREENHOUSE)
 
 TASK_SOW_INDOORS = "sow_indoors"
 TASK_POT_UP = "pot_up"
+TASK_BUY_STARTS = "buy_starts"
 TASK_HARDEN_OFF = "harden_off"
 TASK_TRANSPLANT = "transplant"
 TASK_SOW = "sow"
 TASK_COVER = "cover"
 TASK_HARVEST = "harvest"
 # Indoor tasks done before planting out: they happen at the start location.
-BEFORE_PLANT_OUT = (TASK_SOW_INDOORS, TASK_POT_UP, TASK_HARDEN_OFF)
+# Bought starts: buy this many days before planting out, and harden off
+# for at most this many days.
+BUY_STARTS_DAYS = 7
+BOUGHT_HARDEN_OFF_DAYS = 3
+BEFORE_PLANT_OUT = (TASK_SOW_INDOORS, TASK_POT_UP, TASK_BUY_STARTS, TASK_HARDEN_OFF)
 
 TASK_ICONS = {
     TASK_SOW_INDOORS: "mdi:seed-outline",
+    TASK_BUY_STARTS: "mdi:cart-outline",
     TASK_POT_UP: "mdi:pot-mix",
     TASK_HARDEN_OFF: "mdi:weather-sunny",
     TASK_TRANSPLANT: "mdi:shovel",
@@ -255,6 +261,9 @@ class Planting:
     notes: str | None = None
     # Indoor methods: where it starts (seedling tray...) until it's planted out.
     start_location: str | None = None
+    # Indoor methods: bought as starts (seedlings) instead of sown, so there's
+    # a buy task instead of sowing and potting up.
+    bought_starts: bool = False
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Planting:
@@ -569,16 +578,24 @@ def generate_tasks(
             out_to = planting.location or place
             weeks = _weeks_indoor(crop, window)
             sow = anchor - timedelta(weeks=weeks)
-            add(idx, TASK_SOW_INDOORS, sow, f"Sow {label} indoors",
-                f"Transplant to {out_to} about {anchor:%b %-d}.")
-            if crop.pot_up and weeks >= 5:
-                add(idx, TASK_POT_UP, sow + timedelta(days=weeks * 7 // 2),
-                    f"Pot up {label}")
             harden = (
                 settings.greenhouse_harden_off_days
                 if greenhouse
                 else settings.harden_off_days
             )
+            if planting.bought_starts:
+                # Starts from a garden centre: buy them about a week ahead.
+                # They're often hardened off already, so a few days is enough.
+                add(idx, TASK_BUY_STARTS, anchor - timedelta(days=BUY_STARTS_DAYS),
+                    f"Buy {label} starts",
+                    f"Transplant to {out_to} about {anchor:%b %-d}.")
+                harden = min(harden, BOUGHT_HARDEN_OFF_DAYS)
+            else:
+                add(idx, TASK_SOW_INDOORS, sow, f"Sow {label} indoors",
+                    f"Transplant to {out_to} about {anchor:%b %-d}.")
+                if crop.pot_up and weeks >= 5:
+                    add(idx, TASK_POT_UP, sow + timedelta(days=weeks * 7 // 2),
+                        f"Pot up {label}")
             if harden > 0:
                 add(idx, TASK_HARDEN_OFF, anchor - timedelta(days=harden),
                     f"Start hardening off {label}",
@@ -647,7 +664,7 @@ def planting_timeline(tasks: list[Task], crop: Crop) -> dict[str, Any] | None:
         }
 
     phases = {
-        "indoor": span(TASK_SOW_INDOORS),
+        "indoor": span(TASK_SOW_INDOORS) or span(TASK_BUY_STARTS),
         "out": span(TASK_TRANSPLANT),
         "sow": span(TASK_SOW),
         "harvest": span(TASK_HARVEST, crop.harvest_weeks * 7),

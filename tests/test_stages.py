@@ -172,3 +172,38 @@ async def test_plans_and_finished_plantings_arent_there(hass: HomeAssistant, fre
     freezer.move_to("2028-03-01 12:00:00")
     assert manager.where_now()[planting_id]["active"] is False
     assert garden()["plantings"] == 0
+
+
+def test_bought_starts_skip_sowing() -> None:
+    crop = load_catalog()["tomato"]
+    sown = Planting(id="s", crop="tomato", method="indoor_bed", year=2027, location="Bed 3")
+    bought = Planting(id="b", crop="tomato", method="indoor_bed", year=2027, location="Bed 3",
+                      bought_starts=True)
+    sown_tasks = {t.kind: t for t in generate_tasks(sown, crop, Settings())}
+    tasks = {t.kind: t for t in generate_tasks(bought, crop, Settings())}
+    assert "sow_indoors" not in tasks and "pot_up" not in tasks
+    assert tasks["buy_starts"].summary == "Buy Tomato starts"
+    assert (tasks["transplant"].due - tasks["buy_starts"].due).days == 7
+    assert (tasks["transplant"].due - tasks["harden_off"].due).days <= 3
+    # Planting out and harvest land on the same days as growing from seed.
+    assert tasks["transplant"].due == sown_tasks["transplant"].due
+    assert tasks["harvest"].due == sown_tasks["harvest"].due
+
+
+async def test_bought_starts_only_for_indoor_methods(hass: HomeAssistant) -> None:
+    entry = await _setup(hass)
+    manager = entry.runtime_data
+    resp = await _call(hass, "add_planting", {
+        "crop": "tomato", "method": "indoor_bed", "year": 2027, "bought_starts": True,
+    }, True)
+    planting_id = resp["planting_id"]
+    assert manager.data["plantings"][planting_id]["bought_starts"] is True
+    assert any(t.kind == "buy_starts" for t in manager.tasks if t.planting_id == planting_id)
+    await _call(hass, "update_planting", {"planting_id": planting_id, "method": "direct_bed",
+                                          "crop": "lettuce"})
+    assert not manager.data["plantings"][planting_id].get("bought_starts")
+    # A crop can default to bought starts.
+    await _call(hass, "set_crop_defaults", {"crop": "pepper", "bought_starts": True})
+    await _call(hass, "add_plantings", {"plantings": [{"crop": "pepper", "method": "indoor_bed"}]})
+    pepper = next(p for p in manager.plantings() if p.crop == "pepper")
+    assert pepper.bought_starts is True

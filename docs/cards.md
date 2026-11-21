@@ -38,9 +38,10 @@ rest centre vertically.
 It lists your plantings with the crop's icon, how they're grown, and the next
 task with its icon and date. The pencil edits a planting, the bin removes it,
 and **Add planting** opens a form. The form fills in the crop's defaults,
-**Preview dates** shows every task before you save, and **Save as the default
-for this crop** remembers the method, repeat interval, number of sowings,
-quantity and locations (start and plant-out) for next time.
+**Preview dates** shows every task before you save, and the **Save ... as the
+default for this crop** box remembers the method, whether you buy starts, the
+repeat interval, number of sowings, quantity and locations (start and
+plant-out) for next time.
 
 <p><img src="images/main-light.png" alt="Reap card, light theme" width="380"> <img src="images/main-dark.png" alt="Reap card, dark theme" width="380"></p>
 
