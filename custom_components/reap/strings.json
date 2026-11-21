@@ -81,7 +81,8 @@
           "succession_until": "Repeat until",
           "variety": "Variety",
           "quantity": "Quantity",
-          "location": "Location",
+          "location": "Location (where it's planted out)",
+          "start_location": "Start location (indoor starts)",
           "notes": "Notes",
           "save_defaults": "Save as the default for this crop"
         },
@@ -93,7 +94,8 @@
           "variety": "Shown in task names, for example Sungold.",
           "quantity": "For example 6 cells or 2 rows.",
           "location": "For example Bed 3.",
-          "save_defaults": "Next time you add this crop, the method, repeat interval, number of sowings, quantity and location start with these values."
+          "start_location": "Where an indoor start grows until it's planted out, such as a seedling tray. You can set it later.",
+          "save_defaults": "Next time you add this crop, the method, repeat interval, number of sowings, quantity and locations start with these values."
         }
       },
       "planting_confirm": {
@@ -231,7 +233,11 @@
         },
         "location": {
           "name": "Location",
-          "description": "For example Bed 3."
+          "description": "Where it's planted out, or sown for direct sowing. For example Bed 3."
+        },
+        "start_location": {
+          "name": "Start location",
+          "description": "Indoor starts only: where it starts, such as a seedling tray, until it's planted out."
         },
         "notes": {
           "name": "Notes",
@@ -285,7 +291,11 @@
         },
         "location": {
           "name": "Location",
-          "description": "For example Bed 3."
+          "description": "Where it's planted out, or sown for direct sowing. For example Bed 3."
+        },
+        "start_location": {
+          "name": "Start location",
+          "description": "Indoor starts only: where it starts, such as a seedling tray, until it's planted out."
         },
         "notes": {
           "name": "Notes",
@@ -443,6 +453,10 @@
           "name": "Location",
           "description": "Default location."
         },
+        "start_location": {
+          "name": "Start location",
+          "description": "Default start location for indoor starts."
+        },
         "clear": {
           "name": "Clear",
           "description": "Go back to the built-in defaults."
@@ -499,7 +513,11 @@
         },
         "location": {
           "name": "Location",
-          "description": "For example Bed 3."
+          "description": "Where it's planted out, or sown for direct sowing. For example Bed 3."
+        },
+        "start_location": {
+          "name": "Start location",
+          "description": "Indoor starts only: where it starts, such as a seedling tray, until it's planted out."
         },
         "notes": {
           "name": "Notes",

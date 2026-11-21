@@ -40,6 +40,8 @@ from .const import (
     SYNC_INTERVAL_MINUTES,
 )
 from .planner import (
+    BEFORE_PLANT_OUT,
+    INDOOR_METHODS,
     OFFSET_RE,
     Crop,
     Planting,
@@ -61,7 +63,10 @@ _LOGGER = logging.getLogger(__name__)
 
 CROP_DEFAULT_KEYS = (
     "method", "succession_days", "succession_count", "quantity", "location",
+    "start_location",
 )
+# Planting fields that name a location.
+LOCATION_FIELDS = ("location", "start_location")
 
 
 def _empty_data() -> dict[str, Any]:
@@ -263,7 +268,7 @@ class GardenManager:
             self.data["crop_defaults"].pop(key, None)
         else:
             self.data["crop_defaults"][key] = {
-                k: (self._location_name(v) if k == "location" else v)
+                k: (self._location_name(v) if k in LOCATION_FIELDS else v)
                 for k, v in values.items()
                 if k in CROP_DEFAULT_KEYS
             }
@@ -276,9 +281,10 @@ class GardenManager:
         """Default locations, plus any free-text ones existing plantings use."""
         names = list(DEFAULT_LOCATIONS)
         for raw in self.data["plantings"].values():
-            name = (raw.get("location") or "").strip()
-            if name and name.casefold() not in {n.casefold() for n in names}:
-                names.append(name)
+            for field in LOCATION_FIELDS:
+                name = (raw.get(field) or "").strip()
+                if name and name.casefold() not in {n.casefold() for n in names}:
+                    names.append(name)
         for name in names:
             self._new_location(name)
 
@@ -294,8 +300,9 @@ class GardenManager:
         """Locations in the order they were added, with how many plantings use
         each and when each was last watered."""
         counts: dict[str, int] = {}
-        for raw in self.data["plantings"].values():
-            name = (raw.get("location") or "").casefold()
+        planted_out = self.planted_out_ids()
+        for planting in self.plantings():
+            name = (self.current_location(planting, planted_out) or "").casefold()
             counts[name] = counts.get(name, 0) + 1
         result = []
         for loc in self.data["locations"].values():
@@ -370,6 +377,37 @@ class GardenManager:
                 return loc
         return None
 
+    def _with_locations(self, fields: dict[str, Any]) -> dict[str, Any]:
+        """Planting fields with known location names (new ones are added).
+
+        Only indoor starts have a start location.
+        """
+        fields = dict(fields)
+        if fields.get("method") not in INDOOR_METHODS:
+            fields.pop("start_location", None)
+        for field in LOCATION_FIELDS:
+            if fields.get(field):
+                fields[field] = self._location_name(fields[field])
+        return fields
+
+    def planted_out_ids(self) -> set[str]:
+        """Plantings with a planting-out (or later) task ticked off."""
+        return {
+            t.planting_id for t in self.tasks
+            if t.done_on and t.kind not in BEFORE_PLANT_OUT
+        }
+
+    def current_location(
+        self, planting: Planting, planted_out: set[str] | None = None
+    ) -> str | None:
+        """Where a planting is now: its start location until it's planted out."""
+        if planting.method in INDOOR_METHODS and planting.start_location:
+            if planted_out is None:
+                planted_out = self.planted_out_ids()
+            if planting.id not in planted_out:
+                return planting.start_location
+        return planting.location
+
     def _location_name(self, value: Any) -> Any:
         """A planting's location as a known location name, added if new."""
         if not isinstance(value, str) or not value.strip():
@@ -414,12 +452,11 @@ class GardenManager:
                 location[key] = changes[key] or None
         if location["name"] != old_name:
             folded = old_name.casefold()
-            for raw in self.data["plantings"].values():
-                if (raw.get("location") or "").casefold() == folded:
-                    raw["location"] = location["name"]
-            for defaults in self.data["crop_defaults"].values():
-                if (defaults.get("location") or "").casefold() == folded:
-                    defaults["location"] = location["name"]
+            for raw in [*self.data["plantings"].values(),
+                        *self.data["crop_defaults"].values()]:
+                for field in LOCATION_FIELDS:
+                    if (raw.get(field) or "").casefold() == folded:
+                        raw[field] = location["name"]
         await self._async_save()
         self.rebuild()
         self._watch_watering()
@@ -433,7 +470,8 @@ class GardenManager:
         folded = location["name"].casefold()
         in_use = [
             raw for raw in self.data["plantings"].values()
-            if (raw.get("location") or "").casefold() == folded
+            if any((raw.get(field) or "").casefold() == folded
+                   for field in LOCATION_FIELDS)
         ]
         if in_use:
             raise PlannerError(
@@ -443,8 +481,9 @@ class GardenManager:
         del self.data["locations"][location_id]
         self.data["watering"].pop(location_id, None)
         for defaults in self.data["crop_defaults"].values():
-            if (defaults.get("location") or "").casefold() == folded:
-                defaults.pop("location", None)
+            for field in LOCATION_FIELDS:
+                if (defaults.get(field) or "").casefold() == folded:
+                    defaults.pop(field, None)
         await self._async_save()
         self.rebuild()
         self._watch_watering()
@@ -490,8 +529,7 @@ class GardenManager:
     ) -> tuple[Planting, list[Task]]:
         planting_id = uuid.uuid4().hex[:8]
         fields = self._with_method(fields)
-        if fields.get("location"):
-            fields = {**fields, "location": self._location_name(fields["location"])}
+        fields = self._with_locations(fields)
         planting = Planting.from_dict({**fields, "id": planting_id})
         # Validates the planting before it is saved.
         generate_tasks(planting, self.crop(planting.crop), self.settings)
@@ -525,9 +563,7 @@ class GardenManager:
             new.append(planting)
         # Only now that every planting is valid: new locations get created.
         for planting in new:
-            if planting.location:
-                planting.location = self._location_name(planting.location)
-            self.data["plantings"][planting.id] = planting.to_dict()
+            self.data["plantings"][planting.id] = self._with_locations(planting.to_dict())
         self.rebuild()
         await self._async_save()
         await self.async_sync()
@@ -563,7 +599,8 @@ class GardenManager:
         def same(p: Planting) -> tuple[Any, ...]:
             start = (p.start_date or "")[5:]  # month-day: a March and a June block differ
             return (p.crop, p.method, p.season or "", p.variety or "",
-                    (p.location or "").casefold(), start)
+                    (p.location or "").casefold(), (p.start_location or "").casefold(),
+                    start)
 
         # Each planting already planned covers one source planting, no more.
         planned: dict[tuple[Any, ...], int] = {}
@@ -617,8 +654,7 @@ class GardenManager:
             if key == "id":
                 continue
             merged[key] = None if value == "" else value
-        if merged.get("location"):
-            merged["location"] = self._location_name(merged["location"])
+        merged = self._with_locations(merged)
         planting = Planting.from_dict(merged)
         generate_tasks(planting, self.crop(planting.crop), self.settings)
         self.data["plantings"][planting_id] = planting.to_dict()

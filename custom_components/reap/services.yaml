@@ -56,6 +56,10 @@ add_planting:
       example: Bed 3
       selector:
         text:
+    start_location:
+      example: Seedling tray 1
+      selector:
+        text:
     notes:
       selector:
         text:
@@ -117,6 +121,10 @@ preview_planting:
         text:
     location:
       example: Bed 3
+      selector:
+        text:
+    start_location:
+      example: Seedling tray 1
       selector:
         text:
     notes:
@@ -183,6 +191,10 @@ update_planting:
         text:
     location:
       example: Bed 3
+      selector:
+        text:
+    start_location:
+      example: Seedling tray 1
       selector:
         text:
     notes:
@@ -329,6 +341,9 @@ set_crop_defaults:
       selector:
         text:
     location:
+      selector:
+        text:
+    start_location:
       selector:
         text:
     clear:

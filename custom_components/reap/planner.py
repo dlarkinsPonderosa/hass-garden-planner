@@ -33,6 +33,8 @@ TASK_TRANSPLANT = "transplant"
 TASK_SOW = "sow"
 TASK_COVER = "cover"
 TASK_HARVEST = "harvest"
+# Indoor tasks done before planting out: they happen at the start location.
+BEFORE_PLANT_OUT = (TASK_SOW_INDOORS, TASK_POT_UP, TASK_HARDEN_OFF)
 
 TASK_ICONS = {
     TASK_SOW_INDOORS: "mdi:seed-outline",
@@ -243,8 +245,11 @@ class Planting:
     succession_until: str | None = None
     variety: str | None = None
     quantity: str | None = None
+    # Where it's planted out, or grown for direct sowing.
     location: str | None = None
     notes: str | None = None
+    # Indoor methods: where it starts (seedling tray...) until it's planted out.
+    start_location: str | None = None
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Planting:
@@ -253,6 +258,12 @@ class Planting:
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
+
+    def location_for(self, kind: str) -> str | None:
+        """Where the planting is for a task of this kind."""
+        if kind in BEFORE_PLANT_OUT and self.method in INDOOR_METHODS:
+            return self.start_location or self.location
+        return self.location
 
 
 @dataclass
@@ -528,7 +539,8 @@ def generate_tasks(
     ) -> None:
         suffix = f" (sowing {idx + 1} of {total})" if total > 1 else ""
         parts = [p for p in (extra, planting.quantity and f"Quantity: {planting.quantity}",
-                             planting.location and f"Location: {planting.location}",
+                             planting.location_for(kind)
+                             and f"Location: {planting.location_for(kind)}",
                              planting.notes) if p]
         tasks.append(
             Task(
@@ -551,7 +563,7 @@ def generate_tasks(
             weeks = _weeks_indoor(crop, window)
             sow = anchor - timedelta(weeks=weeks)
             add(idx, TASK_SOW_INDOORS, sow, f"Sow {label} indoors",
-                f"Transplant to {place} about {anchor:%b %-d}.")
+                f"Transplant to {planting.location or place} about {anchor:%b %-d}.")
             if crop.pot_up and weeks >= 5:
                 add(idx, TASK_POT_UP, sow + timedelta(days=weeks * 7 // 2),
                     f"Pot up {label}")
