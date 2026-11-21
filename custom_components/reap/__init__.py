@@ -293,9 +293,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
     async def add_location(call: ServiceCall) -> ServiceResponse:
         try:
-            location = await _manager(hass).async_add_location(
-                call.data["name"], call.data.get("soil_sensor"), call.data.get("light")
-            )
+            data = dict(call.data)
+            location = await _manager(hass).async_add_location(data.pop("name"), **data)
         except PlannerError as err:
             raise _service_error(err) from err
         return {"location": location}
@@ -314,6 +313,13 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             await _manager(hass).async_remove_location(call.data["location_id"])
         except PlannerError as err:
             raise _service_error(err) from err
+
+    async def log_watering(call: ServiceCall) -> ServiceResponse:
+        try:
+            location = await _manager(hass).async_log_watering(call.data["location"])
+        except PlannerError as err:
+            raise _service_error(err) from err
+        return {"location": location}
 
     async def list_locations(call: ServiceCall) -> ServiceResponse:
         return {"locations": _manager(hass).locations()}
@@ -393,6 +399,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                 vol.Required("name"): cv.string,
                 vol.Optional("soil_sensor"): entity_or_empty,
                 vol.Optional("light"): entity_or_empty,
+                vol.Optional("camera"): entity_or_empty,
+                vol.Optional("water"): entity_or_empty,
             }
         ),
         supports_response=SupportsResponse.OPTIONAL,
@@ -405,6 +413,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                 vol.Optional("name"): cv.string,
                 vol.Optional("soil_sensor"): entity_or_empty,
                 vol.Optional("light"): entity_or_empty,
+                vol.Optional("camera"): entity_or_empty,
+                vol.Optional("water"): entity_or_empty,
             }
         ),
         supports_response=SupportsResponse.OPTIONAL,
@@ -416,6 +426,11 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.services.async_register(
         DOMAIN, "list_locations", list_locations, vol.Schema({}),
         supports_response=SupportsResponse.ONLY,
+    )
+    hass.services.async_register(
+        DOMAIN, "log_watering", log_watering,
+        vol.Schema({vol.Required("location"): cv.string}),
+        supports_response=SupportsResponse.OPTIONAL,
     )
     hass.services.async_register(DOMAIN, "sync", sync, vol.Schema({}))
     return True

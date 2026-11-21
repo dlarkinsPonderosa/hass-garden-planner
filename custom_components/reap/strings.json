@@ -522,6 +522,14 @@
         "light": {
           "name": "Light",
           "description": "A light or switch, such as grow lights."
+        },
+        "camera": {
+          "name": "Camera",
+          "description": "A camera that shows this location."
+        },
+        "water": {
+          "name": "Watering",
+          "description": "A valve or switch that waters this location. Reap remembers when it last ran."
         }
       }
     },
@@ -544,6 +552,14 @@
         "light": {
           "name": "Light",
           "description": "A light or switch, such as grow lights."
+        },
+        "camera": {
+          "name": "Camera",
+          "description": "A camera that shows this location."
+        },
+        "water": {
+          "name": "Watering",
+          "description": "A valve or switch that waters this location. Reap remembers when it last ran."
         }
       }
     },
@@ -568,6 +584,16 @@
         "key": {
           "name": "Crop",
           "description": "The crop's key."
+        }
+      }
+    },
+    "log_watering": {
+      "name": "Log watering",
+      "description": "Record that a location was watered by hand just now.",
+      "fields": {
+        "location": {
+          "name": "Location",
+          "description": "The location's name or id."
         }
       }
     }

@@ -175,14 +175,50 @@ plantings already used are added on upgrade. Open **Locations** on the card to
 add, rename or remove them. Renaming moves the plantings with it, and a
 location in use can't be removed.
 
-Each location can have an optional soil moisture sensor and light (a light,
-switch or input boolean, such as grow lights). The card shows them next to
-each planting in that location: moisture in % in green above 30%, yellow from
-15 to 30% and red below 15%, and a bulb icon for the light's state. Tap either
-for its details.
+Each location can have, all optional:
 
-Actions: `reap.add_location`, `reap.update_location`, `reap.remove_location`
-and `reap.list_locations`.
+- a soil moisture sensor,
+- a light (a light, switch or input boolean, such as grow lights),
+- a watering valve or switch (a `valve`, `switch` or `input_boolean`),
+- a camera.
+
+The Reap card shows moisture and the light next to each planting in that
+location: moisture in % in green above 30%, yellow from 15 to 30% and red below
+15%, and a bulb icon for the light's state. Tap either for its details. The
+card options `moisture_good` and `moisture_low` change the 30 and 15.
+
+Reap remembers when each location was last watered: when its valve or switch
+turns on, and for how long it ran. This survives restarts. For beds watered by
+hand, the **Watered** button on the locations card (or `reap.log_watering`)
+records a watering now.
+
+Actions: `reap.add_location`, `reap.update_location`, `reap.remove_location`,
+`reap.list_locations` and `reap.log_watering`.
+
+### Locations card
+
+A read-only card for keeping an eye on your locations: one tile each with soil
+moisture, when it was last watered, buttons to start or stop watering (starting
+asks first) or log a watering by hand, the light switch, a camera button, and
+icons of what's growing there. Pick **Reap locations** when adding a card, or:
+
+```yaml
+type: custom:reap-locations-card
+title: Garden locations   # optional
+locations: []             # names to show, in this order; empty shows all
+show_moisture: true
+show_last_watered: true
+show_watering: true
+show_light: true
+show_camera: true
+show_snapshot: false      # a camera picture on the tile, refreshed every minute
+show_plantings: true      # icons of the crops growing there
+moisture_good: 30         # green above this %
+moisture_low: 15          # red below this %
+```
+
+Anything a location doesn't have is left off its tile. Locations are added
+and edited on the Reap card.
 
 ## Crop defaults
 
