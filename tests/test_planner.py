@@ -37,12 +37,38 @@ def by_kind(tasks):
 
 def test_catalog_has_vegetables_and_herbs():
     assert all(c.source == "builtin" for c in CATALOG.values())
-    assert len([c for c in CATALOG.values() if c.category == "vegetable"]) == 53
+    assert len([c for c in CATALOG.values() if c.category == "vegetable"]) == 55
     assert len([c for c in CATALOG.values() if c.category == "herb"]) == 22
-    for key in ("potato", "tomatillo", "daikon", "napa_cabbage"):
+    assert len([c for c in CATALOG.values() if c.category == "flower"]) == 4
+    for key in ("potato", "tomatillo", "daikon", "napa_cabbage", "watermelon", "sweet_potato"):
         assert key in CATALOG
     for crop in CATALOG.values():
         assert crop.methods(), crop.key
+
+
+def test_growing_details_and_new_methods():
+    tomato = CATALOG["tomato"]
+    assert tomato.details["min_soil_temp_c"] == 16
+    assert tomato.details["spacing_cm"]["in_row"] == 50
+    assert "Cherry" in tomato.details["varieties"]
+    assert any(e["crop"] == "basil" for e in tomato.details["companions"])
+    # Companions only name crops in the catalog.
+    for crop in CATALOG.values():
+        for e in crop.details.get("companions", []):
+            assert e["crop"] in CATALOG, (crop.key, e["crop"])
+    # Ways of growing added from open-garden-data, in every climate profile.
+    for profile in (None, "continental", "atlantic"):
+        assert "indoor_bed" in CATALOG["kale"].methods(profile)
+        assert "direct_bed" in CATALOG["melon"].methods(profile)
+    # Defaults don't change for crops that gained a method.
+    assert CATALOG["parsley"].defaults["method"] == "direct_bed"
+    assert CATALOG["melon"].defaults["method"] == "indoor_bed"
+
+
+def test_flowers_bloom_rather_than_harvest():
+    tasks = tasks_for(crop="marigold", method="indoor_bed")
+    harvest = next(t for t in tasks if t.kind == "harvest")
+    assert harvest.summary == "Marigold starts flowering"
 
 
 def test_tomato_indoor_to_beds_is_not_shifted():

@@ -29,6 +29,7 @@ const CARD_DEFAULTS = {
   show_info: true,
   show_next: true,
   show_sensors: true,
+  show_soil_temperature: true,
   icon_size: 40,
   editable: true,
   planner_path: "",
@@ -110,6 +111,53 @@ function moistureLevel(value, config = {}) {
   return "dry";
 }
 
+// A soil temperature sensor's reading: the value in its own unit for
+// showing, and in °C for comparing with a crop's minimum.
+function soilTemperature(hass, entityId) {
+  const st = entityId && hass.states[entityId];
+  const value = st ? parseFloat(st.state) : NaN;
+  if (Number.isNaN(value)) return null;
+  const unit = st.attributes.unit_of_measurement || "°C";
+  const celsius = /F/.test(unit) ? (value - 32) * 5 / 9 : value;
+  return { value, unit, celsius, text: `${Math.round(value)} ${unit}` };
+}
+
+// Compared with the warmest soil a crop needs: warm enough, within 3 °C,
+// or too cold. Without a crop to compare with there's no level.
+function soilTempLevel(celsius, needC) {
+  if (needC === null || needC === undefined) return "neutral";
+  if (celsius >= needC) return "warm";
+  if (celsius >= needC - 3) return "cool";
+  return "cold";
+}
+
+function tempText(celsius, hass) {
+  const fahrenheit = hass && hass.config && hass.config.unit_system && hass.config.unit_system.temperature === "°F";
+  return fahrenheit ? `${Math.round(celsius * 9 / 5 + 32)} °F` : `${Math.round(celsius)} °C`;
+}
+
+function lengthText(cm, hass) {
+  const imperial = hass && hass.config && hass.config.unit_system && hass.config.unit_system.length === "mi";
+  if (!imperial) return `${cm} cm`;
+  const inches = cm / 2.54;
+  return `${inches < 2 ? Math.round(inches * 4) / 4 : Math.round(inches)} in`;
+}
+
+// What the crop needs, as short phrases: spacing, depth, germination, soil.
+function cropFacts(crop, hass) {
+  const d = (crop && crop.details) || {};
+  const facts = [];
+  if (d.spacing_cm && d.spacing_cm.in_row) {
+    facts.push(`${lengthText(d.spacing_cm.in_row, hass)} apart`
+      + (d.spacing_cm.between_rows ? `, rows ${lengthText(d.spacing_cm.between_rows, hass)}` : ""));
+  }
+  if (d.sowing_depth_cm) facts.push(`sow ${lengthText(d.sowing_depth_cm, hass)} deep`);
+  if (d.germination_days) facts.push(`sprouts in ${d.germination_days[0]} to ${d.germination_days[1]} days`);
+  if (d.min_soil_temp_c !== undefined) facts.push(`soil at least ${tempText(d.min_soil_temp_c, hass)}`);
+  if (d.soil_ph) facts.push(`pH ${d.soil_ph[0].toFixed(1)} to ${d.soil_ph[1].toFixed(1)}`);
+  return facts;
+}
+
 const LIGHT_DOMAINS = ["light.", "switch.", "input_boolean."];
 const WATER_DOMAINS = ["valve.", "switch.", "input_boolean."];
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -173,11 +221,10 @@ class ReapCard extends HTMLElement {
 
   _watched() {
     const ids = [this._config.entity];
-    if (this._config.show_sensors) {
-      for (const loc of this._locations()) {
-        if (loc.soil_sensor) ids.push(loc.soil_sensor);
-        if (loc.light) ids.push(loc.light);
-      }
+    for (const loc of this._locations()) {
+      if (this._config.show_sensors && loc.soil_sensor) ids.push(loc.soil_sensor);
+      if (this._config.show_sensors && loc.light) ids.push(loc.light);
+      if (this._config.show_soil_temperature && loc.soil_temperature) ids.push(loc.soil_temperature);
     }
     return ids;
   }
@@ -597,12 +644,46 @@ class ReapCard extends HTMLElement {
     return form;
   }
 
+  // Spacing, depth, germination and soil, then companions, for a crop.
+  _renderCropFacts(crop) {
+    const facts = cropFacts(crop, this._hass);
+    const companions = ((crop.details && crop.details.companions) || [])
+      .map((e) => {
+        const other = this._cropInfo(e.crop);
+        const fallback = e.crop.replace(/_/g, " ");
+        return { ...e, name: other ? other.name : fallback[0].toUpperCase() + fallback.slice(1) };
+      });
+    const helps = companions.filter((e) => e.kind === "helps");
+    const hinders = companions.filter((e) => e.kind === "hinders");
+    if (!facts.length && !companions.length) return null;
+    const names = (list) => list.map((e, i) => h("span", { title: e.reason }, (i ? ", " : "") + e.name));
+    const first = facts.join(", ");
+    return h("div", { class: "crop-facts" },
+      facts.length ? h("p", { class: "muted small" }, icon("mdi:ruler"), first[0].toUpperCase() + first.slice(1) + ".") : null,
+      helps.length ? h("p", { class: "muted small" }, icon("mdi:sprout-outline"), h("span", {}, "Grows well with ", names(helps), ".")) : null,
+      hinders.length ? h("p", { class: "muted small" }, icon("mdi:alert-outline"), h("span", {}, "Keep away from ", names(hinders), ".")) : null);
+  }
+
+  // Suggested varieties for a crop's variety boxes.
+  _varietyList(crop) {
+    const list = (crop && crop.details && crop.details.varieties) || [];
+    if (!list.length) return {};
+    const id = `reap-varieties-${crop.key}`;
+    if (this.shadowRoot && !this.shadowRoot.getElementById(id)) {
+      this.shadowRoot.append(h("datalist", { id }, list.map((v) => h("option", { value: v }))));
+    }
+    return { list: id };
+  }
+
   _renderVarieties() {
     const f = this._form;
+    const crop = this._cropInfo(f.crop);
+    const suggest = this._varietyList(crop);
     const wrap = h("div", { class: "varieties" });
     wrap.append(h("span", { class: "field-label" }, f.varieties.length > 1 ? "Varieties (one planting each)" : "Variety"));
     f.varieties.forEach((row, i) => {
-      const variety = h("input", { type: "text", value: row.variety, placeholder: i ? "Another variety" : "Sungold",
+      const variety = h("input", { type: "text", value: row.variety, ...suggest,
+        placeholder: i ? "Another variety" : (suggest.list ? crop.details.varieties[0] : "Sungold"),
         oninput: (e) => { row.variety = e.target.value; this._preview = null; } });
       const quantity = h("input", { type: "text", value: row.quantity, placeholder: "Quantity, such as 6 cells",
         oninput: (e) => { row.quantity = e.target.value; } });
@@ -641,9 +722,9 @@ class ReapCard extends HTMLElement {
     this._mode = "location";
     this._editing = loc ? loc.id : null;
     this._form = loc
-      ? { name: loc.name, soil_sensor: loc.soil_sensor || "", light: loc.light || "",
-        camera: loc.camera || "", water: loc.water || "" }
-      : { name: "", soil_sensor: "", light: "", camera: "", water: "" };
+      ? { name: loc.name, soil_sensor: loc.soil_sensor || "", soil_temperature: loc.soil_temperature || "",
+        light: loc.light || "", camera: loc.camera || "", water: loc.water || "" }
+      : { name: "", soil_sensor: "", soil_temperature: "", light: "", camera: "", water: "" };
     this._error = null;
     this._render();
   }
@@ -656,6 +737,7 @@ class ReapCard extends HTMLElement {
       const data = {
         name: (this._form.name || "").trim(),
         soil_sensor: this._form.soil_sensor || "",
+        soil_temperature: this._form.soil_temperature || "",
         light: this._form.light || "",
         camera: this._form.camera || "",
         water: this._form.water || "",
@@ -932,7 +1014,7 @@ class ReapCard extends HTMLElement {
     const row = h("div", { class: "row" },
       iconBox,
       h("div", { class: "info" }, lines),
-      cfg.show_sensors ? this._renderSensors(this._location(p.current_location || p.location)) : null,
+      this._renderSensors(this._location(p.current_location || p.location), this._cropInfo(p.crop)),
       cfg.editable
         ? h("div", { class: "row-actions" },
           h("button", { class: "icon-btn", title: "Edit", onclick: () => this._startEdit(p) }, icon("mdi:pencil")),
@@ -949,10 +1031,32 @@ class ReapCard extends HTMLElement {
     return row;
   }
 
-  _renderSensors(loc) {
-    if (!loc || (!loc.soil_sensor && !loc.light)) return null;
+  _cropInfo(key) {
+    return (this._crops || []).find((c) => c.key === key) || null;
+  }
+
+  // Soil moisture, soil temperature and light chips for a location. With a
+  // crop, the temperature is coloured by whether the soil is warm enough for it.
+  _renderSensors(loc, crop = null) {
+    const cfg = this._config;
+    if (!loc) return null;
+    const moisture = cfg.show_sensors && loc.soil_sensor;
+    const light = cfg.show_sensors && loc.light;
+    const temp = cfg.show_soil_temperature && loc.soil_temperature;
+    if (!moisture && !light && !temp) return null;
     const box = h("div", { class: "sensors" });
-    if (loc.soil_sensor) {
+    if (temp) {
+      const reading = soilTemperature(this._hass, loc.soil_temperature);
+      const need = crop && crop.details ? crop.details.min_soil_temp_c : undefined;
+      const level = reading ? soilTempLevel(reading.celsius, need) : "unknown";
+      const title = `${loc.name} soil ${reading ? reading.text : "unavailable"}`
+        + (need !== undefined ? `. ${crop.name} needs at least ${tempText(need, this._hass)}.` : "");
+      box.append(h("button", {
+        class: `chip soil-temp ${level}`, title, "aria-label": title,
+        onclick: () => this._moreInfo(loc.soil_temperature),
+      }, icon("mdi:thermometer"), reading ? `${Math.round(reading.value)}°` : "--"));
+    }
+    if (moisture) {
       const st = this._hass.states[loc.soil_sensor];
       const value = st ? parseFloat(st.state) : NaN;
       const ok = !Number.isNaN(value);
@@ -962,7 +1066,7 @@ class ReapCard extends HTMLElement {
         onclick: () => this._moreInfo(loc.soil_sensor),
       }, icon("mdi:water-percent"), ok ? `${Math.round(value)}%` : "--"));
     }
-    if (loc.light) {
+    if (light) {
       const st = this._hass.states[loc.light];
       const on = st && st.state === "on";
       box.append(h("button", {
@@ -988,6 +1092,7 @@ class ReapCard extends HTMLElement {
       const extras = [
         !used ? "Not used" : here ? `${count(used)}, ${here} there now` : count(used),
         loc.soil_sensor ? "soil sensor" : null,
+        loc.soil_temperature ? "soil temperature" : null,
         loc.light ? "light" : null,
         loc.water ? "watering" : null,
         loc.camera ? "camera" : null,
@@ -1236,6 +1341,9 @@ class ReapCard extends HTMLElement {
     // Soil sensors first: ones that look like moisture sensors, but any
     // sensor can be picked by searching.
     form.append(this._entityField("soil_sensor", "Soil moisture sensor (optional)", ["sensor"], soil));
+    const soilTemp = (id, st) => id.startsWith("sensor.") && st.attributes.device_class === "temperature"
+      && /soil|ground/i.test(`${id} ${st.attributes.friendly_name || ""}`);
+    form.append(this._entityField("soil_temperature", "Soil temperature sensor (optional)", ["sensor"], soilTemp));
     form.append(this._entityField("light", "Light (optional)", ["light", "switch", "input_boolean"]));
     form.append(this._entityField("water", "Watering valve or switch (optional)", ["valve", "switch", "input_boolean"]));
     form.append(this._entityField("camera", "Camera (optional)", ["camera"]));
@@ -1319,6 +1427,8 @@ class ReapCard extends HTMLElement {
         form.append(this._select("season", "Season", crop.seasons.map((s) => [s, s[0].toUpperCase() + s.slice(1)])));
       }
       if (crop.notes) form.append(h("p", { class: "muted small" }, icon("mdi:information-outline"), crop.notes));
+      const facts = this._renderCropFacts(crop);
+      if (facts) form.append(facts);
     }
     form.append(h("div", { class: "grid" },
       this._input("year", "Year", "number", { min: 2000, max: 2100, placeholder: "Next season" }),
@@ -1326,7 +1436,7 @@ class ReapCard extends HTMLElement {
       this._input("succession_days", "Repeat every (days)", "number", { min: 0, max: 365 }),
       this._input("succession_count", "Number of sowings", "number", { min: 1, max: 200 }),
       this._input("succession_until", "Repeat until", "date"),
-      adding ? null : this._input("variety", "Variety"),
+      adding ? null : this._input("variety", "Variety", "text", this._varietyList(crop)),
       adding ? null : this._input("quantity", "Quantity", "text", { placeholder: "6 cells" })));
     // Indoor starts move from where they start to where they're planted out
     // when the transplant task is ticked off.
@@ -1893,6 +2003,7 @@ const LOCATIONS_DEFAULTS = {
   locations: [],
   second_line: "watered",
   show_moisture: true,
+  show_soil_temperature: true,
   show_valve: true,
   show_hand_watering: true,
   show_light: true,
@@ -1940,8 +2051,6 @@ class ReapLocationsCard extends ReapCard {
       if (config.show_hand_watering === undefined) legacy.show_hand_watering = false;
     }
     super.setConfig({ ...LOCATIONS_DEFAULTS, ...config, ...legacy });
-    // No crop list needed here.
-    this._crops = this._crops || [];
   }
 
   static getConfigElement() {
@@ -1993,7 +2102,7 @@ class ReapLocationsCard extends ReapCard {
   _watched() {
     const ids = [this._config.entity];
     for (const loc of this._shown()) {
-      for (const key of ["soil_sensor", "light", "water"]) if (loc[key]) ids.push(loc[key]);
+      for (const key of ["soil_sensor", "soil_temperature", "light", "water"]) if (loc[key]) ids.push(loc[key]);
     }
     return ids;
   }
@@ -2050,6 +2159,26 @@ class ReapLocationsCard extends ReapCard {
     });
   }
 
+  // Crops whose soil needs matter here now: growing here, or due to be sown
+  // or planted out here within two weeks. The warmest need wins.
+  _soilNeed(loc) {
+    const name = loc.name.toLowerCase();
+    const soon = new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10);
+    const crops = new Map();
+    for (const p of this._growing(loc)) crops.set(p.crop, p);
+    for (const p of this._plantings()) {
+      if ((p.location || "").toLowerCase() !== name) continue;
+      if ((p.tasks || []).some((t) => ["sow", "transplant"].includes(t.kind) && !t.done_on && t.due <= soon)) crops.set(p.crop, p);
+    }
+    let need = null;
+    for (const key of crops.keys()) {
+      const crop = this._cropInfo(key);
+      const min = crop && crop.details ? crop.details.min_soil_temp_c : undefined;
+      if (min !== undefined && (!need || min > need.min)) need = { min, crop };
+    }
+    return need;
+  }
+
   _render() {
     if (!this._config || !this._hass) return;
     if (!this.shadowRoot) this.attachShadow({ mode: "open" });
@@ -2097,6 +2226,17 @@ class ReapLocationsCard extends ReapCard {
         class: `loc-btn drip ${ok ? moistureLevel(value, cfg) : "unknown"}`, title: label, "aria-label": label,
         onclick: () => this._moreInfo(loc.soil_sensor),
       }, icon("mdi:water")));
+    }
+    if (cfg.show_soil_temperature && loc.soil_temperature) {
+      const reading = soilTemperature(this._hass, loc.soil_temperature);
+      const need = this._soilNeed(loc);
+      const level = reading ? soilTempLevel(reading.celsius, need ? need.min : null) : "unknown";
+      const label = `${loc.name} soil ${reading ? reading.text : "unavailable"}`
+        + (need ? `. ${need.crop.name} needs at least ${tempText(need.min, this._hass)}.` : "");
+      row.append(h("button", {
+        class: `loc-btn soil-temp ${level}`, title: label, "aria-label": label,
+        onclick: () => this._moreInfo(loc.soil_temperature),
+      }, icon("mdi:thermometer")));
     }
     if (cfg.show_valve && loc.water) {
       const label = running ? `Stop watering ${loc.name}` : `Start watering ${loc.name}`;
@@ -2174,6 +2314,10 @@ const LOCATIONS_STYLE = `
   button.loc-btn.light.on { color: var(--state-light-active-color, var(--amber-color, #ffc107));
     background: rgba(255, 179, 0, 0.18); }
   button.loc-btn.drip { --mdc-icon-size: 24px; }
+  button.loc-btn.soil-temp.neutral { background: var(--secondary-background-color); }
+  button.loc-btn.soil-temp.warm { color: var(--success-color, #43a047); background: rgba(67, 160, 71, 0.14); }
+  button.loc-btn.soil-temp.cool { color: var(--warning-color, #ffa600); background: rgba(255, 166, 0, 0.16); }
+  button.loc-btn.soil-temp.cold { color: var(--info-color, #039be5); background: rgba(3, 155, 229, 0.14); }
   button.loc-btn.drip.good { color: var(--success-color, #43a047); background: rgba(67, 160, 71, 0.14); }
   button.loc-btn.drip.low { color: var(--warning-color, #ffa600); background: rgba(255, 166, 0, 0.16); }
   button.loc-btn.drip.dry { color: var(--error-color, #db4437); background: rgba(219, 68, 55, 0.14); }
@@ -2229,6 +2373,12 @@ const STYLE = `
   .chip.moisture.low { color: var(--warning-color, #ffa600); }
   .chip.moisture.dry { color: var(--error-color, #db4437); }
   .chip.light { padding: 4px; border-radius: 50%; }
+  .chip.soil-temp.warm { color: var(--success-color, #43a047); }
+  .chip.soil-temp.cool { color: var(--warning-color, #ffa600); }
+  .chip.soil-temp.cold { color: var(--info-color, #039be5); }
+  .crop-facts { display: flex; flex-direction: column; gap: 4px; }
+  .crop-facts p { margin: 0; }
+  .crop-facts .small { align-items: flex-start; }
   .chip.light.on { color: var(--state-light-active-color, var(--amber-color, #ffc107)); }
   button:disabled { opacity: 0.5; cursor: default; }
   .confirm { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px; margin-bottom: 8px; border-radius: 8px;
@@ -2269,6 +2419,7 @@ const EDITOR_SCHEMA = [
       { name: "show_info", selector: { boolean: {} } },
       { name: "show_next", selector: { boolean: {} } },
       { name: "show_sensors", selector: { boolean: {} } },
+      { name: "show_soil_temperature", selector: { boolean: {} } },
       { name: "editable", selector: { boolean: {} } },
       { name: "show_done", selector: { boolean: {} } },
     ],
@@ -2288,6 +2439,7 @@ const EDITOR_LABELS = {
   show_info: "Show details row",
   show_next: "Show next task row",
   show_sensors: "Show soil moisture and light",
+  show_soil_temperature: "Show soil temperature",
   editable: "Edit mode (add, edit and remove)",
   show_done: "Show finished plantings",
   icon_size: "Icon size",
@@ -2362,6 +2514,7 @@ const LOCATIONS_LABELS = {
   locations: "Locations to show (all if none picked)",
   second_line: "Under the name",
   show_moisture: "Soil moisture",
+  show_soil_temperature: "Soil temperature",
   show_valve: "Valve or switch",
   show_hand_watering: "Watered by hand",
   show_light: "Light switch",
@@ -2387,7 +2540,7 @@ class ReapLocationsCardEditor extends ReapCardEditor {
         ] } },
       },
       {
-        type: "grid", name: "", schema: ["show_moisture", "show_valve", "show_hand_watering", "show_light",
+        type: "grid", name: "", schema: ["show_moisture", "show_soil_temperature", "show_valve", "show_hand_watering", "show_light",
           "show_camera", "show_snapshot"].map((name) => ({ name, selector: { boolean: {} } })),
       },
       {

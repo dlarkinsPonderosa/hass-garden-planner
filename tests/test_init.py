@@ -448,9 +448,12 @@ async def test_locations(hass: HomeAssistant) -> None:
     resp = await _call(hass, "list_locations", {}, True)
     assert [loc["name"] for loc in resp["locations"]] == ["Seedling Tray", "Garden", "Greenhouse"]
 
-    resp = await _call(hass, "add_location", {"name": "Bed 3", "soil_sensor": "sensor.bed_3_moisture"}, True)
+    resp = await _call(hass, "add_location", {
+        "name": "Bed 3", "soil_sensor": "sensor.bed_3_moisture", "soil_temperature": "sensor.bed_3_soil_temp",
+    }, True)
     bed = resp["location"]
     assert bed["soil_sensor"] == "sensor.bed_3_moisture" and bed["light"] is None
+    assert bed["soil_temperature"] == "sensor.bed_3_soil_temp"
     with pytest.raises(ServiceValidationError):
         await _call(hass, "add_location", {"name": "bed 3"})
 
@@ -463,7 +466,8 @@ async def test_locations(hass: HomeAssistant) -> None:
     await _call(hass, "update_location", {"location_id": bed["id"], "name": "North bed", "light": "switch.grow_lights", "soil_sensor": ""})
     assert manager.plantings()[0].location == "North bed"
     loc = next(l for l in manager.locations() if l["id"] == bed["id"])
-    assert loc == {**loc, "name": "North bed", "light": "switch.grow_lights", "soil_sensor": None, "in_use": 1}
+    assert loc == {**loc, "name": "North bed", "light": "switch.grow_lights", "soil_sensor": None, "in_use": 1,
+                   "soil_temperature": "sensor.bed_3_soil_temp"}
     attrs = hass.states.get("sensor.reap_plantings").attributes
     assert any(l["name"] == "North bed" for l in attrs["locations"])
 
@@ -585,3 +589,21 @@ async def test_bad_crop_date_is_a_clear_error(hass: HomeAssistant) -> None:
     with pytest.raises(ServiceValidationError, match="month-day"):
         await _call(hass, "add_crop", {"key": "x", "name": "X", "windows": [{"direct": ["02-30", "03-15"]}]})
     await _call(hass, "add_crop", {"key": "y", "name": "Y", "windows": [{"direct": ["02-29", "03-15"]}]})
+
+
+async def test_crop_details_reach_the_card(hass: HomeAssistant) -> None:
+    entry = await _setup(hass)
+    manager = entry.runtime_data
+    resp = await _call(hass, "list_crops", {}, True)
+    tomato = next(c for c in resp["crops"] if c["key"] == "tomato")
+    assert tomato["details"]["min_soil_temp_c"] == 16
+    marigold = next(c for c in resp["crops"] if c["key"] == "marigold")
+    assert marigold["category"] == "flower"
+    # A built-in crop edited before details existed still shows them.
+    stored = manager.crops["tomato"].to_dict()
+    stored.pop("details")
+    manager.data["custom_crops"]["tomato"] = stored
+    manager._crops = None
+    resp = await _call(hass, "list_crops", {}, True)
+    tomato = next(c for c in resp["crops"] if c["key"] == "tomato")
+    assert tomato["details"]["min_soil_temp_c"] == 16

@@ -15,8 +15,9 @@ early or late, it moves the later tasks.
 - **Works in any temperate garden.** Crop timings are stored relative to the
   last spring frost and first fall frost. Your own frost dates and a climate
   profile turn them into a calendar for your garden, in either hemisphere.
-- **75 crops built in** (53 vegetables and 22 herbs), each with sensible
-  defaults. You can add your own crops and varieties, and edit any of them.
+- **81 crops built in** (55 vegetables, 22 herbs and 4 companion flowers),
+  each with sensible defaults, spacing, sowing depth, the soil temperature it
+  needs, suggested varieties and good and bad companions. You can add your own crops and varieties, and edit any of them.
 - **Three dashboard cards** that follow your theme in light and dark mode:
   - your plantings and their next tasks;
   - a season chart of the whole year;
@@ -86,7 +87,7 @@ views:
 ### 4. Set up locations and keep an eye on them
 
 On the Reap card, open **Locations** and add your beds, trays and greenhouse.
-Each one can have a soil moisture sensor, a light, a watering valve or switch,
+Each one can have a soil moisture sensor, a soil temperature sensor, a light, a watering valve or switch,
 and a camera, all optional. A planting started indoors can start in one
 location, such as a seedling tray, and move to its bed when you tick off
 transplanting. Then add a **Reap locations** card to watch them:
@@ -118,3 +119,7 @@ transplanting. Then add a **Reap locations** card to watch them:
 If a dashboard says `Custom element doesn't exist: reap-card` (for example,
 when dashboard resources are managed in YAML), add `/reap/reap-card.js` as a
 **JavaScript module** under **Settings > Dashboards > Resources**.
+
+Spacing, sowing depth, germination, soil temperature and pH, varieties and
+companion plants come from [open-garden-data](https://github.com/thedude459/open-garden-data)
+(public domain, CC0).

@@ -23,6 +23,7 @@ title: Garden          # optional
 show_info: true        # details row: method, year, location, quantity
 show_next: true        # next task row
 show_sensors: true     # soil moisture and light of each planting's location
+show_soil_temperature: true  # soil temperature, coloured by what the crop needs
 icon_size: 40          # crop icon size in pixels
 editable: true         # show Add, Locations, edit and remove buttons
 show_done: false       # also list plantings with no open tasks
@@ -112,6 +113,7 @@ title: Garden locations   # optional
 locations: []             # names to show, in this order; empty shows all
 second_line: watered      # watered, growing (what's there now) or none (larger name)
 show_moisture: true
+show_soil_temperature: true  # coloured by what's growing or about to go in
 show_valve: true          # start or stop the watering valve or switch
 show_hand_watering: true  # log a watering by hand
 show_light: true

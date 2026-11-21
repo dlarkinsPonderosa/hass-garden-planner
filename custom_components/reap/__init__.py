@@ -401,6 +401,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             {
                 vol.Required("name"): cv.string,
                 vol.Optional("soil_sensor"): entity_or_empty,
+                vol.Optional("soil_temperature"): entity_or_empty,
                 vol.Optional("light"): entity_or_empty,
                 vol.Optional("camera"): entity_or_empty,
                 vol.Optional("water"): entity_or_empty,
@@ -415,6 +416,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                 vol.Required("location_id"): cv.string,
                 vol.Optional("name"): cv.string,
                 vol.Optional("soil_sensor"): entity_or_empty,
+                vol.Optional("soil_temperature"): entity_or_empty,
                 vol.Optional("light"): entity_or_empty,
                 vol.Optional("camera"): entity_or_empty,
                 vol.Optional("water"): entity_or_empty,
