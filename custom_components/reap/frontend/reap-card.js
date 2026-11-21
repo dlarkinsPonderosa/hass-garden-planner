@@ -2031,6 +2031,26 @@ const LOCATIONS_DEFAULTS = {
 };
 const SNAPSHOT_SECONDS = 60;
 
+// Options from older versions, turned into today's so the card and its
+// editor agree:
+// - show_last_watered / show_plantings became second_line,
+// - show_watering covered both watering buttons (show_valve, show_hand_watering).
+function migrateLocationsConfig(config) {
+  const out = { ...(config || {}) };
+  if (!out.second_line && ("show_last_watered" in out || "show_plantings" in out)) {
+    if (out.show_last_watered === false) out.second_line = out.show_plantings === false ? "none" : "growing";
+  }
+  if ("show_watering" in out) {
+    for (const key of ["show_valve", "show_hand_watering"]) {
+      if (out[key] === undefined && out.show_watering === false) out[key] = false;
+    }
+  }
+  delete out.show_last_watered;
+  delete out.show_plantings;
+  delete out.show_watering;
+  return out;
+}
+
 function timeOfDay(date) {
   const opts = { hour: "numeric", minute: "2-digit" };
   try {
@@ -2059,15 +2079,7 @@ function isOn(state) {
 class ReapLocationsCard extends ReapCard {
   setConfig(config) {
     this._confirmWater = null;
-    // Older configs had show_last_watered / show_plantings instead of second_line.
-    const legacy = config && !config.second_line && config.show_last_watered === false
-      ? { second_line: config.show_plantings === false ? "none" : "growing" } : {};
-    // show_watering used to cover both watering buttons.
-    if (config && config.show_watering === false) {
-      if (config.show_valve === undefined) legacy.show_valve = false;
-      if (config.show_hand_watering === undefined) legacy.show_hand_watering = false;
-    }
-    super.setConfig({ ...LOCATIONS_DEFAULTS, ...config, ...legacy });
+    super.setConfig({ ...LOCATIONS_DEFAULTS, ...migrateLocationsConfig(config) });
   }
 
   static getConfigElement() {
@@ -2542,6 +2554,18 @@ const LOCATIONS_LABELS = {
 };
 
 class ReapLocationsCardEditor extends ReapCardEditor {
+  setConfig(config) {
+    // Show (and save) old options the way the card reads them.
+    const migrated = migrateLocationsConfig(config);
+    const changed = JSON.stringify(migrated) !== JSON.stringify(config);
+    super.setConfig(migrated);
+    if (changed) {
+      this.dispatchEvent(new CustomEvent("config-changed", {
+        bubbles: true, composed: true, detail: { config: migrated },
+      }));
+    }
+  }
+
   // Older configs list locations by name; the picker works with ids.
   _render() {
     const state = this._hass && this._config && this._hass.states[this._config.entity || LOCATIONS_DEFAULTS.entity];
