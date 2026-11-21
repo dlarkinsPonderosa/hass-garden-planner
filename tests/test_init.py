@@ -463,7 +463,7 @@ async def test_locations(hass: HomeAssistant) -> None:
     await _call(hass, "update_location", {"location_id": bed["id"], "name": "North bed", "light": "switch.grow_lights", "soil_sensor": ""})
     assert manager.plantings()[0].location == "North bed"
     loc = next(l for l in manager.locations() if l["id"] == bed["id"])
-    assert loc == {**loc, "name": "North bed", "light": "switch.grow_lights", "soil_sensor": None, "plantings": 1}
+    assert loc == {**loc, "name": "North bed", "light": "switch.grow_lights", "soil_sensor": None, "in_use": 1}
     attrs = hass.states.get("sensor.reap_plantings").attributes
     assert any(l["name"] == "North bed" for l in attrs["locations"])
 

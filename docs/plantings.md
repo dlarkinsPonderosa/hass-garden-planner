@@ -13,7 +13,8 @@ Without the card, go to **Settings > Devices & services > Reap > Configure** and
 
 1. Choose the crop.
 2. Choose how it's grown (only the methods that crop supports are offered),
-   and optionally a start date, repeat sowings, variety, quantity and location.
+   and optionally a start date, repeat sowings, variety, quantity, location and,
+   for indoor starts, a start location.
 3. Check the list of dates, then submit.
 
 **Remove plantings** and **Settings** are on the same menu.
@@ -102,6 +103,13 @@ data:
   method: direct_bed
   succession_days: 14
   location: Bed 3
+---
+action: reap.set_crop_defaults
+data:
+  crop: tomato
+  method: indoor_bed
+  start_location: Seedling Tray   # indoor starts begin here
+  location: Bed 1                 # and are planted out here
 ```
 
 `clear: true` goes back to the built-in defaults. A planting can always

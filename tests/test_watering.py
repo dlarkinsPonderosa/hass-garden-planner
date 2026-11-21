@@ -75,3 +75,21 @@ async def test_watered_by_hand(hass: HomeAssistant) -> None:
     with pytest.raises(ServiceValidationError):
         await _call(hass, "log_watering", {"location": "Nowhere"})
     assert manager.data["watering"]
+
+
+@pytest.mark.freeze_time("2027-05-01 07:00:00")
+async def test_valve_dropping_off_mid_run(hass: HomeAssistant, freezer: FrozenDateTimeFactory) -> None:
+    hass.states.async_set("valve.bed_5", "closed")
+    entry = await _setup(hass)
+    manager = entry.runtime_data
+    await _call(hass, "add_location", {"name": "Bed 5", "water": "valve.bed_5"})
+    hass.states.async_set("valve.bed_5", "open")
+    await hass.async_block_till_done()
+    freezer.tick(timedelta(minutes=5))
+    hass.states.async_set("valve.bed_5", "unavailable")
+    await hass.async_block_till_done()
+    freezer.tick(timedelta(minutes=10))
+    hass.states.async_set("valve.bed_5", "closed")
+    await hass.async_block_till_done()
+    bed = next(x for x in manager.locations() if x["name"] == "Bed 5")
+    assert bed["watered_minutes"] == 15

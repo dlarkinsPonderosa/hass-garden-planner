@@ -560,10 +560,12 @@ def generate_tasks(
 
     for idx, anchor in enumerate(schedule.dates):
         if indoor:
+            # Where it's planted out, when the planting says.
+            out_to = planting.location or place
             weeks = _weeks_indoor(crop, window)
             sow = anchor - timedelta(weeks=weeks)
             add(idx, TASK_SOW_INDOORS, sow, f"Sow {label} indoors",
-                f"Transplant to {planting.location or place} about {anchor:%b %-d}.")
+                f"Transplant to {out_to} about {anchor:%b %-d}.")
             if crop.pot_up and weeks >= 5:
                 add(idx, TASK_POT_UP, sow + timedelta(days=weeks * 7 // 2),
                     f"Pot up {label}")
@@ -575,8 +577,8 @@ def generate_tasks(
             if harden > 0:
                 add(idx, TASK_HARDEN_OFF, anchor - timedelta(days=harden),
                     f"Start hardening off {label}",
-                    f"{harden} days before transplanting to {place}.")
-            add(idx, TASK_TRANSPLANT, anchor, f"Transplant {label} to {place}")
+                    f"{harden} days before transplanting to {out_to}.")
+            add(idx, TASK_TRANSPLANT, anchor, f"Transplant {label} to {out_to}")
             seeded = sow
         else:
             verb = "Plant" if crop.planted else "Sow"
