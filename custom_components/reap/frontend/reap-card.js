@@ -47,11 +47,22 @@ const METHOD_ICONS = {
   direct_bed: "mdi:shovel",
   direct_greenhouse: "mdi:greenhouse",
 };
-const DEFAULT_KEYS = ["method", "succession_days", "succession_count", "quantity", "location"];
+const DEFAULT_KEYS = ["method", "succession_days", "succession_count", "quantity", "location", "start_location"];
 const FIELDS = [
   "method", "season", "year", "start_date", "succession_days",
-  "succession_count", "succession_until", "variety", "quantity", "location", "notes",
+  "succession_count", "succession_until", "variety", "quantity", "location", "start_location", "notes",
 ];
+const INDOOR_METHODS = ["indoor_bed", "indoor_greenhouse"];
+
+// Where a planting is, for display: "Seedling tray 1, then Bed 3" while an
+// indoor start is still in its start location.
+function whereText(p) {
+  const now = p.current_location || p.location;
+  if (p.start_location && now === p.start_location && p.location && p.location !== p.start_location) {
+    return `${p.start_location}, then ${p.location}`;
+  }
+  return now || null;
+}
 
 function h(tag, attrs = {}, ...children) {
   const el = document.createElement(tag);
@@ -116,7 +127,7 @@ const CROP_SEASONS = ["spring", "summer", "fall"];
 // What makes two plantings "the same" when planning a year again.
 function sameKey(p) {
   return [p.crop, p.method, p.season || "", p.variety || "", (p.location || "").toLowerCase(),
-    (p.start_date || "").slice(5)].join("|");
+    (p.start_location || "").toLowerCase(), (p.start_date || "").slice(5)].join("|");
 }
 
 // Go to a dashboard path the way Home Assistant's own links do.
@@ -243,7 +254,7 @@ class ReapCard extends HTMLElement {
   _startEdit(planting) {
     this._mode = "edit";
     this._editing = planting.id;
-    this._form = { crop: planting.crop };
+    this._form = { crop: planting.crop, _saved_method: planting.method };
     for (const key of FIELDS) {
       if (planting[key] !== null && planting[key] !== undefined) this._form[key] = planting[key];
     }
@@ -383,6 +394,7 @@ class ReapCard extends HTMLElement {
         if (f.year !== "" && f.year !== undefined) one.year = Number(f.year);
         if (f.bulk_method && crop && crop.methods.includes(f.bulk_method)) one.method = f.bulk_method;
         if (f.location) one.location = f.location;
+        if (f.start_location) one.start_location = f.start_location;
         if ((f.notes || "").trim()) one.notes = f.notes.trim();
         return one;
       });
@@ -569,7 +581,8 @@ class ReapCard extends HTMLElement {
       this._input("year", "Year", "number", { min: 2000, max: 2100, placeholder: "Next season" }),
       this._select("bulk_method", "Method", [["", "Each crop's default"],
         ...Object.entries(METHOD_LABELS).map(([k, v]) => [k, `${v} (where it can be)`])]),
-      this._select("location", "Location", [["", "Each crop's default"], ...names])));
+      this._select("location", "Location (where it grows)", [["", "Each crop's default"], ...names]),
+      this._select("start_location", "Start indoor starts in", [["", "Each crop's default"], ...names])));
     form.append(this._input("notes", "Notes"));
     this._countBtn = h("button", { class: "primary", disabled: this._busy, onclick: () => this._saveBulk() });
     this._countLabel = (n) => [icon("mdi:plus"), `Add ${n} planting${n === 1 ? "" : "s"}`];
@@ -891,7 +904,7 @@ class ReapCard extends HTMLElement {
       p.season && p.season !== "spring" ? p.season : null,
       String(p.year),
       sowings > 1 ? `${sowings} sowings, every ${p.succession_days} days` : null,
-      p.location,
+      whereText(p),
       p.quantity,
     ].filter(Boolean).join(" · ");
 
@@ -915,7 +928,7 @@ class ReapCard extends HTMLElement {
     const row = h("div", { class: "row" },
       iconBox,
       h("div", { class: "info" }, lines),
-      cfg.show_sensors ? this._renderSensors(this._location(p.location)) : null,
+      cfg.show_sensors ? this._renderSensors(this._location(p.current_location || p.location)) : null,
       cfg.editable
         ? h("div", { class: "row-actions" },
           h("button", { class: "icon-btn", title: "Edit", onclick: () => this._startEdit(p) }, icon("mdi:pencil")),
@@ -1251,11 +1264,11 @@ class ReapCard extends HTMLElement {
     return h("label", { class: "field" }, h("span", {}, label), select);
   }
 
-  _locationSelect() {
+  _locationSelect(key = "location", label = "Location", none = "None") {
     const names = this._locations().map((l) => l.name);
-    const current = this._form.location;
+    const current = this._form[key];
     if (current && !names.some((n) => n.toLowerCase() === current.toLowerCase())) names.push(current);
-    return this._select("location", "Location", [["", "None"], ...names.map((n) => [n, n])]);
+    return this._select(key, label, [["", none], ...names.map((n) => [n, n])]);
   }
 
   _renderForm() {
@@ -1273,9 +1286,11 @@ class ReapCard extends HTMLElement {
           // Several crops start from each crop's own defaults, not the one picked above.
           if (value && !this._form.bulk) {
             this._form.single_location = this._form.location;
-            this._form.location = "";
+            this._form.single_start = this._form.start_location;
+            this._form.location = this._form.start_location = "";
           } else if (!value && this._form.bulk) {
             this._form.location = this._form.single_location || "";
+            this._form.start_location = this._form.single_start || "";
           }
           this._form.bulk = value; this._preview = null; this._error = null; this._render();
         },
@@ -1287,7 +1302,12 @@ class ReapCard extends HTMLElement {
     const crops = (this._crops || []).map((c) => [c.key, c.name]);
     form.append(this._select("crop", "Crop", crops, (key) => this._pickCrop(key)));
     if (crop) {
-      form.append(this._select("method", "Method", crop.methods.map((m) => [m, METHOD_LABELS[m] || m])));
+      form.append(this._select("method", "Method", crop.methods.map((m) => [m, METHOD_LABELS[m] || m]),
+        (value) => { this._form.method = value; this._preview = null; this._render(); }));
+      if (!adding && this._form._saved_method && this._form.method !== this._form._saved_method) {
+        form.append(h("p", { class: "warn small" }, icon("mdi:calendar-sync"),
+          "Changing the method re-times the tasks that aren't done yet. Preview dates shows the new dates before you save."));
+      }
       if (crop.seasons.length > 1) {
         form.append(this._select("season", "Season", crop.seasons.map((s) => [s, s[0].toUpperCase() + s.slice(1)])));
       }
@@ -1300,8 +1320,14 @@ class ReapCard extends HTMLElement {
       this._input("succession_count", "Number of sowings", "number", { min: 1, max: 200 }),
       this._input("succession_until", "Repeat until", "date"),
       adding ? null : this._input("variety", "Variety"),
-      adding ? null : this._input("quantity", "Quantity", "text", { placeholder: "6 cells" }),
-      this._locationSelect()));
+      adding ? null : this._input("quantity", "Quantity", "text", { placeholder: "6 cells" })));
+    // Indoor starts move from where they start to where they're planted out
+    // when the transplant task is ticked off.
+    form.append(INDOOR_METHODS.includes(this._form.method)
+      ? h("div", { class: "grid" },
+        this._locationSelect("start_location", "Start in (optional)", "Not decided yet"),
+        this._locationSelect("location", "Plant out to"))
+      : h("div", { class: "grid" }, this._locationSelect()));
     if (adding) form.append(this._renderVarieties());
     form.append(this._input("notes", "Notes"));
     form.append(h("label", { class: "check" },
@@ -1309,7 +1335,7 @@ class ReapCard extends HTMLElement {
         type: "checkbox", checked: !!this._form.save_defaults,
         onchange: (e) => { this._form.save_defaults = e.target.checked; },
       }),
-      "Save method, repeat, sowings, quantity and location as the default for this crop"));
+      "Save method, repeat, sowings, quantity and locations as the default for this crop"));
     form.append(h("p", { class: "muted small" },
       "Start date is the transplant date for indoor starts, or the first sowing for direct sowing. Leave it empty to use the crop's usual window."
       + (adding && this._form.varieties.length > 1 ? " Preview shows the first variety; the others get the same dates." : "")));
@@ -1501,7 +1527,8 @@ class ReapPlannerCard extends ReapCard {
     const order = this._locations().map((l) => l.name.toLowerCase());
     const groups = new Map();
     for (const row of rows) {
-      const name = row.p.location || "";
+      // Grouped by where each planting is going: the planning question.
+      const name = row.p.location || row.p.start_location || "";
       const key = name.toLowerCase();
       if (!groups.has(key)) groups.set(key, { name: name || "No location", key, rows: [] });
       groups.get(key).rows.push(row);
@@ -1546,7 +1573,7 @@ class ReapPlannerCard extends ReapCard {
 
     const rows = this._rows(year);
     const own = rows.filter((r) => !r.other).map((r) => r.p);
-    const places = new Set(own.map((p) => (p.location || "").toLowerCase()).filter(Boolean));
+    const places = new Set(own.map((p) => (p.location || p.start_location || "").toLowerCase()).filter(Boolean));
     const problems = own.filter((p) => p.problem).length;
 
     const nav = (delta, label, iconName) => h("button", {
@@ -1677,8 +1704,8 @@ class ReapPlannerCard extends ReapCard {
     }
 
     const sub = row.other
-      ? [`From ${this._yearLabel(p.year)}`, p.location]
-      : [p.location || null, p.problem ? null : (METHOD_LABELS[p.method] || p.method)];
+      ? [`From ${this._yearLabel(p.year)}`, whereText(p)]
+      : [whereText(p), p.problem ? null : (METHOD_LABELS[p.method] || p.method)];
     const selected = this._selected === p.id;
     const label = h("div", { class: "plabel" },
       h("div", { class: "pname" }, icon(p.icon || "mdi:sprout"), h("span", {}, this._name(p))),
@@ -1729,7 +1756,7 @@ class ReapPlannerCard extends ReapCard {
       METHOD_LABELS[p.method] || p.method,
       p.season && p.season !== "spring" ? `${p.season} planting` : null,
       sowings > 1 ? `${sowings} sowings, every ${p.succession_days} days` : null,
-      p.location,
+      whereText(p),
       p.quantity,
     ].filter(Boolean).join(" · ");
     const box = h("div", { class: "plan-detail" },
@@ -1997,7 +2024,8 @@ class ReapLocationsCard extends ReapCard {
   // Plantings still under way in a location: ones with open tasks.
   _growing(loc) {
     const name = loc.name.toLowerCase();
-    return this._plantings().filter((p) => (p.location || "").toLowerCase() === name && (p.open_count || 0) > 0);
+    return this._plantings().filter((p) => (p.current_location || p.location || "").toLowerCase() === name
+      && (p.open_count || 0) > 0);
   }
 
   _render() {
@@ -2210,6 +2238,7 @@ const STYLE = `
   .removed summary { cursor: pointer; color: var(--secondary-text-color); padding: 8px 0; }
   .crop-icon.small-icon { width: 36px; height: 36px; --mdc-icon-size: 22px; }
   .error { color: var(--error-color); display: flex; align-items: center; gap: 6px; padding: 8px 0; }
+  .warn { color: var(--warning-color, #ffa600); display: flex; align-items: center; gap: 6px; margin: 0; }
   .info .error { padding: 2px 0; }
 `;
 

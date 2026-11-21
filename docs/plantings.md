@@ -39,7 +39,9 @@ data:
 | `season` | For crops with more than one window, such as `fall` for garlic or broad beans |
 | `start_date` | Transplant date (indoor methods) or first sowing date (direct). Defaults to the start of the crop's window |
 | `succession_days`, `succession_count`, `succession_until` | Repeat sowings |
-| `variety`, `quantity`, `location`, `notes` | Shown on the tasks |
+| `location` | Where it's planted out, or sown for direct sowing |
+| `start_location` | Indoor starts only: where it starts, until its transplant task is ticked off. See [Locations](locations.md#starting-indoors-then-planting-out) |
+| `variety`, `quantity`, `notes` | Shown on the tasks |
 
 `reap.preview_planting` takes the same fields and returns the tasks
 without saving anything. `reap.update_planting` takes a

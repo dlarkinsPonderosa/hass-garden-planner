@@ -38,6 +38,7 @@ from .const import (
     ZONE_CUSTOM,
     ZONE_FROST_DATES,
 )
+from .manager import CROP_DEFAULT_KEYS
 from .planner import PlannerError
 
 
@@ -280,7 +281,7 @@ METHOD_LABELS = {
 PLANTING_KEYS = (
     "method", "season", "year", "start_date", "succession_days",
     "succession_count", "succession_until", "variety", "quantity",
-    "location", "notes",
+    "location", "start_location", "notes",
 )
 
 
@@ -471,13 +472,9 @@ class ReapOptionsFlow(OptionsFlow):
                 vol.Optional("succession_until"): selector.DateSelector(),
                 vol.Optional("variety"): str,
                 vol.Optional("quantity"): str,
-                vol.Optional("location"): selector.SelectSelector(
-                    selector.SelectSelectorConfig(
-                        options=[loc["name"] for loc in manager.locations()],
-                        custom_value=True,
-                        mode=selector.SelectSelectorMode.DROPDOWN,
-                    )
-                ),
+                vol.Optional("location"): self._location_picker(),
+                # Ignored unless the method starts indoors.
+                vol.Optional("start_location"): self._location_picker(),
                 vol.Optional("notes"): str,
                 vol.Optional("save_defaults", default=False): bool,
             }
@@ -493,6 +490,15 @@ class ReapOptionsFlow(OptionsFlow):
             description_placeholders={"crop": crop.name, "error": problem},
         )
 
+    def _location_picker(self) -> selector.SelectSelector:
+        return selector.SelectSelector(
+            selector.SelectSelectorConfig(
+                options=[loc["name"] for loc in self._manager.locations()],
+                custom_value=True,
+                mode=selector.SelectSelectorMode.DROPDOWN,
+            )
+        )
+
     async def async_step_planting_confirm(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
@@ -505,7 +511,7 @@ class ReapOptionsFlow(OptionsFlow):
                     self._planting["crop"],
                     {
                         k: v for k, v in self._planting.items()
-                        if k in ("method", "succession_days", "succession_count", "quantity", "location")
+                        if k in CROP_DEFAULT_KEYS
                     },
                 )
             return self._done()

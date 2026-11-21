@@ -87,7 +87,9 @@ views:
 
 On the Reap card, open **Locations** and add your beds, trays and greenhouse.
 Each one can have a soil moisture sensor, a light, a watering valve or switch,
-and a camera, all optional. Then add a **Reap locations** card to watch them:
+and a camera, all optional. A planting started indoors can start in one
+location, such as a seedling tray, and move to its bed when you tick off
+transplanting. Then add a **Reap locations** card to watch them:
 
 - moisture, shown green, yellow or red;
 - when each location was last watered;

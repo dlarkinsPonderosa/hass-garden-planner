@@ -9,7 +9,7 @@
 | `sensor.reap_next_task` | Next open task | due date, crop, method |
 | `sensor.reap_tasks_due_this_week` | Count, including overdue | task list |
 | `sensor.reap_overdue_tasks` | Count | task list |
-| `sensor.reap_plantings` | Count | every planting with its next tasks and `timeline` (phase date ranges); `southern` |
+| `sensor.reap_plantings` | Count | every planting with its next tasks, `current_location` (where it is now) and `timeline` (phase date ranges); `southern` |
 | `todo.reap_garden_tasks` | Only when the planner makes its own list | |
 
 Each crop has a Material Design icon (`mdi:carrot`, `mdi:chili-mild`,

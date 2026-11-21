@@ -157,6 +157,7 @@ class PlantingsSensor(GardenSensor):
     def _update_from_manager(self) -> None:
         crops = self.manager.crops
         dismissed = set(self.manager.data["dismissed"])
+        planted_out = self.manager.planted_out_ids()
         plantings = []
         for planting in self.manager.plantings():
             crop = crops.get(planting.crop)
@@ -166,6 +167,8 @@ class PlantingsSensor(GardenSensor):
                 {
                     **planting.to_dict(),
                     "crop_name": crop.name if crop else planting.crop,
+                    # Where it is now: the start location until it's planted out.
+                    "current_location": self.manager.current_location(planting, planted_out),
                     "icon": crop.icon if crop else "mdi:sprout",
                     "sowings": len({t.succession for t in tasks}),
                     "task_count": len(tasks),
