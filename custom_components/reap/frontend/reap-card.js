@@ -2337,13 +2337,12 @@ const LOCATIONS_STYLE = `
   .loc-sub { font-size: 0.8em; color: var(--secondary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .loc-sub.running { color: var(--info-color, var(--primary-color)); }
   button.loc-btn { width: 40px; height: 40px; flex: none; padding: 0; border: none; border-radius: 50%; justify-content: center;
-    background: none; color: var(--secondary-text-color); --mdc-icon-size: 22px; }
-  button.loc-btn:hover:not(:disabled) { background: var(--secondary-background-color); }
+    background: var(--secondary-background-color); color: var(--secondary-text-color); --mdc-icon-size: 22px; }
+  button.loc-btn:hover:not(:disabled) { filter: brightness(0.95); }
   button.loc-btn.running { background: var(--info-color, var(--primary-color)); color: var(--text-primary-color, #fff); }
   button.loc-btn.light.on { color: var(--state-light-active-color, var(--amber-color, #ffc107));
     background: rgba(255, 179, 0, 0.18); }
   button.loc-btn.drip { --mdc-icon-size: 24px; }
-  button.loc-btn.soil-temp.neutral { background: var(--secondary-background-color); }
   button.loc-btn.soil-temp.warm { color: var(--success-color, #43a047); background: rgba(67, 160, 71, 0.14); }
   button.loc-btn.soil-temp.cool { color: var(--warning-color, #ffa600); background: rgba(255, 166, 0, 0.16); }
   button.loc-btn.soil-temp.cold { color: var(--info-color, #039be5); background: rgba(3, 155, 229, 0.14); }
