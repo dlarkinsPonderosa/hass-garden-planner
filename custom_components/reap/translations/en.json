@@ -537,6 +537,10 @@
           "name": "Soil moisture sensor",
           "description": "A sensor reporting soil moisture in %."
         },
+        "soil_temperature": {
+          "name": "Soil temperature sensor",
+          "description": "A sensor reporting the soil temperature."
+        },
         "light": {
           "name": "Light",
           "description": "A light or switch, such as grow lights."
@@ -553,7 +557,7 @@
     },
     "update_location": {
       "name": "Update location",
-      "description": "Rename a location or change its sensor and light. Plantings follow a rename. An empty value clears a sensor or light.",
+      "description": "Rename a location or change its sensors, light, camera or watering. Plantings follow a rename. An empty value clears one.",
       "fields": {
         "location_id": {
           "name": "Location ID",
@@ -566,6 +570,10 @@
         "soil_sensor": {
           "name": "Soil moisture sensor",
           "description": "A sensor reporting soil moisture in %."
+        },
+        "soil_temperature": {
+          "name": "Soil temperature sensor",
+          "description": "A sensor reporting the soil temperature."
         },
         "light": {
           "name": "Light",

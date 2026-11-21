@@ -92,7 +92,7 @@ def _empty_data() -> dict[str, Any]:
         "own_items": [],
         # crop key -> the user's planting defaults for that crop
         "crop_defaults": {},
-        # location id -> {id, name, soil_sensor, light, camera, water}
+        # location id -> {id, name, soil_sensor, soil_temperature, light, camera, water}
         "locations": {},
         # location id -> {last, minutes, manual, started}: when it was last
         # watered, for how long, by hand or not, and when the valve opened if
@@ -105,7 +105,7 @@ def _empty_data() -> dict[str, Any]:
 OWN_LIST_KEY = "own"
 
 DEFAULT_LOCATIONS = ("Seedling Tray", "Garden", "Greenhouse")
-LOCATION_ENTITY_KEYS = ("soil_sensor", "light", "camera", "water")
+LOCATION_ENTITY_KEYS = ("soil_sensor", "soil_temperature", "light", "camera", "water")
 # States of a watering valve or switch that mean water is running.
 WATER_ON_STATES = ("on", "open", "opening")
 
@@ -848,6 +848,10 @@ class GardenManager:
             "edited": crop.key in self.builtin_crops
             and crop.key in self.data["custom_crops"],
             "notes": crop.notes,
+            # A built-in crop edited before details existed keeps the built-in ones.
+            "details": crop.details or (
+                self.builtin_crops[crop.key].details if crop.key in self.builtin_crops else {}
+            ),
             "methods": crop.methods(profile),
             "seasons": crop.seasons(profile),
             "defaults": self.crop_defaults(crop.key),

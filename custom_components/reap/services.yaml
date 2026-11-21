@@ -360,6 +360,11 @@ add_location:
       selector:
         entity:
           domain: sensor
+    soil_temperature:
+      selector:
+        entity:
+          domain: sensor
+          device_class: temperature
     light:
       selector:
         entity:
@@ -391,6 +396,11 @@ update_location:
       selector:
         entity:
           domain: sensor
+    soil_temperature:
+      selector:
+        entity:
+          domain: sensor
+          device_class: temperature
     light:
       selector:
         entity:

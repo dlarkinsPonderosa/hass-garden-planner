@@ -13,6 +13,7 @@ location in use can't be removed.
 Each location can have, all optional:
 
 - a soil moisture sensor,
+- a soil temperature sensor,
 - a light (a light, switch or input boolean, such as grow lights),
 - a watering valve or switch (a `valve`, `switch` or `input_boolean`),
 - a camera.
@@ -21,6 +22,13 @@ The Reap card shows moisture and the light next to each planting in that
 location: moisture in % in green above 30%, yellow from 15 to 30% and red below
 15%, and a bulb icon for the light's state. Tap either for its details. The
 card options `moisture_good` and `moisture_low` change the 30 and 15.
+
+Soil temperature shows as a thermometer, coloured by what the crop needs (the
+minimum soil temperature listed for it): green when the soil is warm enough,
+yellow within 3 °C of it, and blue when it's colder. On the Reap card each
+planting is compared with its own crop. On the locations card it's compared
+with the crop that needs the warmest soil among those growing there or due to
+be sown or planted out there in the next two weeks; with none, it's grey.
 
 ## Starting indoors, then planting out
 

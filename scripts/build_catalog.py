@@ -72,13 +72,13 @@ crop("eggplant","Eggplant",[(S,{"indoor":("04-01","04-20"),"transplant":("06-01"
 crop("endive","Endive/Escarole",[(S,{"direct":("04-01","04-30")}),(F,{"direct":("08-15","09-30"),"cover":("09-15","10-31")})],dth=85,harvest_weeks=4)
 crop("fennel","Fennel",[(S,{"direct":("04-01","06-30")})],dth=80,harvest_weeks=4)
 crop("garlic","Garlic",[(S,{"direct":("03-01","03-15")}),(F,{"direct":("09-20","11-15")})],dth=270,harvest_weeks=3,notes="Plant cloves. Fall planting is harvested the next July.")
-crop("kale","Kale & Collard",[(S,{"direct":("03-01","07-31")})],dth=60,harvest_weeks=16)
+crop("kale","Kale & Collard",[(S,{"indoor":("02-15","03-31"),"transplant":("03-20","05-15"),"direct":("03-01","07-31")})],weeks_indoor=5,dth=60,harvest_weeks=16)
 crop("kohlrabi","Kohlrabi",[(S,{"direct":("04-01","05-15")}),(SU,{"direct":("07-15","07-31")})],dth=55,harvest_weeks=3)
 crop("leek","Leek",[(S,{"indoor":("02-01","04-01"),"transplant":("04-01","04-15"),"direct":("04-15","05-15")}),(SU,{"indoor":("06-01","06-15"),"transplant":("08-01","08-15")})],weeks_indoor=10,dth=150,harvest_weeks=12)
 crop("lettuce","Lettuce",[(S,{"indoor":("03-01","04-01"),"transplant":("04-01","04-30"),"direct":("05-01","09-15"),"cover":("09-01","09-30")})],weeks_indoor=4,dth=50,harvest_weeks=4)
-crop("melon","Melon",[(S,{"indoor":("04-15","05-01"),"transplant":("06-01","06-30")})],weeks_indoor=4,dth=90,harvest_weeks=4,tender=True)
+crop("melon","Melon",[(S,{"indoor":("04-15","05-01"),"transplant":("06-01","06-30"),"direct":("06-01","06-20")})],weeks_indoor=4,dth=90,harvest_weeks=4,tender=True)
 crop("mustard","Mustard",[(S,{"direct":("03-01","06-30")}),(F,{"direct":("08-01","09-30"),"cover":("09-15","10-15")})],dth=40,harvest_weeks=4)
-crop("okra","Okra",[(S,{"indoor":("04-15","05-01"),"transplant":("05-20","06-01")})],weeks_indoor=5,dth=90,harvest_weeks=6,tender=True)
+crop("okra","Okra",[(S,{"indoor":("04-15","05-01"),"transplant":("05-20","06-01"),"direct":("06-01","06-15")})],weeks_indoor=5,dth=90,harvest_weeks=6,tender=True)
 crop("onion","Onion",[(S,{"indoor":("01-01","03-31"),"direct":("04-01","04-30"),"transplant":("04-30","05-31")})],weeks_indoor=10,dth=150,harvest_weeks=3)
 crop("onion_overwinter","Onion, overwinter",[(SU,{"indoor":("06-01","07-15"),"transplant":("08-15","08-31")})],weeks_indoor=8,dth=330,harvest_weeks=3)
 crop("scallion","Onion, scallion",[(S,{"indoor":("03-15","04-01"),"direct":("04-01","08-31")})],weeks_indoor=4,dth=60,harvest_weeks=6)
@@ -102,9 +102,17 @@ crop("potato","Potato",[(S,{"direct":("03-15","06-15")})],dth=100,harvest_weeks=
 crop("daikon","Daikon radish",[(F,{"direct":("07-15","08-31")})],dth=60,harvest_weeks=4,source=A,notes="Sow in late summer for a fall harvest. Spring sowings tend to bolt.")
 crop("napa_cabbage","Napa cabbage",[(S,{"indoor":("03-15","04-15"),"transplant":("04-15","05-10")}),(F,{"direct":("07-15","08-15")})],weeks_indoor=4,dth=70,harvest_weeks=3,source=A,notes="Late-summer sowings head best. Spring plantings can bolt as days lengthen.")
 crop("tomatillo","Tomatillo",[(S,{"indoor":("03-15","04-15"),"transplant":("05-15","06-15")})],weeks_indoor=7,dth=120,harvest_weeks=8,tender=True,pot_up=True,source=A)
+crop("watermelon","Watermelon",[(S,{"indoor":("04-15","05-01"),"transplant":("06-01","06-30"),"direct":("06-01","06-20")})],weeks_indoor=4,dth=110,harvest_weeks=3,tender=True,source=A)
+crop("sweet_potato","Sweet potato",[(S,{"indoor":("04-01","04-20"),"transplant":("06-01","06-20")})],weeks_indoor=7,dth=150,harvest_weeks=2,tender=True,source=A)
+# Flowers grown with vegetables. Harvest means first flowers.
+FL = "added_flowers"
+crop("calendula","Calendula",[(S,{"indoor":("03-01","04-01"),"transplant":("04-01","04-30"),"direct":("04-01","06-30")})],weeks_indoor=6,dth=55,harvest_weeks=16,source=FL)
+crop("marigold","Marigold",[(S,{"indoor":("03-15","04-30"),"transplant":("05-15","06-15"),"direct":("05-15","06-15")})],weeks_indoor=7,dth=100,harvest_weeks=16,tender=True,source=FL)
+crop("nasturtium","Nasturtium",[(S,{"direct":("05-01","06-30")})],dth=55,harvest_weeks=16,tender=True,source=FL)
+crop("sweet_alyssum","Sweet alyssum",[(S,{"indoor":("03-01","04-01"),"transplant":("04-15","05-15"),"direct":("04-15","06-15")})],weeks_indoor=6,dth=50,harvest_weeks=20,source=FL)
 # Herbs, from the same chart's flower and herb guide.
 H = "pdf_herbs"
-crop("basil","Basil",[(S,{"indoor":("04-15","05-20"),"transplant":("06-01","06-30")})],weeks_indoor=6,dth=85,harvest_weeks=10,tender=True,source=H)
+crop("basil","Basil",[(S,{"indoor":("04-15","05-20"),"transplant":("06-01","06-30"),"direct":("06-01","06-30")})],weeks_indoor=6,dth=85,harvest_weeks=10,tender=True,source=H)
 crop("bergamot","Bergamot",[(S,{"indoor":("02-15","03-20"),"direct":("03-20","04-15"),"transplant":("05-01","05-15")}),(F,{"direct":("10-01","10-31")})],weeks_indoor=10,dth=120,harvest_weeks=8,perennial=True,source=H)
 crop("borage","Borage",[(S,{"direct":("04-01","08-15")})],dth=55,harvest_weeks=8,source=H)
 crop("chamomile","Chamomile",[(S,{"direct":("04-01","06-30")}),(F,{"direct":("09-15","10-31")})],dth=65,harvest_weeks=8,source=H)
@@ -118,7 +126,7 @@ crop("lemongrass","Lemongrass",[(S,{"indoor":("02-15","03-31"),"transplant":("05
 crop("lovage","Lovage",[(S,{"indoor":("03-01","04-01"),"direct":("04-01","04-20"),"transplant":("04-20","05-01")}),(F,{"direct":("10-01","10-31")})],weeks_indoor=7,dth=365,harvest_weeks=12,perennial=True,source=H)
 crop("mint","Mint",[(S,{"indoor":("02-01","03-31"),"transplant":("05-01","06-15")})],weeks_indoor=10,dth=120,harvest_weeks=16,perennial=True,source=H)
 crop("oregano","Oregano",[(S,{"indoor":("02-15","04-20"),"transplant":("04-20","05-15")})],weeks_indoor=8,dth=110,harvest_weeks=16,perennial=True,source=H)
-crop("parsley","Parsley",[(S,{"direct":("04-15","08-15")})],dth=75,harvest_weeks=20,source=H,notes="Flat-leaf (Italian) and curly are timed the same.")
+crop("parsley","Parsley",[(S,{"indoor":("02-15","03-31"),"transplant":("04-15","05-15"),"direct":("04-15","08-15")})],weeks_indoor=8,dth=75,harvest_weeks=20,source=H,notes="Flat-leaf (Italian) and curly are timed the same.")
 crop("rosemary","Rosemary",[(S,{"indoor":("02-01","04-20"),"transplant":("04-20","05-15")})],weeks_indoor=10,dth=180,harvest_weeks=20,perennial=True,source=H)
 crop("sage","Sage",[(S,{"indoor":("02-01","04-20"),"transplant":("04-20","05-15")})],weeks_indoor=10,dth=150,harvest_weeks=20,perennial=True,source=H)
 crop("savory","Savory",[(S,{"indoor":("03-01","04-25"),"transplant":("04-25","05-10")})],weeks_indoor=7,dth=90,harvest_weeks=12,source=H)
@@ -379,6 +387,12 @@ def to_json(windows):
             for season, kinds in windows.items()]
 
 
+# Methods added to crops from open-garden-data's windows (not on the charts).
+ADDED_METHODS = {
+    "kale": ("indoor", "transplant"), "parsley": ("indoor", "transplant"),
+    "melon": ("direct",), "okra": ("direct",), "basil": ("direct",),
+}
+
 PROFILES = {
     "continental": [CONTINENTAL_A, CONTINENTAL_B],
     "atlantic": [ATLANTIC],
@@ -394,6 +408,13 @@ for profile, charts in PROFILES.items():
         c.setdefault("profiles", {})
         if c["key"] in sets:
             windows = sets[c["key"]]
+            # Ways of growing it that the regional chart doesn't list, added
+            # from the cool-spring timing like a crop the chart lacks.
+            for kind in ADDED_METHODS.get(c["key"], ()):
+                base = cool_spring_windows(c)
+                for season, kinds in shifted(base, shifts[c["frost_tender"]]).items():
+                    if kind in kinds and season in windows and kind not in windows[season]:
+                        windows[season][kind] = kinds[kind]
             # Keep cool-spring-only seasons out: a region's chart is the authority.
             c["profiles"][profile] = to_json(windows)
         else:
@@ -411,7 +432,8 @@ ICONS = {
     "corn": "mdi:corn", "pepper": "mdi:chili-mild", "tomato": "mdi:fruit-cherries",
     "tomatillo": "mdi:fruit-cherries", "eggplant": "mdi:food-variant",
     "cucumber": "mdi:food-variant", "melon": "mdi:fruit-watermelon",
-    "squash": "mdi:pumpkin", "strawberry": "mdi:fruit-cherries",
+    "squash": "mdi:pumpkin", "watermelon": "mdi:fruit-watermelon", "sweet_potato": "mdi:sprout",
+    "strawberry": "mdi:fruit-cherries",
     "rhubarb": "mdi:leaf", "asparagus": "mdi:sprout", "artichoke": "mdi:flower",
     "pea": "mdi:seed", "bean_broad": "mdi:seed", "bean_bush_pole": "mdi:seed",
     "bean_soya": "mdi:seed", "bean_asparagus": "mdi:seed",
@@ -429,6 +451,8 @@ for c in C:
         icon = ICONS[c["key"]]
     elif c["source"] == "pdf_herbs":
         icon = HERB
+    elif c["source"] == FL:
+        icon = "mdi:flower"
     else:
         icon = LEAFY
     c["icon"] = icon
@@ -457,7 +481,8 @@ SUCCESSION = {
     "scallion": (21, None), "cilantro": (21, None), "dill": (21, None), "chervil": (21, None),
     "pea": (21, 3), "bean_bush_pole": (21, 4), "corn": (14, 3),
 }
-DIRECT_FIRST = {"lettuce", "scallion", "pac_choi", "cabbage", "kale", "chives", "shiso", "lemon_balm"}
+DIRECT_FIRST = {"lettuce", "scallion", "pac_choi", "cabbage", "kale", "chives", "shiso", "lemon_balm",
+                "parsley", "calendula", "sweet_alyssum"}
 for c in C:
     defaults = {}
     has_indoor = any("transplant" in w for w in c["windows"])
@@ -477,14 +502,35 @@ for c in C:
 
 # Published values: every built-in crop is "builtin", with a category.
 for c in C:
-    c["category"] = "herb" if c["source"] == "pdf_herbs" else "vegetable"
+    c["category"] = {"pdf_herbs": "herb", FL: "flower"}.get(c["source"], "vegetable")
     c["source"] = "builtin"
     # Grown from cloves or tubers: tasks say "Plant", not "Sow".
     c["planted"] = c["key"] in ("garlic", "potato")
 
+# ---------------------------------------------------------------------------
+# Growing details from open-garden-data (CC0): spacing, sowing depth, days to
+# germinate, soil temperature and pH, varieties and companions. Refresh with
+# scripts/import_open_garden_data.py.
+# ---------------------------------------------------------------------------
+OGD = json.loads((Path(__file__).resolve().parent / "data/open_garden_data.json").read_text(encoding="utf-8"))
+KEYS = {c["key"] for c in C}
+for c in C:
+    found = OGD["crops"].get(c["key"])
+    if not found:
+        continue
+    details = {k: found[k] for k in ("spacing_cm", "sowing_depth_cm", "germination_days",
+                                      "min_soil_temp_c", "soil_ph", "varieties") if k in found}
+    companions = [e for e in found.get("companions", []) if e["crop"] in KEYS]
+    if companions:
+        details["companions"] = companions
+    c["details"] = details
+    if found.get("notes") and not c.get("notes"):
+        c["notes"] = found["notes"]
+
 out = {
     "source": "Built-in catalog: regional planting charts for cool-spring, continental and Atlantic climates, plus added crops",
     "format": "Ranges are days from the last spring frost (L) or first fall frost (F).",
+    "details_source": f"Growing details from open-garden-data ({OGD['url']}, CC0, {OGD['commit'][:7]})",
     "profiles": {
         "cool_spring": "Long, cool spring",
         "continental": "Spring warms fast",

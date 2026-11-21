@@ -165,6 +165,10 @@ class Crop:
     overwinter_harvest: int | None = None
     # Grown from cloves, sets, tubers or slips: tasks say "Plant", not "Sow".
     planted: bool = False
+    # Growing details: spacing_cm {in_row, between_rows}, sowing_depth_cm,
+    # germination_days [min, max], min_soil_temp_c, soil_ph [min, max],
+    # varieties [names], companions [{crop, kind, reason}].
+    details: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Crop:
@@ -189,6 +193,7 @@ class Crop:
             category=data.get("category") or "vegetable",
             notes=data.get("notes"),
             planted=bool(data.get("planted", data["key"] in ("garlic", "potato"))),
+            details=dict(data.get("details") or {}),
             overwinter_harvest=(
                 int(data["overwinter_harvest"])
                 if data.get("overwinter_harvest") is not None
@@ -604,8 +609,10 @@ def generate_tasks(
         else:
             harvest = seeded + timedelta(days=crop.days_to_harvest)
         harvest_end = harvest + timedelta(weeks=crop.harvest_weeks)
-        add(idx, TASK_HARVEST, harvest, f"Harvest {label}",
-            f"Expected harvest window: {harvest:%b %-d, %Y} to {harvest_end:%b %-d, %Y}."
+        add(idx, TASK_HARVEST, harvest,
+            f"{label} starts flowering" if crop.category == "flower" else f"Harvest {label}",
+            ("Expected flowering" if crop.category == "flower" else "Expected harvest window")
+            + f": {harvest:%b %-d, %Y} to {harvest_end:%b %-d, %Y}."
             + (f" {crop.notes}" if crop.notes else ""),
             fixed=overwinter)
 

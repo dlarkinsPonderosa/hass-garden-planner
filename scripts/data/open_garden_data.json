@@ -1,0 +1,1275 @@
+{
+ "source": "open-garden-data",
+ "url": "https://github.com/thedude459/open-garden-data",
+ "license": "CC0-1.0",
+ "commit": "fd216ce0caffb1d9937e4cf180f869c5c3beb30a",
+ "crops": {
+  "bean_bush_pole": {
+   "from": [
+    "bush-bean",
+    "pole-bean"
+   ],
+   "spacing_cm": {
+    "in_row": 10,
+    "between_rows": 45
+   },
+   "sowing_depth_cm": 2.5,
+   "germination_days": [
+    6,
+    10
+   ],
+   "min_soil_temp_c": 16,
+   "soil_ph": [
+    6.0,
+    7.0
+   ],
+   "varieties": [
+    "Provider",
+    "Kentucky Wonder"
+   ],
+   "companions": [
+    {
+     "crop": "corn",
+     "kind": "helps",
+     "reason": "Corn stalks give pole beans something to climb, and the beans fix nitrogen. Part of the three sisters planting of corn, beans, and squash."
+    }
+   ]
+  },
+  "pepper": {
+   "from": [
+    "sweet-pepper",
+    "hot-pepper"
+   ],
+   "spacing_cm": {
+    "in_row": 45,
+    "between_rows": 75
+   },
+   "sowing_depth_cm": 0.6,
+   "germination_days": [
+    7,
+    21
+   ],
+   "min_soil_temp_c": 18,
+   "soil_ph": [
+    6.0,
+    7.0
+   ],
+   "varieties": [
+    "California Wonder",
+    "Jalapeño",
+    "Cayenne"
+   ]
+  },
+  "squash": {
+   "from": [
+    "winter-squash",
+    "pumpkin",
+    "summer-squash"
+   ],
+   "spacing_cm": {
+    "in_row": 90,
+    "between_rows": 180
+   },
+   "sowing_depth_cm": 2.5,
+   "germination_days": [
+    5,
+    10
+   ],
+   "min_soil_temp_c": 16,
+   "soil_ph": [
+    6.0,
+    7.0
+   ],
+   "varieties": [
+    "Waltham Butternut",
+    "Connecticut Field",
+    "Black Beauty"
+   ],
+   "companions": [
+    {
+     "crop": "cucumber",
+     "kind": "helps",
+     "reason": "Blue Hubbard squash pulls striped cucumber beetles away from nearby cucumbers."
+    },
+    {
+     "crop": "nasturtium",
+     "kind": "helps",
+     "reason": "Nasturtium planted with squash reduced squash bugs, and in an Iowa trial reduced squash bug and cucumber beetle damage."
+    },
+    {
+     "crop": "marigold",
+     "kind": "helps",
+     "reason": "Marigold reduced squash bug and cucumber beetle damage in an Iowa trial, and marigold with sweet alyssum raised the natural enemies of aphids on squash in Florida."
+    },
+    {
+     "crop": "sweet_alyssum",
+     "kind": "helps",
+     "reason": "Sweet alyssum with marigold raised the natural enemies of aphids on squash and slightly improved yield."
+    },
+    {
+     "crop": "corn",
+     "kind": "helps",
+     "reason": "Squash vines cover and shade the soil under the corn, holding moisture and keeping weeds down. Part of the three sisters planting."
+    },
+    {
+     "crop": "borage",
+     "kind": "helps",
+     "reason": "Borage flowers draw bees that pollinate squash, which cannot set fruit without insect pollination."
+    },
+    {
+     "crop": "calendula",
+     "kind": "helps",
+     "reason": "Calendula flowers draw bees that pollinate squash, which cannot set fruit without insect pollination."
+    }
+   ]
+  },
+  "asparagus": {
+   "from": [
+    "asparagus"
+   ],
+   "spacing_cm": {
+    "in_row": 30,
+    "between_rows": 120
+   },
+   "sowing_depth_cm": 15,
+   "soil_ph": [
+    6.5,
+    7.5
+   ],
+   "varieties": [
+    "Mary Washington"
+   ]
+  },
+  "basil": {
+   "from": [
+    "basil"
+   ],
+   "spacing_cm": {
+    "in_row": 25,
+    "between_rows": 45
+   },
+   "sowing_depth_cm": 0.6,
+   "germination_days": [
+    5,
+    10
+   ],
+   "min_soil_temp_c": 18,
+   "soil_ph": [
+    6.0,
+    7.5
+   ],
+   "varieties": [
+    "Genovese"
+   ],
+   "companions": [
+    {
+     "crop": "tomato",
+     "kind": "helps",
+     "reason": "Basil interplanted with tomatoes reduced thrips and, under net covers, whiteflies, and may help tomato growth."
+    }
+   ]
+  },
+  "beet": {
+   "from": [
+    "beet"
+   ],
+   "spacing_cm": {
+    "in_row": 8,
+    "between_rows": 30
+   },
+   "sowing_depth_cm": 1.3,
+   "germination_days": [
+    5,
+    14
+   ],
+   "min_soil_temp_c": 7,
+   "soil_ph": [
+    6.0,
+    7.5
+   ],
+   "varieties": [
+    "Detroit Dark Red"
+   ]
+  },
+  "borage": {
+   "from": [
+    "borage"
+   ],
+   "spacing_cm": {
+    "in_row": 45,
+    "between_rows": 60
+   },
+   "sowing_depth_cm": 1,
+   "germination_days": [
+    5,
+    15
+   ],
+   "soil_ph": [
+    6.0,
+    7.5
+   ],
+   "companions": [
+    {
+     "crop": "squash",
+     "kind": "helps",
+     "reason": "Borage flowers draw bees that pollinate squash, which cannot set fruit without insect pollination."
+    },
+    {
+     "crop": "melon",
+     "kind": "helps",
+     "reason": "Borage flowers draw bees that pollinate melons, which cannot set fruit without insect pollination."
+    }
+   ]
+  },
+  "broccoli": {
+   "from": [
+    "broccoli"
+   ],
+   "spacing_cm": {
+    "in_row": 45,
+    "between_rows": 75
+   },
+   "sowing_depth_cm": 1,
+   "germination_days": [
+    5,
+    10
+   ],
+   "min_soil_temp_c": 7,
+   "soil_ph": [
+    6.0,
+    7.0
+   ],
+   "varieties": [
+    "Waltham 29"
+   ],
+   "companions": [
+    {
+     "crop": "thyme",
+     "kind": "helps",
+     "reason": "Thyme planted with broccoli reduced cabbage looper and imported cabbageworm damage."
+    },
+    {
+     "crop": "nasturtium",
+     "kind": "helps",
+     "reason": "Nasturtium planted with broccoli reduced cabbage looper and imported cabbageworm damage."
+    },
+    {
+     "crop": "onion",
+     "kind": "helps",
+     "reason": "Onion planted with broccoli reduced cabbage looper and imported cabbageworm damage."
+    },
+    {
+     "crop": "dill",
+     "kind": "helps",
+     "reason": "Dill in flower draws parasitic wasps, which attack the caterpillars that feed on broccoli, such as cabbage looper and imported cabbageworm."
+    },
+    {
+     "crop": "parsley",
+     "kind": "helps",
+     "reason": "Parsley in flower draws parasitic wasps and tachinid flies, which attack the caterpillars that feed on broccoli, such as cabbage looper and imported cabbageworm."
+    }
+   ]
+  },
+  "brussels_sprouts": {
+   "from": [
+    "brussels-sprouts"
+   ],
+   "spacing_cm": {
+    "in_row": 60,
+    "between_rows": 90
+   },
+   "sowing_depth_cm": 1,
+   "germination_days": [
+    5,
+    10
+   ],
+   "min_soil_temp_c": 7,
+   "soil_ph": [
+    6.0,
+    7.5
+   ],
+   "varieties": [
+    "Long Island Improved"
+   ],
+   "companions": [
+    {
+     "crop": "thyme",
+     "kind": "helps",
+     "reason": "Thyme cut diamondback moth egg-laying on Brussels sprouts in a greenhouse, but only when the moths landed on the thyme; the scent alone did not mask the crop."
+    }
+   ]
+  },
+  "cabbage": {
+   "from": [
+    "cabbage"
+   ],
+   "spacing_cm": {
+    "in_row": 45,
+    "between_rows": 75
+   },
+   "sowing_depth_cm": 1,
+   "germination_days": [
+    5,
+    10
+   ],
+   "min_soil_temp_c": 7,
+   "soil_ph": [
+    6.0,
+    7.5
+   ],
+   "varieties": [
+    "Golden Acre"
+   ],
+   "companions": [
+    {
+     "crop": "marigold",
+     "kind": "helps",
+     "reason": "Marigold planted with cabbage reduced cabbage looper and imported cabbageworm damage."
+    },
+    {
+     "crop": "nasturtium",
+     "kind": "helps",
+     "reason": "Nasturtium planted with cabbage reduced cabbage looper and imported cabbageworm damage."
+    },
+    {
+     "crop": "onion",
+     "kind": "helps",
+     "reason": "Onion planted with cabbage reduced cabbage looper and imported cabbageworm damage."
+    },
+    {
+     "crop": "dill",
+     "kind": "helps",
+     "reason": "Dill in flower draws parasitic wasps, which attack the caterpillars that feed on cabbage, such as cabbage looper and imported cabbageworm."
+    },
+    {
+     "crop": "parsley",
+     "kind": "helps",
+     "reason": "Parsley in flower draws parasitic wasps and tachinid flies, which attack the caterpillars that feed on cabbage, such as cabbage looper and imported cabbageworm."
+    }
+   ]
+  },
+  "calendula": {
+   "from": [
+    "calendula"
+   ],
+   "spacing_cm": {
+    "in_row": 25,
+    "between_rows": 40
+   },
+   "sowing_depth_cm": 0.6,
+   "germination_days": [
+    5,
+    15
+   ],
+   "soil_ph": [
+    6.0,
+    7.0
+   ],
+   "notes": "Pot marigold. Flowers best in cool weather and may stall in midsummer heat; cut back and it blooms again in fall. Days to maturity are days to first bloom.",
+   "companions": [
+    {
+     "crop": "squash",
+     "kind": "helps",
+     "reason": "Calendula flowers draw bees that pollinate squash, which cannot set fruit without insect pollination."
+    },
+    {
+     "crop": "melon",
+     "kind": "helps",
+     "reason": "Calendula flowers draw bees that pollinate melons, which cannot set fruit without insect pollination."
+    }
+   ]
+  },
+  "carrot": {
+   "from": [
+    "carrot"
+   ],
+   "spacing_cm": {
+    "in_row": 5,
+    "between_rows": 30
+   },
+   "sowing_depth_cm": 0.6,
+   "germination_days": [
+    10,
+    21
+   ],
+   "min_soil_temp_c": 7,
+   "soil_ph": [
+    6.0,
+    7.0
+   ],
+   "varieties": [
+    "Danvers"
+   ]
+  },
+  "cauliflower": {
+   "from": [
+    "cauliflower"
+   ],
+   "spacing_cm": {
+    "in_row": 45,
+    "between_rows": 75
+   },
+   "sowing_depth_cm": 1,
+   "germination_days": [
+    5,
+    10
+   ],
+   "min_soil_temp_c": 7,
+   "soil_ph": [
+    6.0,
+    7.5
+   ],
+   "varieties": [
+    "Snowball"
+   ]
+  },
+  "celery": {
+   "from": [
+    "celery"
+   ],
+   "spacing_cm": {
+    "in_row": 25,
+    "between_rows": 60
+   },
+   "sowing_depth_cm": 0.3,
+   "germination_days": [
+    14,
+    21
+   ],
+   "min_soil_temp_c": 10,
+   "soil_ph": [
+    6.0,
+    7.0
+   ],
+   "varieties": [
+    "Tall Utah"
+   ]
+  },
+  "chives": {
+   "from": [
+    "chives"
+   ],
+   "spacing_cm": {
+    "in_row": 20,
+    "between_rows": 30
+   },
+   "sowing_depth_cm": 0.6,
+   "germination_days": [
+    7,
+    14
+   ],
+   "min_soil_temp_c": 10,
+   "soil_ph": [
+    6.0,
+    7.0
+   ]
+  },
+  "cilantro": {
+   "from": [
+    "cilantro"
+   ],
+   "spacing_cm": {
+    "in_row": 15,
+    "between_rows": 30
+   },
+   "sowing_depth_cm": 1,
+   "germination_days": [
+    7,
+    14
+   ],
+   "min_soil_temp_c": 10,
+   "soil_ph": [
+    6.0,
+    7.0
+   ],
+   "varieties": [
+    "Santo"
+   ],
+   "companions": [
+    {
+     "crop": "lettuce",
+     "kind": "helps",
+     "reason": "Flowering coriander feeds adult hoverflies, whose larvae eat lettuce aphids. Organic growers intercrop it with lettuce for that reason."
+    }
+   ]
+  },
+  "cucumber": {
+   "from": [
+    "cucumber"
+   ],
+   "spacing_cm": {
+    "in_row": 30,
+    "between_rows": 90
+   },
+   "sowing_depth_cm": 2.5,
+   "germination_days": [
+    3,
+    10
+   ],
+   "min_soil_temp_c": 16,
+   "soil_ph": [
+    6.0,
+    7.0
+   ],
+   "varieties": [
+    "Marketmore 76"
+   ],
+   "companions": [
+    {
+     "crop": "squash",
+     "kind": "helps",
+     "reason": "Blue Hubbard squash pulls striped cucumber beetles away from nearby cucumbers."
+    }
+   ]
+  },
+  "dill": {
+   "from": [
+    "dill"
+   ],
+   "spacing_cm": {
+    "in_row": 20,
+    "between_rows": 45
+   },
+   "sowing_depth_cm": 0.6,
+   "germination_days": [
+    7,
+    21
+   ],
+   "min_soil_temp_c": 10,
+   "soil_ph": [
+    5.5,
+    7.0
+   ],
+   "varieties": [
+    "Bouquet"
+   ],
+   "companions": [
+    {
+     "crop": "cabbage",
+     "kind": "helps",
+     "reason": "Dill in flower draws parasitic wasps, which attack the caterpillars that feed on cabbage, such as cabbage looper and imported cabbageworm."
+    },
+    {
+     "crop": "broccoli",
+     "kind": "helps",
+     "reason": "Dill in flower draws parasitic wasps, which attack the caterpillars that feed on broccoli, such as cabbage looper and imported cabbageworm."
+    }
+   ]
+  },
+  "eggplant": {
+   "from": [
+    "eggplant"
+   ],
+   "spacing_cm": {
+    "in_row": 45,
+    "between_rows": 75
+   },
+   "sowing_depth_cm": 0.6,
+   "germination_days": [
+    7,
+    14
+   ],
+   "min_soil_temp_c": 18,
+   "soil_ph": [
+    5.5,
+    7.0
+   ],
+   "varieties": [
+    "Black Beauty"
+   ],
+   "companions": [
+    {
+     "crop": "potato",
+     "kind": "hinders",
+     "reason": "Colorado potato beetle feeds on both. In Minnesota trials, eggplant did not work as a trap crop to protect potatoes."
+    }
+   ]
+  },
+  "garlic": {
+   "from": [
+    "garlic"
+   ],
+   "spacing_cm": {
+    "in_row": 15,
+    "between_rows": 30
+   },
+   "sowing_depth_cm": 5,
+   "soil_ph": [
+    6.0,
+    7.0
+   ],
+   "varieties": [
+    "Music"
+   ]
+  },
+  "kale": {
+   "from": [
+    "kale"
+   ],
+   "spacing_cm": {
+    "in_row": 45,
+    "between_rows": 60
+   },
+   "sowing_depth_cm": 1,
+   "germination_days": [
+    5,
+    10
+   ],
+   "min_soil_temp_c": 7,
+   "soil_ph": [
+    6.0,
+    7.5
+   ],
+   "varieties": [
+    "Lacinato"
+   ]
+  },
+  "leek": {
+   "from": [
+    "leek"
+   ],
+   "spacing_cm": {
+    "in_row": 15,
+    "between_rows": 40
+   },
+   "sowing_depth_cm": 0.6,
+   "germination_days": [
+    7,
+    14
+   ],
+   "min_soil_temp_c": 7,
+   "soil_ph": [
+    6.0,
+    7.5
+   ],
+   "varieties": [
+    "American Flag"
+   ]
+  },
+  "lettuce": {
+   "from": [
+    "lettuce"
+   ],
+   "spacing_cm": {
+    "in_row": 25,
+    "between_rows": 40
+   },
+   "sowing_depth_cm": 0.3,
+   "germination_days": [
+    4,
+    10
+   ],
+   "min_soil_temp_c": 4,
+   "soil_ph": [
+    6.0,
+    7.0
+   ],
+   "varieties": [
+    "Buttercrunch"
+   ],
+   "companions": [
+    {
+     "crop": "cilantro",
+     "kind": "helps",
+     "reason": "Flowering coriander feeds adult hoverflies, whose larvae eat lettuce aphids. Organic growers intercrop it with lettuce for that reason."
+    },
+    {
+     "crop": "sweet_alyssum",
+     "kind": "helps",
+     "reason": "Sweet alyssum feeds adult hoverflies, whose larvae eat lettuce aphids. Skip it where Bagrada bug is building up; it is one of that pest's favorite hosts."
+    }
+   ]
+  },
+  "marigold": {
+   "from": [
+    "marigold"
+   ],
+   "spacing_cm": {
+    "in_row": 20,
+    "between_rows": 30
+   },
+   "sowing_depth_cm": 0.6,
+   "germination_days": [
+    5,
+    7
+   ],
+   "min_soil_temp_c": 18,
+   "soil_ph": [
+    6.0,
+    7.0
+   ],
+   "notes": "French marigold, the kind used in the companion trials. Days to maturity are days to first bloom. Frost kills it.",
+   "companions": [
+    {
+     "crop": "squash",
+     "kind": "helps",
+     "reason": "Marigold reduced squash bug and cucumber beetle damage in an Iowa trial, and marigold with sweet alyssum raised the natural enemies of aphids on squash in Florida."
+    },
+    {
+     "crop": "cabbage",
+     "kind": "helps",
+     "reason": "Marigold planted with cabbage reduced cabbage looper and imported cabbageworm damage."
+    },
+    {
+     "crop": "tomato",
+     "kind": "helps",
+     "reason": "French marigold protected tomatoes from greenhouse whitefly through the limonene it gives off, and marigold reduced thrips on tomatoes in field and greenhouse studies."
+    }
+   ]
+  },
+  "melon": {
+   "from": [
+    "melon"
+   ],
+   "spacing_cm": {
+    "in_row": 45,
+    "between_rows": 150
+   },
+   "sowing_depth_cm": 1.5,
+   "germination_days": [
+    4,
+    10
+   ],
+   "min_soil_temp_c": 21,
+   "soil_ph": [
+    6.0,
+    7.0
+   ],
+   "varieties": [
+    "Hale's Best Jumbo"
+   ],
+   "companions": [
+    {
+     "crop": "borage",
+     "kind": "helps",
+     "reason": "Borage flowers draw bees that pollinate melons, which cannot set fruit without insect pollination."
+    },
+    {
+     "crop": "calendula",
+     "kind": "helps",
+     "reason": "Calendula flowers draw bees that pollinate melons, which cannot set fruit without insect pollination."
+    }
+   ]
+  },
+  "mint": {
+   "from": [
+    "mint"
+   ],
+   "spacing_cm": {
+    "in_row": 45,
+    "between_rows": 60
+   },
+   "soil_ph": [
+    6.0,
+    7.0
+   ],
+   "varieties": [
+    "Spearmint"
+   ]
+  },
+  "nasturtium": {
+   "from": [
+    "nasturtium"
+   ],
+   "spacing_cm": {
+    "in_row": 30,
+    "between_rows": 45
+   },
+   "sowing_depth_cm": 1.5,
+   "germination_days": [
+    7,
+    12
+   ],
+   "min_soil_temp_c": 13,
+   "soil_ph": [
+    6.0,
+    7.5
+   ],
+   "notes": "Sow where it is to grow; it resents transplanting. Rich soil gives leaves instead of flowers. Leaves and flowers are edible. Days to maturity are days to first bloom.",
+   "companions": [
+    {
+     "crop": "squash",
+     "kind": "helps",
+     "reason": "Nasturtium planted with squash reduced squash bugs, and in an Iowa trial reduced squash bug and cucumber beetle damage."
+    },
+    {
+     "crop": "broccoli",
+     "kind": "helps",
+     "reason": "Nasturtium planted with broccoli reduced cabbage looper and imported cabbageworm damage."
+    },
+    {
+     "crop": "cabbage",
+     "kind": "helps",
+     "reason": "Nasturtium planted with cabbage reduced cabbage looper and imported cabbageworm damage."
+    }
+   ]
+  },
+  "okra": {
+   "from": [
+    "okra"
+   ],
+   "spacing_cm": {
+    "in_row": 30,
+    "between_rows": 90
+   },
+   "sowing_depth_cm": 1.5,
+   "germination_days": [
+    5,
+    12
+   ],
+   "min_soil_temp_c": 21,
+   "soil_ph": [
+    6.0,
+    7.0
+   ],
+   "varieties": [
+    "Clemson Spineless"
+   ]
+  },
+  "onion": {
+   "from": [
+    "onion"
+   ],
+   "spacing_cm": {
+    "in_row": 10,
+    "between_rows": 30
+   },
+   "sowing_depth_cm": 1,
+   "germination_days": [
+    7,
+    14
+   ],
+   "min_soil_temp_c": 7,
+   "soil_ph": [
+    6.0,
+    7.0
+   ],
+   "companions": [
+    {
+     "crop": "broccoli",
+     "kind": "helps",
+     "reason": "Onion planted with broccoli reduced cabbage looper and imported cabbageworm damage."
+    },
+    {
+     "crop": "cabbage",
+     "kind": "helps",
+     "reason": "Onion planted with cabbage reduced cabbage looper and imported cabbageworm damage."
+    }
+   ]
+  },
+  "oregano": {
+   "from": [
+    "oregano"
+   ],
+   "spacing_cm": {
+    "in_row": 30,
+    "between_rows": 45
+   },
+   "sowing_depth_cm": 0.3,
+   "germination_days": [
+    7,
+    14
+   ],
+   "min_soil_temp_c": 13,
+   "soil_ph": [
+    6.0,
+    8.0
+   ],
+   "varieties": [
+    "Greek"
+   ]
+  },
+  "parsley": {
+   "from": [
+    "parsley"
+   ],
+   "spacing_cm": {
+    "in_row": 20,
+    "between_rows": 40
+   },
+   "sowing_depth_cm": 0.6,
+   "germination_days": [
+    14,
+    28
+   ],
+   "min_soil_temp_c": 10,
+   "soil_ph": [
+    6.0,
+    7.0
+   ],
+   "varieties": [
+    "Giant of Italy"
+   ],
+   "companions": [
+    {
+     "crop": "cabbage",
+     "kind": "helps",
+     "reason": "Parsley in flower draws parasitic wasps and tachinid flies, which attack the caterpillars that feed on cabbage, such as cabbage looper and imported cabbageworm."
+    },
+    {
+     "crop": "broccoli",
+     "kind": "helps",
+     "reason": "Parsley in flower draws parasitic wasps and tachinid flies, which attack the caterpillars that feed on broccoli, such as cabbage looper and imported cabbageworm."
+    }
+   ]
+  },
+  "parsnip": {
+   "from": [
+    "parsnip"
+   ],
+   "spacing_cm": {
+    "in_row": 10,
+    "between_rows": 45
+   },
+   "sowing_depth_cm": 1.3,
+   "germination_days": [
+    14,
+    28
+   ],
+   "min_soil_temp_c": 7,
+   "soil_ph": [
+    6.0,
+    7.0
+   ],
+   "varieties": [
+    "Hollow Crown"
+   ]
+  },
+  "pea": {
+   "from": [
+    "pea"
+   ],
+   "spacing_cm": {
+    "in_row": 5,
+    "between_rows": 45
+   },
+   "sowing_depth_cm": 2.5,
+   "germination_days": [
+    7,
+    14
+   ],
+   "min_soil_temp_c": 4,
+   "soil_ph": [
+    6.0,
+    7.5
+   ],
+   "varieties": [
+    "Sugar Snap"
+   ]
+  },
+  "potato": {
+   "from": [
+    "potato"
+   ],
+   "spacing_cm": {
+    "in_row": 30,
+    "between_rows": 75
+   },
+   "sowing_depth_cm": 10,
+   "min_soil_temp_c": 7,
+   "soil_ph": [
+    5.0,
+    6.5
+   ],
+   "varieties": [
+    "Yukon Gold"
+   ],
+   "companions": [
+    {
+     "crop": "tomato",
+     "kind": "hinders",
+     "reason": "Both get late blight, and the same strains move between them. Infected potato tubers are a common way it starts. Keep them apart and rotate."
+    },
+    {
+     "crop": "eggplant",
+     "kind": "hinders",
+     "reason": "Colorado potato beetle feeds on both. In Minnesota trials, eggplant did not work as a trap crop to protect potatoes."
+    }
+   ]
+  },
+  "radish": {
+   "from": [
+    "radish"
+   ],
+   "spacing_cm": {
+    "in_row": 3,
+    "between_rows": 20
+   },
+   "sowing_depth_cm": 1,
+   "germination_days": [
+    3,
+    7
+   ],
+   "min_soil_temp_c": 4,
+   "soil_ph": [
+    6.0,
+    7.0
+   ],
+   "varieties": [
+    "Cherry Belle"
+   ]
+  },
+  "rhubarb": {
+   "from": [
+    "rhubarb"
+   ],
+   "spacing_cm": {
+    "in_row": 90,
+    "between_rows": 120
+   },
+   "sowing_depth_cm": 5,
+   "soil_ph": [
+    6.0,
+    7.0
+   ],
+   "varieties": [
+    "Victoria"
+   ]
+  },
+  "spinach": {
+   "from": [
+    "spinach"
+   ],
+   "spacing_cm": {
+    "in_row": 10,
+    "between_rows": 30
+   },
+   "sowing_depth_cm": 1,
+   "germination_days": [
+    7,
+    14
+   ],
+   "min_soil_temp_c": 4,
+   "soil_ph": [
+    6.5,
+    7.5
+   ],
+   "varieties": [
+    "Bloomsdale"
+   ]
+  },
+  "strawberry": {
+   "from": [
+    "strawberry"
+   ],
+   "spacing_cm": {
+    "in_row": 30,
+    "between_rows": 90
+   },
+   "soil_ph": [
+    5.5,
+    6.5
+   ],
+   "varieties": [
+    "Albion"
+   ]
+  },
+  "sweet_alyssum": {
+   "from": [
+    "sweet-alyssum"
+   ],
+   "spacing_cm": {
+    "in_row": 15,
+    "between_rows": 25
+   },
+   "germination_days": [
+    5,
+    15
+   ],
+   "soil_ph": [
+    6.0,
+    7.5
+   ],
+   "notes": "Sow on the surface; the seed needs light. Its small flowers feed hoverflies, whose larvae eat aphids. A favorite host of Bagrada bug, so skip it where that pest is building up. Days to maturity are days to first bloom.",
+   "companions": [
+    {
+     "crop": "squash",
+     "kind": "helps",
+     "reason": "Sweet alyssum with marigold raised the natural enemies of aphids on squash and slightly improved yield."
+    },
+    {
+     "crop": "lettuce",
+     "kind": "helps",
+     "reason": "Sweet alyssum feeds adult hoverflies, whose larvae eat lettuce aphids. Skip it where Bagrada bug is building up; it is one of that pest's favorite hosts."
+    }
+   ]
+  },
+  "corn": {
+   "from": [
+    "sweet-corn"
+   ],
+   "spacing_cm": {
+    "in_row": 25,
+    "between_rows": 75
+   },
+   "sowing_depth_cm": 3,
+   "germination_days": [
+    4,
+    10
+   ],
+   "min_soil_temp_c": 16,
+   "soil_ph": [
+    6.0,
+    7.0
+   ],
+   "varieties": [
+    "Golden Bantam"
+   ],
+   "companions": [
+    {
+     "crop": "bean_bush_pole",
+     "kind": "helps",
+     "reason": "Corn stalks give pole beans something to climb, and the beans fix nitrogen. Part of the three sisters planting of corn, beans, and squash."
+    },
+    {
+     "crop": "squash",
+     "kind": "helps",
+     "reason": "Squash vines cover and shade the soil under the corn, holding moisture and keeping weeds down. Part of the three sisters planting."
+    },
+    {
+     "crop": "tomato",
+     "kind": "hinders",
+     "reason": "Corn earworm is also the tomato fruitworm; planting the two together makes it easier for the pest to spread between them."
+    }
+   ]
+  },
+  "sweet_potato": {
+   "from": [
+    "sweet-potato"
+   ],
+   "spacing_cm": {
+    "in_row": 30,
+    "between_rows": 90
+   },
+   "min_soil_temp_c": 18,
+   "soil_ph": [
+    5.5,
+    6.5
+   ],
+   "varieties": [
+    "Beauregard"
+   ],
+   "notes": "Grown from slips (rooted sprouts) rather than seed; indoor start here means sprouting slips from a stored root. Needs warm soil and a long season. Too much nitrogen gives leaves instead of roots. Cure the roots somewhere warm for a week or two before storing."
+  },
+  "swiss_chard": {
+   "from": [
+    "swiss-chard"
+   ],
+   "spacing_cm": {
+    "in_row": 25,
+    "between_rows": 45
+   },
+   "sowing_depth_cm": 1.3,
+   "germination_days": [
+    5,
+    14
+   ],
+   "min_soil_temp_c": 7,
+   "soil_ph": [
+    6.0,
+    7.5
+   ],
+   "varieties": [
+    "Bright Lights"
+   ]
+  },
+  "thyme": {
+   "from": [
+    "thyme"
+   ],
+   "spacing_cm": {
+    "in_row": 25,
+    "between_rows": 45
+   },
+   "sowing_depth_cm": 0.3,
+   "germination_days": [
+    7,
+    21
+   ],
+   "min_soil_temp_c": 13,
+   "soil_ph": [
+    6.0,
+    8.0
+   ],
+   "companions": [
+    {
+     "crop": "broccoli",
+     "kind": "helps",
+     "reason": "Thyme planted with broccoli reduced cabbage looper and imported cabbageworm damage."
+    },
+    {
+     "crop": "brussels_sprouts",
+     "kind": "helps",
+     "reason": "Thyme cut diamondback moth egg-laying on Brussels sprouts in a greenhouse, but only when the moths landed on the thyme; the scent alone did not mask the crop."
+    }
+   ]
+  },
+  "tomato": {
+   "from": [
+    "tomato"
+   ],
+   "spacing_cm": {
+    "in_row": 50,
+    "between_rows": 90
+   },
+   "sowing_depth_cm": 0.6,
+   "germination_days": [
+    5,
+    10
+   ],
+   "min_soil_temp_c": 16,
+   "soil_ph": [
+    6.0,
+    7.0
+   ],
+   "varieties": [
+    "Cherry"
+   ],
+   "companions": [
+    {
+     "crop": "marigold",
+     "kind": "helps",
+     "reason": "French marigold protected tomatoes from greenhouse whitefly through the limonene it gives off, and marigold reduced thrips on tomatoes in field and greenhouse studies."
+    },
+    {
+     "crop": "basil",
+     "kind": "helps",
+     "reason": "Basil interplanted with tomatoes reduced thrips and, under net covers, whiteflies, and may help tomato growth."
+    },
+    {
+     "crop": "potato",
+     "kind": "hinders",
+     "reason": "Both get late blight, and the same strains move between them. Infected potato tubers are a common way it starts. Keep them apart and rotate."
+    },
+    {
+     "crop": "corn",
+     "kind": "hinders",
+     "reason": "Corn earworm is also the tomato fruitworm; planting the two together makes it easier for the pest to spread between them."
+    }
+   ]
+  },
+  "watermelon": {
+   "from": [
+    "watermelon"
+   ],
+   "spacing_cm": {
+    "in_row": 60,
+    "between_rows": 180
+   },
+   "sowing_depth_cm": 2,
+   "germination_days": [
+    4,
+    12
+   ],
+   "min_soil_temp_c": 21,
+   "soil_ph": [
+    6.0,
+    7.0
+   ],
+   "varieties": [
+    "Sugar Baby"
+   ],
+   "notes": "Needs heat and space; small \"icebox\" types such as Sugar Baby suit shorter seasons. Ripe when the spot resting on the ground turns creamy yellow and the nearest tendril dries."
+  }
+ }
+}

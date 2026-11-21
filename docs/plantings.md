@@ -115,6 +115,20 @@ data:
 `clear: true` goes back to the built-in defaults. A planting can always
 override them.
 
+## What the crop needs
+
+When you pick a crop for a planting, the form shows how far apart to plant it,
+how deep to sow, how long it takes to sprout, the soil temperature and pH it
+likes, and which crops it grows well with or should be kept away from (hover a
+name for why). The variety box suggests a few common varieties. These details
+come from [open-garden-data](https://github.com/thedude459/open-garden-data),
+which is in the public domain. Distances and temperatures follow your Home
+Assistant unit system.
+
+The four built-in flowers (calendula, marigold, nasturtium and sweet alyssum)
+are companions for vegetables. Their last task is when they start flowering
+rather than a harvest.
+
 ## Custom crops and varieties
 
 To add a crop or variety that isn't built in, open **Crops** on the card and
