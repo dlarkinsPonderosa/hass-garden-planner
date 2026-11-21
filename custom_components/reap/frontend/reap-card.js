@@ -969,6 +969,8 @@ class ReapCard extends HTMLElement {
         used ? `${used} planting${used === 1 ? "" : "s"}` : "Not used",
         loc.soil_sensor ? "soil sensor" : null,
         loc.light ? "light" : null,
+        loc.water ? "watering" : null,
+        loc.camera ? "camera" : null,
       ].filter(Boolean).join(" · ");
       const row = h("div", { class: "row" },
         h("div", { class: "info" },
@@ -1829,6 +1831,7 @@ const PLANNER_STYLE = `
   .steps { display: flex; flex-direction: column; gap: 4px; font-size: 0.9em; }
   .step { display: flex; align-items: center; gap: 8px; }
   .step-label { width: 110px; flex: none; }
+  .step .swatch.out { margin: 0 4px; } /* same width as the bar swatches, so dates line up */
   .done-mark { --mdc-icon-size: 16px; color: var(--success-color, #43a047); }
   .row-actions.gap { gap: 8px; flex-wrap: wrap; }
   .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.8em; padding: 10px 0 0; }
