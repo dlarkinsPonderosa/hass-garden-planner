@@ -63,7 +63,7 @@ _LOGGER = logging.getLogger(__name__)
 
 CROP_DEFAULT_KEYS = (
     "method", "succession_days", "succession_count", "quantity", "location",
-    "start_location",
+    "start_location", "bought_starts",
 )
 # Planting fields that name a location.
 LOCATION_FIELDS = ("location", "start_location")
@@ -406,6 +406,7 @@ class GardenManager:
         fields = dict(fields)
         if fields.get("method") not in INDOOR_METHODS:
             fields.pop("start_location", None)
+            fields.pop("bought_starts", None)
         for field in LOCATION_FIELDS:
             if fields.get(field):
                 fields[field] = self._location_name(fields[field])

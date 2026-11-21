@@ -281,7 +281,7 @@ METHOD_LABELS = {
 PLANTING_KEYS = (
     "method", "season", "year", "start_date", "succession_days",
     "succession_count", "succession_until", "variety", "quantity",
-    "location", "start_location", "notes",
+    "location", "start_location", "bought_starts", "notes",
 )
 
 
@@ -422,7 +422,7 @@ class ReapOptionsFlow(OptionsFlow):
             fields = {"crop": crop.key}
             for key in PLANTING_KEYS:
                 value = user_input.get(key)
-                if value in (None, ""):
+                if value in (None, "") or (key == "bought_starts" and not value):
                     continue
                 if key in ("year", "succession_days", "succession_count"):
                     value = int(value)
@@ -475,6 +475,7 @@ class ReapOptionsFlow(OptionsFlow):
                 vol.Optional("location"): self._location_picker(),
                 # Ignored unless the method starts indoors.
                 vol.Optional("start_location"): self._location_picker(),
+                vol.Optional("bought_starts", default=False): bool,
                 vol.Optional("notes"): str,
                 vol.Optional("save_defaults", default=False): bool,
             }

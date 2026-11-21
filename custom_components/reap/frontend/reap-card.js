@@ -49,11 +49,19 @@ const METHOD_ICONS = {
   direct_bed: "mdi:shovel",
   direct_greenhouse: "mdi:greenhouse",
 };
-const DEFAULT_KEYS = ["method", "succession_days", "succession_count", "quantity", "location", "start_location"];
+const DEFAULT_KEYS = ["method", "succession_days", "succession_count", "quantity", "location", "start_location", "bought_starts"];
 const FIELDS = [
   "method", "season", "year", "start_date", "succession_days",
-  "succession_count", "succession_until", "variety", "quantity", "location", "start_location", "notes",
+  "succession_count", "succession_until", "variety", "quantity", "location", "start_location", "bought_starts", "notes",
 ];
+
+// How a planting is grown, for display. Bought starts skip sowing.
+function methodLabel(p) {
+  if (p.bought_starts && INDOOR_METHODS.includes(p.method)) {
+    return p.method === "indoor_greenhouse" ? "Bought starts, transplant to greenhouse" : "Bought starts, transplant to beds";
+  }
+  return METHOD_LABELS[p.method] || p.method;
+}
 const INDOOR_METHODS = ["indoor_bed", "indoor_greenhouse"];
 
 // Where a planting is, for display: "Seedling tray 1, then Bed 3" while an
@@ -559,7 +567,7 @@ class ReapCard extends HTMLElement {
     if (!source.length) list.append(h("p", { class: "muted" }, "No plantings in that year."));
     for (const p of source) {
       const name = p.variety ? `${p.crop_name} (${p.variety})` : p.crop_name;
-      const extra = [METHOD_LABELS[p.method] || p.method, p.season && p.season !== "spring" ? p.season : null,
+      const extra = [methodLabel(p), p.season && p.season !== "spring" ? p.season : null,
         p.location, f.planned && f.planned.has(p.id) ? `already planned for ${f.to_year}` : null].filter(Boolean).join(" · ");
       list.append(h("label", { class: "pick" },
         h("input", { type: "checkbox", checked: !!f.copy[p.id], onchange: (e) => { f.copy[p.id] = e.target.checked; this._renderCount(); } }),
@@ -986,7 +994,7 @@ class ReapCard extends HTMLElement {
     const name = p.variety ? `${p.crop_name} (${p.variety})` : p.crop_name;
     const sowings = p.sowings || new Set((p.tasks || []).map((t) => t.succession)).size;
     const details = [
-      METHOD_LABELS[p.method] || p.method,
+      methodLabel(p),
       p.season && p.season !== "spring" ? p.season : null,
       String(p.year),
       sowings > 1 ? `${sowings} sowings, every ${p.succession_days} days` : null,
@@ -996,7 +1004,8 @@ class ReapCard extends HTMLElement {
 
     const cfg = this._config;
     const size = Math.max(16, Number(cfg.icon_size) || 40);
-    const lines = [h("div", { class: "name" }, name, " ", icon(METHOD_ICONS[p.method] || "mdi:sprout", "method"))];
+    const methodIcon = p.bought_starts && INDOOR_METHODS.includes(p.method) ? "mdi:cart-outline" : METHOD_ICONS[p.method];
+    const lines = [h("div", { class: "name" }, name, " ", icon(methodIcon || "mdi:sprout", "method"))];
     if (cfg.show_info && details) lines.push(h("div", { class: "muted small" }, details));
     if (p.problem) {
       // Can't be scheduled (after a settings change, say): say why.
@@ -1423,6 +1432,14 @@ class ReapCard extends HTMLElement {
         form.append(h("p", { class: "warn small" }, icon("mdi:calendar-sync"),
           "Changing the method re-times the tasks that aren't done yet. Preview dates shows the new dates before you save."));
       }
+      if (INDOOR_METHODS.includes(this._form.method)) {
+        form.append(h("label", { class: "check" },
+          h("input", {
+            type: "checkbox", checked: !!this._form.bought_starts,
+            onchange: (e) => { this._form.bought_starts = e.target.checked; this._preview = null; this._render(); },
+          }),
+          "Bought as starts (a task to buy them instead of sowing)"));
+      }
       if (crop.seasons.length > 1) {
         form.append(this._select("season", "Season", crop.seasons.map((s) => [s, s[0].toUpperCase() + s.slice(1)])));
       }
@@ -1452,7 +1469,7 @@ class ReapCard extends HTMLElement {
         type: "checkbox", checked: !!this._form.save_defaults,
         onchange: (e) => { this._form.save_defaults = e.target.checked; },
       }),
-      "Save method, repeat, sowings, quantity and locations as the default for this crop"));
+      "Save method, bought starts, repeat, sowings, quantity and locations as the default for this crop"));
     form.append(h("p", { class: "muted small" },
       "Start date is the transplant date for indoor starts, or the first sowing for direct sowing. Leave it empty to use the crop's usual window."
       + (adding && this._form.varieties.length > 1 ? " Preview shows the first variety; the others get the same dates." : "")));
@@ -1822,7 +1839,7 @@ class ReapPlannerCard extends ReapCard {
 
     const sub = row.other
       ? [`From ${this._yearLabel(p.year)}`, whereText(p)]
-      : [whereText(p), p.problem ? null : (METHOD_LABELS[p.method] || p.method)];
+      : [whereText(p), p.problem ? null : methodLabel(p)];
     const selected = this._selected === p.id;
     const label = h("div", { class: "plabel" },
       h("div", { class: "pname" }, icon(p.icon || "mdi:sprout"), h("span", {}, this._name(p))),
@@ -1870,7 +1887,7 @@ class ReapPlannerCard extends ReapCard {
     const sowings = p.sowings || 0;
     const facts = [
       row.other ? `From the ${this._yearLabel(p.year)} plan` : null,
-      METHOD_LABELS[p.method] || p.method,
+      methodLabel(p),
       p.season && p.season !== "spring" ? `${p.season} planting` : null,
       sowings > 1 ? `${sowings} sowings, every ${p.succession_days} days` : null,
       whereText(p),
@@ -2525,6 +2542,21 @@ const LOCATIONS_LABELS = {
 };
 
 class ReapLocationsCardEditor extends ReapCardEditor {
+  // Older configs list locations by name; the picker works with ids.
+  _render() {
+    const state = this._hass && this._config && this._hass.states[this._config.entity || LOCATIONS_DEFAULTS.entity];
+    const all = (state && state.attributes.locations) || [];
+    const picked = (this._config && this._config.locations) || [];
+    if (all.length && picked.some((n) => !all.some((l) => l.id === n))) {
+      const ids = picked.map((n) => {
+        const found = all.find((l) => l.id === n || l.name.toLowerCase() === String(n).toLowerCase());
+        return found ? found.id : n;
+      });
+      this._config = { ...this._config, locations: ids };
+    }
+    super._render();
+  }
+
   get _schema() {
     const state = this._hass && this._config && this._hass.states[this._config.entity || LOCATIONS_DEFAULTS.entity];
     const options = ((state && state.attributes.locations) || []).map((l) => ({ value: l.id, label: l.name }));
@@ -2562,7 +2594,10 @@ class ReapLocationsCardEditor extends ReapCardEditor {
     if (this._form) {
       this._form.hass = hass;
       // The location list comes from Home Assistant, so fill it in once known.
-      if (first) this._form.schema = this._schema;
+      if (first) {
+        this._form.schema = this._schema;
+        this._render();
+      }
     } else this._render();
   }
 }

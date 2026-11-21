@@ -60,6 +60,9 @@ add_planting:
       example: Seedling tray 1
       selector:
         text:
+    bought_starts:
+      selector:
+        boolean:
     notes:
       selector:
         text:
@@ -127,6 +130,9 @@ preview_planting:
       example: Seedling tray 1
       selector:
         text:
+    bought_starts:
+      selector:
+        boolean:
     notes:
       selector:
         text:
@@ -197,6 +203,9 @@ update_planting:
       example: Seedling tray 1
       selector:
         text:
+    bought_starts:
+      selector:
+        boolean:
     notes:
       selector:
         text:
@@ -346,6 +355,9 @@ set_crop_defaults:
     start_location:
       selector:
         text:
+    bought_starts:
+      selector:
+        boolean:
     clear:
       selector:
         boolean:

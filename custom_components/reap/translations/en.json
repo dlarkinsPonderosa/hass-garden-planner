@@ -83,6 +83,7 @@
           "quantity": "Quantity",
           "location": "Plant out to, or sow in",
           "start_location": "Start in (indoor starts)",
+          "bought_starts": "Bought as starts (indoor methods)",
           "notes": "Notes",
           "save_defaults": "Save as the default for this crop"
         },
@@ -95,6 +96,7 @@
           "quantity": "For example 6 cells or 2 rows.",
           "location": "For example Bed 3.",
           "start_location": "Where an indoor start grows until it's planted out, such as a seedling tray. You can set it later.",
+          "bought_starts": "Bought as seedlings from a garden centre: a task to buy them about a week before planting out replaces sowing and potting up.",
           "save_defaults": "Next time you add this crop, the method, repeat interval, number of sowings, quantity and locations start with these values."
         }
       },
@@ -239,6 +241,10 @@
           "name": "Start location",
           "description": "Indoor starts only: where it starts, such as a seedling tray, until it's planted out."
         },
+        "bought_starts": {
+          "name": "Bought as starts",
+          "description": "Indoor methods only: bought as seedlings instead of sown, so there's a task to buy them instead of sowing and potting up."
+        },
         "notes": {
           "name": "Notes",
           "description": "Added to each task's description."
@@ -296,6 +302,10 @@
         "start_location": {
           "name": "Start location",
           "description": "Indoor starts only: where it starts, such as a seedling tray, until it's planted out."
+        },
+        "bought_starts": {
+          "name": "Bought as starts",
+          "description": "Indoor methods only: bought as seedlings instead of sown, so there's a task to buy them instead of sowing and potting up."
         },
         "notes": {
           "name": "Notes",
@@ -457,6 +467,10 @@
           "name": "Start location",
           "description": "Default start location for indoor starts."
         },
+        "bought_starts": {
+          "name": "Bought as starts",
+          "description": "Buy this crop as seedlings by default instead of sowing it."
+        },
         "clear": {
           "name": "Clear",
           "description": "Go back to the built-in defaults."
@@ -518,6 +532,10 @@
         "start_location": {
           "name": "Start location",
           "description": "Indoor starts only: where it starts, such as a seedling tray, until it's planted out."
+        },
+        "bought_starts": {
+          "name": "Bought as starts",
+          "description": "Indoor methods only: bought as seedlings instead of sown, so there's a task to buy them instead of sowing and potting up."
         },
         "notes": {
           "name": "Notes",

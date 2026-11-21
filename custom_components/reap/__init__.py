@@ -44,6 +44,7 @@ PLANTING_FIELDS = {
     vol.Optional("quantity"): cv.string,
     vol.Optional("location"): cv.string,
     vol.Optional("start_location"): cv.string,
+    vol.Optional("bought_starts"): cv.boolean,
     vol.Optional("notes"): cv.string,
 }
 
@@ -66,6 +67,7 @@ UPDATE_FIELDS = {
     vol.Optional("quantity"): _clearable(cv.string),
     vol.Optional("location"): _clearable(cv.string),
     vol.Optional("start_location"): _clearable(cv.string),
+    vol.Optional("bought_starts"): cv.boolean,
     vol.Optional("notes"): _clearable(cv.string),
 }
 
@@ -390,6 +392,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                 vol.Optional("quantity"): cv.string,
                 vol.Optional("location"): cv.string,
                 vol.Optional("start_location"): cv.string,
+                vol.Optional("bought_starts"): cv.boolean,
                 vol.Optional("clear", default=False): cv.boolean,
             }
         ),

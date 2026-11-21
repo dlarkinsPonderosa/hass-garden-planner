@@ -51,6 +51,17 @@ and its open tasks (completed ones stay on your list).
 
 <img src="images/add-planting-light.png" alt="Add a planting form" width="380">
 
+## Bought as starts
+
+If you buy seedlings (starts) from a garden centre instead of sowing them,
+pick an indoor method and tick **Bought as starts**. Instead of sowing and
+potting up, the planting gets a **Buy ... starts** task a week before
+planting out, then a short hardening off (at most 3 days, since bought starts
+are often hardened off already), planting out and harvest. Planting out and
+harvest land on the same days as for starts you grow yourself. With the
+action, add `bought_starts: true`. To buy a crop as starts every time, save
+it as the crop's default.
+
 ## Several at once
 
 On the card, **Add planting** has two tabs:
