@@ -620,6 +620,7 @@ class ReapCard extends HTMLElement {
   }
 
   _startLocation(loc) {
+    this._ensurePickers();
     this._mode = "location";
     this._editing = loc ? loc.id : null;
     this._form = loc
@@ -1155,15 +1156,51 @@ class ReapCard extends HTMLElement {
     return form;
   }
 
-  _entityOptions(filter, current) {
-    const ids = Object.keys(this._hass.states).filter((id) => filter(id, this._hass.states[id]));
-    if (current && !ids.includes(current)) ids.push(current);
-    const label = (id) => {
-      const st = this._hass.states[id];
-      const name = st && st.attributes.friendly_name;
-      return name ? `${name} (${id})` : id;
-    };
-    return [["", "None"], ...ids.sort().map((id) => [id, label(id)])];
+  // Home Assistant's own searchable entity picker, loaded on demand. Until
+  // it's available, a text box that suggests matching entities as you type.
+  async _ensurePickers() {
+    if (customElements.get("ha-entity-picker") || this._loadingPickers || !window.loadCardHelpers) return;
+    this._loadingPickers = true;
+    try {
+      const helpers = await window.loadCardHelpers();
+      const card = await helpers.createCardElement({ type: "entities", entities: [] });
+      if (card && card.constructor.getConfigElement) await card.constructor.getConfigElement();
+      await Promise.race([customElements.whenDefined("ha-entity-picker"), new Promise((r) => setTimeout(r, 3000))]);
+    } catch (err) {
+      // The text box stays.
+    }
+    this._loadingPickers = false;
+    if (this._mode === "location" && customElements.get("ha-entity-picker")) this._render();
+  }
+
+  _entityField(key, label, domains, preferred) {
+    if (customElements.get("ha-entity-picker")) {
+      const picker = document.createElement("ha-entity-picker");
+      picker.hass = this._hass;
+      picker.label = label;
+      picker.value = this._form[key] || "";
+      picker.includeDomains = domains;
+      picker.addEventListener("value-changed", (e) => { this._form[key] = e.detail.value || ""; });
+      return h("div", { class: "field picker" }, picker);
+    }
+    const listId = `reap-${key}-options`;
+    const ids = Object.keys(this._hass.states)
+      .filter((id) => domains.includes(id.split(".")[0]))
+      .sort((a, b) => {
+        // Matching entities first, then in the order the domains are listed.
+        const rank = (id) => (preferred && preferred(id, this._hass.states[id]) ? 0 : 100)
+          + domains.indexOf(id.split(".")[0]);
+        return rank(a) - rank(b) || a.localeCompare(b);
+      });
+    return h("label", { class: "field" }, h("span", {}, label),
+      h("input", {
+        type: "search", list: listId, value: this._form[key] || "", placeholder: "Type to search, or leave empty",
+        autocomplete: "off", oninput: (e) => { this._form[key] = e.target.value.trim(); },
+      }),
+      h("datalist", { id: listId }, ids.map((id) => {
+        const name = this._hass.states[id].attributes.friendly_name;
+        return h("option", { value: id }, name ? `${name}` : id);
+      })));
   }
 
   _renderLocationForm() {
@@ -1174,14 +1211,12 @@ class ReapCard extends HTMLElement {
     const soil = (id, st) => id.startsWith("sensor.") && (
       st.attributes.device_class === "moisture" ||
       (st.attributes.unit_of_measurement === "%" && /soil|moist/i.test(`${id} ${st.attributes.friendly_name || ""}`)));
-    form.append(this._select("soil_sensor", "Soil moisture sensor (optional)",
-      this._entityOptions(soil, this._form.soil_sensor)));
-    form.append(this._select("light", "Light (optional)",
-      this._entityOptions((id) => LIGHT_DOMAINS.some((d) => id.startsWith(d)), this._form.light)));
-    form.append(this._select("water", "Watering valve or switch (optional)",
-      this._entityOptions((id) => WATER_DOMAINS.some((d) => id.startsWith(d)), this._form.water)));
-    form.append(this._select("camera", "Camera (optional)",
-      this._entityOptions((id) => id.startsWith("camera."), this._form.camera)));
+    // Soil sensors first: ones that look like moisture sensors, but any
+    // sensor can be picked by searching.
+    form.append(this._entityField("soil_sensor", "Soil moisture sensor (optional)", ["sensor"], soil));
+    form.append(this._entityField("light", "Light (optional)", ["light", "switch", "input_boolean"]));
+    form.append(this._entityField("water", "Watering valve or switch (optional)", ["valve", "switch", "input_boolean"]));
+    form.append(this._entityField("camera", "Camera (optional)", ["camera"]));
     form.append(h("p", { class: "muted small" },
       "Renaming a location moves its plantings with it."));
     form.append(h("div", { class: "actions" },
