@@ -112,7 +112,8 @@ title: Garden locations   # optional
 locations: []             # names to show, in this order; empty shows all
 second_line: watered      # watered, growing (what's there now) or none (larger name)
 show_moisture: true
-show_watering: true       # the valve and watered-by-hand buttons
+show_valve: true          # start or stop the watering valve or switch
+show_hand_watering: true  # log a watering by hand
 show_light: true
 show_camera: true
 show_snapshot: false      # a camera picture under the row, refreshed every minute

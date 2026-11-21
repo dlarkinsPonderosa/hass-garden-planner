@@ -1893,7 +1893,8 @@ const LOCATIONS_DEFAULTS = {
   locations: [],
   second_line: "watered",
   show_moisture: true,
-  show_watering: true,
+  show_valve: true,
+  show_hand_watering: true,
   show_light: true,
   show_camera: true,
   show_snapshot: false,
@@ -1933,6 +1934,11 @@ class ReapLocationsCard extends ReapCard {
     // Older configs had show_last_watered / show_plantings instead of second_line.
     const legacy = config && !config.second_line && config.show_last_watered === false
       ? { second_line: config.show_plantings === false ? "none" : "growing" } : {};
+    // show_watering used to cover both watering buttons.
+    if (config && config.show_watering === false) {
+      if (config.show_valve === undefined) legacy.show_valve = false;
+      if (config.show_hand_watering === undefined) legacy.show_hand_watering = false;
+    }
     super.setConfig({ ...LOCATIONS_DEFAULTS, ...config, ...legacy });
     // No crop list needed here.
     this._crops = this._crops || [];
@@ -2092,7 +2098,7 @@ class ReapLocationsCard extends ReapCard {
         onclick: () => this._moreInfo(loc.soil_sensor),
       }, icon("mdi:water")));
     }
-    if (cfg.show_watering && loc.water) {
+    if (cfg.show_valve && loc.water) {
       const label = running ? `Stop watering ${loc.name}` : `Start watering ${loc.name}`;
       row.append(h("button", {
         class: `loc-btn${running ? " running" : ""}`, title: label, "aria-label": label,
@@ -2100,7 +2106,7 @@ class ReapLocationsCard extends ReapCard {
         onclick: () => { if (running) this._setWater(loc.water, false); else { this._confirmWater = loc.id; this._render(); } },
       }, icon("mdi:sprinkler-variant")));
     }
-    if (cfg.show_watering && !running) {
+    if (cfg.show_hand_watering && !running) {
       const label = `${loc.name} watered by hand`;
       row.append(h("button", {
         class: "loc-btn", title: "Log a watering by hand", "aria-label": label, disabled: this._busy,
@@ -2356,7 +2362,8 @@ const LOCATIONS_LABELS = {
   locations: "Locations to show (all if none picked)",
   second_line: "Under the name",
   show_moisture: "Soil moisture",
-  show_watering: "Watering buttons",
+  show_valve: "Valve or switch",
+  show_hand_watering: "Watered by hand",
   show_light: "Light switch",
   show_camera: "Camera button",
   show_snapshot: "Camera snapshot",
@@ -2380,7 +2387,7 @@ class ReapLocationsCardEditor extends ReapCardEditor {
         ] } },
       },
       {
-        type: "grid", name: "", schema: ["show_moisture", "show_watering", "show_light",
+        type: "grid", name: "", schema: ["show_moisture", "show_valve", "show_hand_watering", "show_light",
           "show_camera", "show_snapshot"].map((name) => ({ name, selector: { boolean: {} } })),
       },
       {
