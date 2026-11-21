@@ -39,7 +39,7 @@ task with its icon and date. The pencil edits a planting, the bin removes it,
 and **Add planting** opens a form. The form fills in the crop's defaults,
 **Preview dates** shows every task before you save, and **Save as the default
 for this crop** remembers the method, repeat interval, number of sowings,
-quantity and location for next time.
+quantity and locations (start and plant-out) for next time.
 
 <p><img src="images/main-light.png" alt="Reap card, light theme" width="380"> <img src="images/main-dark.png" alt="Reap card, dark theme" width="380"></p>
 
@@ -63,7 +63,7 @@ editable: true         # add, edit, remove and copy
   as fall garlic in the spring after it was planted. A planting that runs
   into the next year has an arrow at the right edge.
 - Click a planting to see its dates under it, with **Edit** and **Remove**.
-- **Copy to 2028** copies the year's plantings to the next one with the same
+- **Copy to** the next year (the button names it, such as **Copy to 2028**) copies the year's plantings to the next one with the same
   settings. Untick anything you're not growing again.
 
 It can sit on the same dashboard as the Reap card. To keep the main dashboard
@@ -93,10 +93,12 @@ On a phone the month names shorten and the chart still fits:
 
 ## Locations card
 
-A read-only card for keeping an eye on your locations: one tile each with soil
+A card for keeping an eye on your locations (adding and editing them is on the Reap card): one tile each with soil
 moisture, when it was last watered, buttons to start or stop watering (starting
 asks first) or log a watering by hand, the light switch, a camera button, and
-icons of what's growing there. Pick **Reap locations** when adding a card, or:
+icons of what's growing there now. Plantings show up once their first task is
+done or due, and drop off when their harvest is done or its window is over, so
+next year's plans don't crowd the tiles. Pick **Reap locations** when adding a card, or:
 
 ```yaml
 type: custom:reap-locations-card

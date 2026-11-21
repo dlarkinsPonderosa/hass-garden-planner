@@ -16,10 +16,11 @@
  * moisture_low: 15                # below this is red; in between is yellow
  *
  * type: custom:reap-planner-card    # the season chart, defined further down
- *
- * type: custom:reap-locations-card  # read-only location tiles, defined further down
  * group_by: date                    # or crop, or location
  * max_height: 480                   # chart height in px before it scrolls; 0 = no limit
+ *
+ * type: custom:reap-locations-card  # location tiles: moisture, watering, light,
+ *                                   # camera and what's growing; defined further down
  */
 
 const CARD_DEFAULTS = {
@@ -57,6 +58,9 @@ const INDOOR_METHODS = ["indoor_bed", "indoor_greenhouse"];
 // Where a planting is, for display: "Seedling tray 1, then Bed 3" while an
 // indoor start is still in its start location.
 function whereText(p) {
+  // Repeat sowings can be in the tray and the bed at once.
+  const places = p.current_locations || [];
+  if (places.length > 1) return places.join(" and ");
   const now = p.current_location || p.location;
   if (p.start_location && now === p.start_location && p.location && p.location !== p.start_location) {
     return `${p.start_location}, then ${p.location}`;
@@ -977,9 +981,12 @@ class ReapCard extends HTMLElement {
     const locations = this._locations();
     if (!locations.length) list.append(h("p", { class: "muted" }, "No locations yet."));
     for (const loc of locations) {
-      const used = loc.plantings || 0;
+      // in_use: plantings that name it, planned ones too; plantings: under way there now.
+      const used = loc.in_use ?? loc.plantings ?? 0;
+      const here = loc.plantings || 0;
+      const count = (n) => `${n} planting${n === 1 ? "" : "s"}`;
       const extras = [
-        used ? `${used} planting${used === 1 ? "" : "s"}` : "Not used",
+        !used ? "Not used" : here ? `${count(used)}, ${here} there now` : count(used),
         loc.soil_sensor ? "soil sensor" : null,
         loc.light ? "light" : null,
         loc.water ? "watering" : null,
@@ -1816,7 +1823,7 @@ const PLANNER_STYLE = `
   button.prow.selected { background: color-mix(in srgb, var(--primary-color) 13%, transparent); }
   button.prow.other .plabel, button.prow.other .track > div { opacity: 0.5; }
   .prow.head { padding-top: 0; padding-bottom: 0; }
-  .plabel { width: 170px; flex: none; min-width: 0; padding-right: 10px; box-sizing: border-box; }
+  .plabel { width: 170px; flex: none; min-width: 0; padding-right: 18px; box-sizing: border-box; }
   .pname { display: flex; align-items: center; gap: 6px; font-weight: 500; font-size: 0.95em; }
   .pname span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .pname ha-icon { --mdc-icon-size: 18px; color: var(--secondary-text-color); flex: none; }
@@ -1851,7 +1858,7 @@ const PLANNER_STYLE = `
   .today { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: var(--error-color, #db4437); opacity: 0.8; }
   .more { position: absolute; top: 50%; transform: translateY(-50%); display: flex; color: var(--secondary-text-color); --mdc-icon-size: 16px; }
   .more.after { right: -15px; }
-  .more.before { left: -15px; }
+  .more.before { left: -13px; }
   .group-name { padding: 10px 16px 2px; font-size: 0.75em; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--secondary-text-color); }
   .plan-detail { margin: 2px 16px 8px; padding: 12px; border-radius: 12px; background: var(--secondary-background-color);
     display: flex; flex-direction: column; gap: 8px; }
@@ -1970,7 +1977,8 @@ class ReapLocationsCard extends ReapCard {
     const all = this._locations();
     const picked = (this._config.locations || []).map((n) => String(n).toLowerCase());
     if (!picked.length) return all;
-    return picked.map((n) => all.find((l) => l.name.toLowerCase() === n || l.id === n)).filter(Boolean);
+    // Ids from the editor (they survive a rename), or names written by hand.
+    return picked.map((n) => all.find((l) => l.id === n || l.name.toLowerCase() === n)).filter(Boolean);
   }
 
   _watched() {
@@ -2021,11 +2029,16 @@ class ReapLocationsCard extends ReapCard {
     }
   }
 
-  // Plantings still under way in a location: ones with open tasks.
+  // Plantings under way in a location now: started (first task done or
+  // due) and not finished (harvest done or its window over). Next year's
+  // plans aren't there yet.
   _growing(loc) {
     const name = loc.name.toLowerCase();
-    return this._plantings().filter((p) => (p.current_location || p.location || "").toLowerCase() === name
-      && (p.open_count || 0) > 0);
+    return this._plantings().filter((p) => {
+      const places = p.current_locations || [p.current_location || p.location].filter(Boolean);
+      const active = p.active ?? (p.open_count || 0) > 0;
+      return active && places.some((n) => n.toLowerCase() === name);
+    });
   }
 
   _render() {
@@ -2355,11 +2368,11 @@ const LOCATIONS_LABELS = {
 class ReapLocationsCardEditor extends ReapCardEditor {
   get _schema() {
     const state = this._hass && this._config && this._hass.states[this._config.entity || LOCATIONS_DEFAULTS.entity];
-    const names = ((state && state.attributes.locations) || []).map((l) => l.name);
+    const options = ((state && state.attributes.locations) || []).map((l) => ({ value: l.id, label: l.name }));
     return [
       { name: "title", selector: { text: {} } },
       { name: "entity", selector: { entity: { domain: "sensor", integration: "reap" } } },
-      { name: "locations", selector: { select: { multiple: true, mode: "list", options: names } } },
+      { name: "locations", selector: { select: { multiple: true, mode: "list", options } } },
       {
         type: "grid", name: "", schema: ["show_moisture", "show_last_watered", "show_watering", "show_light",
           "show_camera", "show_snapshot", "show_plantings"].map((name) => ({ name, selector: { boolean: {} } })),

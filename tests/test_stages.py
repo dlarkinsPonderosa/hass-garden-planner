@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import pytest
+
 from homeassistant.core import HomeAssistant
 
 from custom_components.reap.planner import Planting, Settings, generate_tasks, load_catalog
-from tests.test_init import _call, _setup
+from tests.test_init import OWN_LIST, _call, _items, _setup
 
 
 def test_tasks_name_the_right_place() -> None:
@@ -22,6 +24,7 @@ def test_tasks_name_the_right_place() -> None:
     assert "Location: Bed 3" in tasks["harvest"].description
 
 
+@pytest.mark.freeze_time("2027-06-01 12:00:00")
 async def test_planting_moves_when_planted_out(hass: HomeAssistant) -> None:
     entry = await _setup(hass)
     manager = entry.runtime_data
@@ -38,19 +41,25 @@ async def test_planting_moves_when_planted_out(hass: HomeAssistant) -> None:
         counts = {x["name"]: x["plantings"] for x in manager.locations()}
         return planting["current_location"], counts.get("Seedling tray 1", 0), counts.get("Bed 3", 0)
 
+    async def tick(start: str, status: str = "completed") -> None:
+        item = next(i for i in await _items(hass, OWN_LIST) if i["summary"].startswith(start))
+        await hass.services.async_call(
+            "todo", "update_item", {"entity_id": OWN_LIST, "item": item["uid"], "status": status},
+            blocking=True,
+        )
+        await hass.async_block_till_done()
+
     assert where() == ("Seedling tray 1", 1, 0)
     # Ticking off sowing indoors doesn't move it.
-    sow = next(t for t in manager.tasks if t.planting_id == planting_id and t.kind == "sow_indoors")
-    manager.data["actuals"][sow.uid] = "2027-02-10"
-    manager.rebuild()
-    await hass.async_block_till_done()
+    await tick("Sow Tomato indoors")
     assert where()[0] == "Seedling tray 1"
-    # Transplanting does.
-    out = next(t for t in manager.tasks if t.planting_id == planting_id and t.kind == "transplant")
-    manager.data["actuals"][out.uid] = "2027-04-10"
-    manager.rebuild()
-    await hass.async_block_till_done()
+    # Transplanting does, and the task names the bed.
+    await tick("Transplant Tomato to Bed 3")
     assert where() == ("Bed 3", 0, 1)
+    # Un-ticking moves it back.
+    await tick("Transplant Tomato to Bed 3", "needs_action")
+    assert where()[0] == "Seedling tray 1"
+    await tick("Transplant Tomato to Bed 3")
 
     # Changing where it went is just an edit.
     await _call(hass, "update_planting", {"planting_id": planting_id, "location": "Greenhouse"})
@@ -105,3 +114,61 @@ async def test_crop_defaults_keep_start_location(hass: HomeAssistant) -> None:
     await _call(hass, "add_plantings", {"plantings": [{"crop": "onion", "method": "indoor_bed"}]})
     planting = manager.plantings()[0]
     assert (planting.location, planting.start_location) == ("Bed 1", "Seedling Tray")
+
+
+@pytest.mark.freeze_time("2027-05-10 12:00:00")
+async def test_repeat_sowings_can_be_in_both_places(hass: HomeAssistant) -> None:
+    entry = await _setup(hass)
+    manager = entry.runtime_data
+    resp = await _call(hass, "add_planting", {
+        "crop": "lettuce", "method": "indoor_bed", "year": 2027, "start_date": "2027-04-01",
+        "succession_days": 14, "succession_count": 2, "succession_until": "2027-06-01",
+        "location": "Garden", "start_location": "Seedling Tray",
+    }, True)
+    planting_id = resp["planting_id"]
+    first = next(t for t in manager.tasks
+                 if t.planting_id == planting_id and t.kind == "transplant" and t.succession == 0)
+    manager.data["actuals"][first.uid] = "2027-04-01"
+    manager.rebuild()
+    state = manager.where_now()[planting_id]
+    # The second sowing is still in the tray.
+    assert state["current_location"] == "Seedling Tray"
+    assert state["current_locations"] == ["Seedling Tray", "Garden"]
+    counts = {x["name"]: x["plantings"] for x in manager.locations()}
+    assert counts["Seedling Tray"] == counts["Garden"] == 1
+
+
+@pytest.mark.freeze_time("2027-06-15 12:00:00")
+async def test_deleted_transplant_counts_once_due(hass: HomeAssistant) -> None:
+    entry = await _setup(hass)
+    manager = entry.runtime_data
+    resp = await _call(hass, "add_planting", {
+        "crop": "tomato", "method": "indoor_bed", "year": 2027,
+        "location": "Garden", "start_location": "Seedling Tray",
+    }, True)
+    planting_id = resp["planting_id"]
+    out = next(t for t in manager.tasks if t.planting_id == planting_id and t.kind == "transplant")
+    assert out.due.isoformat() < "2027-06-15"
+    manager.data["dismissed"].append(out.uid)
+    assert manager.where_now()[planting_id]["current_location"] == "Garden"
+
+
+async def test_plans_and_finished_plantings_arent_there(hass: HomeAssistant, freezer) -> None:
+    freezer.move_to("2026-11-21 12:00:00")
+    entry = await _setup(hass)
+    manager = entry.runtime_data
+    resp = await _call(hass, "add_planting", {
+        "crop": "carrot", "method": "direct_bed", "year": 2027, "location": "Garden",
+    }, True)
+    planting_id = resp["planting_id"]
+    garden = lambda: next(x for x in manager.locations() if x["name"] == "Garden")  # noqa: E731
+    # Next year's plan: in use (can't be removed) but nothing there yet.
+    assert manager.where_now()[planting_id]["active"] is False
+    assert (garden()["plantings"], garden()["in_use"]) == (0, 1)
+    freezer.move_to("2027-04-01 12:00:00")
+    assert manager.where_now()[planting_id]["active"] is True
+    assert garden()["plantings"] == 1
+    # Long after the last harvest window, it's gone from the bed.
+    freezer.move_to("2028-03-01 12:00:00")
+    assert manager.where_now()[planting_id]["active"] is False
+    assert garden()["plantings"] == 0

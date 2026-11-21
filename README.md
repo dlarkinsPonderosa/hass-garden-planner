@@ -64,7 +64,7 @@ Tasks then show up on your to-do list as they come due.
 ### 3. See the season with the planner card
 
 Add a **Reap planner** card to see the whole year at a glance. Tap a planting
-to see its dates, and use **Copy to 2028** when it's time to plan next year.
+to see its dates, and use **Copy to** (the next year, such as 2028) when it's time to plan next year.
 You can group the chart by date, crop or location.
 
 To keep your main dashboard tidy, put the planner on a

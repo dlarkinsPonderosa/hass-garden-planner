@@ -297,20 +297,33 @@ class GardenManager:
         return location
 
     def locations(self) -> list[dict[str, Any]]:
-        """Locations in the order they were added, with how many plantings use
-        each and when each was last watered."""
-        counts: dict[str, int] = {}
-        planted_out = self.planted_out_ids()
+        """Locations in the order they were added, with when each was last
+        watered and how many plantings use it:
+
+        - plantings: under way there now,
+        - in_use: plantings that name it at all, planned ones included. A
+          location in use can't be removed.
+        """
+        here: dict[str, int] = {}
+        named: dict[str, int] = {}
+        where = self.where_now()
         for planting in self.plantings():
-            name = (self.current_location(planting, planted_out) or "").casefold()
-            counts[name] = counts.get(name, 0) + 1
+            state = where.get(planting.id, {})
+            if state.get("active"):
+                for name in state.get("current_locations", []):
+                    here[name.casefold()] = here.get(name.casefold(), 0) + 1
+            for name in {(getattr(planting, f) or "").casefold() for f in LOCATION_FIELDS}:
+                if name:
+                    named[name] = named.get(name, 0) + 1
         result = []
         for loc in self.data["locations"].values():
             watering = self.data["watering"].get(loc["id"], {})
+            folded = loc["name"].casefold()
             result.append({
                 **{key: None for key in LOCATION_ENTITY_KEYS},
                 **loc,
-                "plantings": counts.get(loc["name"].casefold(), 0),
+                "plantings": here.get(folded, 0),
+                "in_use": named.get(folded, 0),
                 "last_watered": watering.get("last"),
                 "watered_minutes": watering.get("minutes"),
                 "watered_by_hand": bool(watering.get("manual")),
@@ -338,25 +351,33 @@ class GardenManager:
     async def _async_water_changed(self, event: Event) -> None:
         entity_id = event.data["entity_id"]
         old, new = event.data.get("old_state"), event.data.get("new_state")
-        was_on = old is not None and old.state in WATER_ON_STATES
-        is_on = new is not None and new.state in WATER_ON_STATES
-        if was_on == is_on or new is None or new.state in ("unavailable", "unknown"):
+        # Dropping off the network isn't a change: a run that was going stays
+        # open, and the next real state ends or continues it.
+        if new is None or new.state in ("unavailable", "unknown"):
             return
+        is_on = new.state in WATER_ON_STATES
         now = dt_util.now()
+        changed = False
         for loc in self.data["locations"].values():
             if loc.get("water") != entity_id:
                 continue
             record = self.data["watering"].setdefault(loc["id"], {})
-            if is_on:
+            running = bool(record.get("started"))
+            if is_on and not running:
+                changed = True
                 record.update(last=now.isoformat(), minutes=None, manual=False,
                               started=now.isoformat())
-            elif record.get("started"):
+            elif not is_on and running:
+                changed = True
                 started = dt_util.parse_datetime(record["started"])
-                if started:
+                # Without an old state (Home Assistant just started) the run
+                # ended while it was down, at a time nobody saw.
+                if started and old is not None:
                     record["minutes"] = max(0, round((now - started).total_seconds() / 60))
                 record["started"] = None
-        await self._async_save()
-        self._notify()
+        if changed:
+            await self._async_save()
+            self._notify()
 
     async def async_log_watering(self, location: str) -> dict[str, Any]:
         """Record that a location was watered by hand just now."""
@@ -390,23 +411,71 @@ class GardenManager:
                 fields[field] = self._location_name(fields[field])
         return fields
 
-    def planted_out_ids(self) -> set[str]:
-        """Plantings with a planting-out (or later) task ticked off."""
-        return {
-            t.planting_id for t in self.tasks
-            if t.done_on and t.kind not in BEFORE_PLANT_OUT
-        }
+    def where_now(self) -> dict[str, dict[str, Any]]:
+        """Where each planting is now, and whether it's in the ground.
 
-    def current_location(
-        self, planting: Planting, planted_out: set[str] | None = None
-    ) -> str | None:
+        - current_locations: every place it is. An indoor start is in its
+          start location until a sowing is planted out, so repeat sowings can
+          be in the tray and the bed at once.
+        - current_location: the start location while any sowing is still
+          there, then where it's planted out.
+        - active: under way. Its first task is done or due, and its harvest
+          isn't done and its harvest window hasn't ended.
+
+        A sowing counts as planted out once its transplant (or a later task)
+        is ticked off, or was deleted from the list after its due date.
+        """
+        today = dt_util.now().date()
+        dismissed = set(self.data["dismissed"])
+        by_planting: dict[str, list[Task]] = {}
+        for task in self.tasks:
+            by_planting.setdefault(task.planting_id, []).append(task)
+        result: dict[str, dict[str, Any]] = {}
+        for planting in self.plantings():
+            tasks = by_planting.get(planting.id, [])
+            places: list[str] = []
+            staged = planting.method in INDOOR_METHODS and planting.start_location
+            if staged:
+                for idx in sorted({t.succession for t in tasks}) or [0]:
+                    out = any(
+                        t.succession == idx and t.kind not in BEFORE_PLANT_OUT
+                        and (t.done_on or (t.uid in dismissed and t.due <= today))
+                        for t in tasks
+                    )
+                    places.append(planting.location if out else planting.start_location)
+            else:
+                places.append(planting.location)
+            places = [p for i, p in enumerate(places) if p and p not in places[:i]]
+            if staged and planting.start_location in places:
+                current = planting.start_location
+            else:
+                current = planting.location or (places[0] if places else None)
+            # Start location first, then the bed.
+            places.sort(key=lambda p: p != planting.start_location)
+            result[planting.id] = {
+                "current_location": current,
+                "current_locations": places,
+                "active": self._active(planting, tasks, today),
+            }
+        return result
+
+    def _active(self, planting: Planting, tasks: list[Task], today: date) -> bool:
+        if not tasks:
+            return False
+        started = any(t.done_on for t in tasks) or min(t.due for t in tasks) <= today
+        if not started:
+            return False
+        harvests = [t for t in tasks if t.kind == "harvest"]
+        if harvests and all(t.done_on for t in harvests):
+            return False
+        weeks = self.crops[planting.crop].harvest_weeks if planting.crop in self.crops else 4
+        if harvests and max(t.due for t in harvests) + timedelta(weeks=weeks) < today:
+            return False
+        return any(not t.done_on for t in tasks)
+
+    def current_location(self, planting: Planting) -> str | None:
         """Where a planting is now: its start location until it's planted out."""
-        if planting.method in INDOOR_METHODS and planting.start_location:
-            if planted_out is None:
-                planted_out = self.planted_out_ids()
-            if planting.id not in planted_out:
-                return planting.start_location
-        return planting.location
+        return self.where_now().get(planting.id, {}).get("current_location", planting.location)
 
     def _location_name(self, value: Any) -> Any:
         """A planting's location as a known location name, added if new."""

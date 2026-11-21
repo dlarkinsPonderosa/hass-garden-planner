@@ -81,8 +81,8 @@
           "succession_until": "Repeat until",
           "variety": "Variety",
           "quantity": "Quantity",
-          "location": "Location (where it's planted out)",
-          "start_location": "Start location (indoor starts)",
+          "location": "Plant out to, or sow in",
+          "start_location": "Start in (indoor starts)",
           "notes": "Notes",
           "save_defaults": "Save as the default for this crop"
         },

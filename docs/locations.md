@@ -42,6 +42,13 @@ starts indoors.
   time, before or after planting out. If you also change the method (say
   from greenhouse to beds), the tasks that aren't done yet are re-timed, and
   the form says so before you save.
+- Repeat sowings can be in both places at once, such as "Seedling Tray and
+  Garden": each sowing moves when its own transplant task is ticked off.
+- Deleting a transplant task from your list, rather than ticking it off,
+  counts as planted out once its due date has passed.
+- The Locations list on the Reap card shows how many plantings use each
+  location, planned ones included, and how many are there now. A location
+  any planting uses can't be removed.
 - The planner card's **By location** groups plantings by where they're going.
 
 ## Watering
