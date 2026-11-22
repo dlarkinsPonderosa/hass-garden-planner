@@ -230,6 +230,16 @@ class ReapCard extends HTMLElement {
     }
   }
 
+  _toTop() {
+    if (!this.isConnected) return;
+    // Leave room for Home Assistant's toolbar, which sits over the page.
+    const header = parseFloat(getComputedStyle(this).getPropertyValue("--header-height")) || 56;
+    if (this.getBoundingClientRect().top < header) {
+      this.style.scrollMarginTop = `${header + 8}px`;
+      this.scrollIntoView({ block: "start" });
+    }
+  }
+
   _watched() {
     const ids = [this._config.entity];
     for (const loc of this._locations()) {
@@ -914,6 +924,10 @@ class ReapCard extends HTMLElement {
   _render() {
     if (!this._config || !this._hass) return;
     if (!this.shadowRoot) this.attachShadow({ mode: "open" });
+    // Switching views (Locations, Crops, a form, back to the list) can make the
+    // card much shorter, leaving the page scrolled past it. Bring its top back.
+    if (this._shownMode !== undefined && this._shownMode !== this._mode) requestAnimationFrame(() => this._toTop());
+    this._shownMode = this._mode;
     const root = this.shadowRoot;
     root.textContent = "";
     root.append(h("style", {}, this._style()));
