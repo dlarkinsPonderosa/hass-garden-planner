@@ -2123,7 +2123,8 @@ class ReapLocationsCard extends ReapCard {
   _shown() {
     const all = this._locations();
     const picked = (this._config.locations || []).map((n) => String(n).toLowerCase());
-    if (!picked.length) return all;
+    if (!picked.length) return [...all].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: "base" }));
+    // Picked locations keep the order they were picked in.
     // Ids from the editor (they survive a rename), or names written by hand.
     return picked.map((n) => all.find((l) => l.id === n || l.name.toLowerCase() === n)).filter(Boolean);
   }
