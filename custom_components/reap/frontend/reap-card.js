@@ -221,8 +221,11 @@ class ReapCard extends HTMLElement {
     // While list_crops fails, wait longer between tries instead of asking on
     // every state change in the house.
     if (!this._crops && !this._loadingCrops && !(this._cropsRetryAt > Date.now())) this._loadCrops();
-    // Only redraw when something shown changes, so typing in a form isn't interrupted.
-    if (!this._mode && (!old || this._watched().some((id) => old.states[id] !== hass.states[id]))) {
+    // Only redraw when something shown changes, and never under an open form,
+    // so typing isn't interrupted. The locations list has no inputs, and a
+    // save made there shows up a moment after the service call returns.
+    const listing = !this._mode || this._mode === "locations";
+    if (listing && (!old || this._watched().some((id) => old.states[id] !== hass.states[id]))) {
       this._render();
     }
   }
