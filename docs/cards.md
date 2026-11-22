@@ -111,7 +111,7 @@ picture can go under the row. Pick **Reap locations** when adding a card, or:
 ```yaml
 type: custom:reap-locations-card
 title: Garden locations   # optional
-locations: []             # names to show, in this order; empty shows all
+locations: []             # names to show, in this order; empty shows all, by name
 second_line: watered      # watered, growing (what's there now) or none (larger name)
 show_moisture: true
 show_soil_temperature: true  # coloured by what's growing or about to go in
